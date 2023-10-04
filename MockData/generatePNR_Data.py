@@ -4,9 +4,14 @@ create mock data based on the data points 1. - 18. that the PNR-register can con
 # Imports
 from random import randint, choices
 from typing import List
-import names
+from names import get_last_name, get_first_name
+from random_address import real_random_address_by_state
+from pandas import read_json, DataFrame
+from math import acos, cos, sin, radians
+from datetime import timedelta, datetime
 
-class GeneratePNR_number():
+
+class GeneratePNR_number:
     """
     Jf. § 60-5. 1.
     Generates a PNR-number for an entry in the PNR-registry of an order.
@@ -50,7 +55,7 @@ def generateDate() -> int:
     pass
 
 
-class GenerateName():
+class GenerateName:
     """
     Jf. § 60-5. 4. & 17.
     Generates a Name for a passenger.
@@ -62,9 +67,6 @@ class GenerateName():
         name (str): The name.
     """
 
-    def __init__(self):
-        self.names = names
-
     def get_gender(self) -> str:
         gender = 'female'
 
@@ -74,16 +76,19 @@ class GenerateName():
 
         return gender
 
-    def get_first_name(self, gender) -> str:
+    def get_first_name(self) -> str:
         """
         Parameters:
             - gender (str) {'male', 'female'} : The gender of the name.
 
         Returns:
+            :raises ValueError, TypeError
             first_name (str) : A first name based on gender.
         """
 
-        first_name = self.names.get_first_name(gender)
+        gender = self.get_gender()
+
+        first_name = get_first_name(gender)
         return first_name
 
     def get_last_name(self) -> str:
@@ -95,7 +100,7 @@ class GenerateName():
             last_name (str) : A last name.
         """
 
-        last_name = self.names.get_last_name()
+        last_name = get_last_name()
 
         return last_name
 
@@ -121,9 +126,9 @@ class GenerateName():
             if type_first_name:
                 gender = self.get_gender()
 
-                middle_name += self.names.get_first_name(gender) + ' '
+                middle_name += self.get_first_name(gender) + ' '
             else:
-                middle_name += self.names.get_last_name() + ' '
+                middle_name += self.get_last_name() + ' '
 
         return middle_name
 
@@ -145,7 +150,8 @@ class GenerateName():
 
         return full_name
 
-class GenerateEMail():
+
+class GenerateEMail:
     """
     Jf. § 60-5. 5.
     Generates a EMail for a passenger based on their name.
@@ -161,8 +167,14 @@ class GenerateEMail():
             - passenger_full_name (str) : The full name of the passenger.
 
         Returns:
+            :raises TypeError, ValueError
             email_address (str) : The email address.
         """
+
+        if type(passenger_full_name) != str:
+            raise TypeError('Passenger name is not string')
+        elif len(passenger_full_name.split(' ')) < 2:
+            raise ValueError('Provided incomplete full name')
 
         providers = [provider[0] for provider in self.email_providers]
         providers_probability = [provider[1] for provider in self.email_providers]
@@ -180,11 +192,11 @@ class GenerateEMail():
             if i != len(full_name):
                 stem += '.'
 
-
         email_address = f'{stem}@{provider}.{suffix}'
         return email_address
 
-class GeneratePhoneNumber():
+
+class GeneratePhoneNumber:
     """
     Jf. § 60-5. 5.
     Generates a Phone Number.
@@ -203,7 +215,7 @@ class GeneratePhoneNumber():
                                       ('+30', 0.0016), ('+355', 0.0023), ('+252', 0.015), ('+254', 0.015),
                                       ('+234', 0.015), ('+220', 0.015), ('+27', 0.015), ('+20', 0.015), ('+98', 0.005),
                                       ('+964', 0.005), ('+93', 0.005), ('+66', 0.005), ('+84', 0.005), ('+86', 0.005),
-                                      ('+94', 0.005), ('+91', 0.005), ('+63', 0.005), ('+7', 0.005), ('+56', 0.0027),
+                                      ('+94', 0.005), ('+92', 0.005), ('+63', 0.005), ('+7', 0.005), ('+56', 0.0027),
                                       ('+55', 0.0027), ('+502', 0.0027), (f'+{randint(10, 389)}', 0.0096)]
         self.phone_number_starts = [('4', 0.5), ('9', 0.5)]
 
@@ -231,47 +243,210 @@ class GeneratePhoneNumber():
         return f'{prefix} {number_start}{remaining_digits}'
 
 
-def generateAddress() -> tuple(str, int, str):
+class GenerateAddress:
     """
     Jf. § 60-5. 5.
     Generates an Address.
-
-    Parameters:
-        -
-
-    Returns:
-        address (tuple(str, int, str)) : The complete address (street name, zip code, city).
     """
-    pass
+    def __init__(self):
+        self.states = ['CT', 'MA', 'VT', 'AL', 'AR', 'DC', 'FL', 'GA', 'KY', 'MD', 'OK', 'TN', 'AK', 'AZ', 'CA',
+                       'CO']
+
+    def get_address(self) -> tuple:
+        """
+        Parameters:
+            -
+
+        Returns:
+            address (tuple(str, int, str)) : The complete address (street name, zip code, city).
+        """
+
+        state = self.states[randint(0, len(self.states) - 1)]
+        address = real_random_address_by_state(state)
+
+        return address['city'], address['postalCode'], address['address1']
 
 
-def generatePaymentInformation() -> tuple(str, str):
+class GeneratePaymentInformation:
     """
     Jf. § 60-5. 6.
     Generates the Payment Information for an order. This information is the vendor and the type of payment.
-
-    Parameters:
-        -
-
-    Returns:
-        payment_information (tuple(str,str)) : The payment information with the vendor and type of payment.
     """
-    pass
+    def __init__(self):
+        self.vendors = ['Mastercard', 'Visa']
+        self.payment_types = ['Credit', 'Debit']
+
+    def get_payment_information(self) -> tuple:
+        """
+        Parameters:
+            -
+
+        Returns:
+            payment_information (tuple(str,str)) : The payment information with the vendor and type of payment.
+        """
+
+        vendor = self.vendors[randint(0, len(self.vendors) - 1)]
+        payment_type = self.payment_types[randint(0, len(self.payment_types) - 1)]
+
+        return vendor, payment_type
 
 
-def generateTravelPlan() -> List[tuple(str, int)]:
+class GenerateTravelPlan:
     """
     Jf. § 60-5. 7.
     Generates a Travel Plan for a passenger. This plan is the travel path, in order, with the corresponding arrival time.
     Except for the first entry as it is the departure location and therefore the associated time is the time of departure.
-
-    Parameters:
-        -
-
-    Returns:
-        travel_path (List[str]) : The travel destinations and their arrival time, in order, for a given passenger.
     """
-    pass
+
+    def __init__(self):
+        self.airport_data = read_json('airport_data.json')
+        self.flight_path_lengths = [(2, 0.75), (3, 0.2), (4, 0.045), (5, 0.004), (6, 0.001)]
+
+    def get_random_airport(self):
+        """
+        Pulls a random airport from the airport_data.json.
+
+        Parameters:
+            -
+
+        Returns:
+            airport (DataFrame) {iata_code, airport_name, city_name, latitude, longitude} :
+                Information about the airport. IATA code, name, city, latitude, longitude.
+        """
+        airport = self.airport_data.sample()
+
+        return airport
+
+    def get_travel_plan(self) -> list[tuple]:
+        """
+        Parameters:
+            -
+
+        Returns:
+            travel_path (list[tuple(str, str, datetime)]) :
+                The travel destinations and their arrival time, in order, for a given record.
+        """
+
+        path_lengths = [path_length[0] for path_length in self.flight_path_lengths]
+        path_length_probabilities = [path_length[1] for path_length in self.flight_path_lengths]
+        path_length = choices(path_lengths, path_length_probabilities)[0]
+
+        travel_path = [self.get_random_airport() for _ in range(path_length)]
+
+        travel_plan = []
+
+        departure_airport = travel_path[0]
+        airport_code = departure_airport['iata_code'].values[0]
+        airport_name = departure_airport['airport_name'].values[0]
+        airport_city = departure_airport['city_name'].values[0]
+        departure_time = self.get_random_datetime()
+        travel_plan.append((airport_code, airport_name, airport_city, departure_time))
+
+        for airport in travel_path[1:]:
+            airport_code = airport['iata_code'].values[0]
+            airport_name = airport['airport_name'].values[0]
+            airport_city = airport['city_name'].values[0]
+            arrival_time = self.calculate_arrival_time(departure_airport, airport, departure_time)
+            travel_plan.append((airport_code, airport_name, airport_city, arrival_time))
+
+            departure_airport = airport
+            departure_time = self.add_waiting_time_between_fights(arrival_time)
+
+        print(travel_plan)
+        return travel_plan
+
+    def add_waiting_time_between_fights(self, arrival_time):
+        """
+        Adds in one hour waiting time between flights
+
+        Parameters:
+            - arrival_time (datetime) : The arrival time at the airport from the previous flight.
+
+        Returns:
+            :raises TypeError
+            departure_time (datetime) : The new departure time of the next flight.
+        """
+
+        if type(arrival_time) != datetime:
+            raise TypeError('Arrival time is not a datetime')
+
+        departure_time = arrival_time + timedelta(hours=1)
+
+        return departure_time
+
+    def calculate_arrival_time(self, departure_airport, arrival_airport, departure_time) -> int:
+        """
+        Finds the distance between to airports and calculates the arrival time based on the departure time and how long
+        the flight would take.
+
+        Parameters:
+            - departure_airport (DataFrame) {iata_code, airport_name, city_name, latitude, longitude} :
+                The airport to be departed.
+            - arrival_airport (DataFrame) {iata_code, airport_name, city_name, latitude, longitude} :
+                The arrival airport.
+            - departure_time (datetime) : The time of departure.
+
+        Returns:
+            :raises TypeError, KeyError
+            arrival_time (datetime) : The time of arrival.
+        """
+
+        dataframe_keys = ['iata_code', 'airport_name', 'city_name', 'latitude', 'longitude']
+
+        if type(departure_time) != datetime:
+            raise TypeError('Departure time is not datetime')
+        elif type(departure_airport) != DataFrame:
+            raise TypeError('Departure airport is not DataFrame')
+        elif type(arrival_airport) != DataFrame:
+            raise TypeError('Departure airport is not DataFrame')
+        elif not all(key in dataframe_keys for key in departure_airport.keys().values):
+            raise KeyError('Departure airport have incorrect keys')
+        elif not all(key in dataframe_keys for key in arrival_airport.keys().values):
+            raise KeyError('Arrival airport have incorrect keys')
+
+        airplane_speed = 12   # 12 Kilometers per Minute
+        additional_time = 15  # Additional time due to reduced speed on take off and landing
+        real_path_deviation = 1.3   # Time lost with real flight path to the shortest path
+
+        departure_latitude = radians(departure_airport['latitude'].values[0])
+        departure_longitude = radians(departure_airport['longitude'].values[0])
+        arrival_latitude = radians(arrival_airport['latitude'].values[0])
+        arrival_longitude = radians(arrival_airport['longitude'].values[0])
+
+        distance = int(acos(sin(departure_latitude) * sin(arrival_latitude) +
+                            cos(departure_latitude) * cos(arrival_latitude) *
+                            cos(arrival_longitude - departure_longitude)) * 6371)
+
+        time = distance / airplane_speed  # Minutes
+        travel_time = int((time + additional_time) * real_path_deviation)
+        travel_time_round = round(travel_time / 5) * 5
+
+        arrival_time = departure_time + timedelta(minutes=travel_time_round)
+
+        return arrival_time
+
+    def get_random_datetime(self):
+        """
+        Picks a random date and time between 1970 and 2030.
+
+        Parameters:
+            -
+
+        Returns:
+            random_datetime (datetime) : A random time.
+        """
+
+        start_date = datetime(1970, 1, 1)
+        end_date = datetime(2030, 12, 31)
+        days = (end_date - start_date).days
+        random_day = randint(1, days)
+        random_hour = randint(1, 23)
+        random_minute = randint(0, 5) * 10 + randint(0, 1) * 5
+
+        random_date = start_date + timedelta(days=random_day)
+        random_datetime = random_date.replace(hour=random_hour, minute=random_minute)
+
+        return random_datetime
 
 
 def generateBonusProgram() -> str:
