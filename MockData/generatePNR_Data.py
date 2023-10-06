@@ -408,7 +408,6 @@ class GenerateTravelPlan:
             departure_airport = airport
             departure_time = self.add_waiting_time_between_fights(arrival_time)
 
-        print(travel_plan)
         return travel_plan
 
     def add_waiting_time_between_fights(self, arrival_time):
@@ -607,7 +606,7 @@ class GeneratePassengerStatus:
 
             if status != 'showed':
                 for _ in range(len(travel_path) - len(departure_statuses)):
-                    departure_statuses.append(status)
+                    departure_statuses.append('-')
 
                 return departure_statuses
             else:
@@ -742,20 +741,53 @@ class GenerateSeat:
         return seat
 
 
-def generateLuggage() -> list[int]:
+class GenerateLuggage:
     """
     Jf. § 60-5. 16.
     Generates Luggage Information for a given passenger. This information is the amount of cabin luggage with their
-    corresponding weight. And the amount of checked luggage with their corresponding weight.
+    corresponding weights in kilograms, the amount of checked luggage with their corresponding weights in kilograms, and
+    the amount of special baggage with their corresponding weights in kilograms.
 
-    Parameters:
-        -
-
-    Returns:
-        cabin_luggage (List[int]) : The weights of all cabin luggage for the passenger.
-        checked_luggage (List[int]) : The weights of all checked luggage for the passenger.
     """
-    pass
+    def __init__(self):
+        self.cabin_luggage_amounts = [('unknown', 1)]
+        self.checked_luggage_amounts = [(0, 0.45), (1, 0.3), (2, 0.1), (3, 0.05), (randint(4, 12), 0.1)]
+        self.special_baggage_amounts = [(0, 0.9), (1, 0.05), (2, 0.025), (randint(3, 12), 0.025)]
+
+    def get_luggage(self) -> tuple[list, list, list]:
+        """
+        Jf. § 60-5. 16.
+        Generates Luggage Information for a given passenger.
+
+        Parameters:
+            -
+
+        Returns:
+            cabin_luggage (list) : The weights, in kilograms, of all cabin luggage for the passenger.
+            checked_luggage (list) : The weights, in kilograms, of all checked luggage for the passenger.
+            special_baggage (list) : The weights, in kilograms, of all special baggage for the passenger.
+        """
+
+        cabin_luggage_amounts = [luggage[0] for luggage in self.cabin_luggage_amounts]
+        cabin_luggage_amounts_probabilities = [luggage[1] for luggage in self.cabin_luggage_amounts]
+        cabin_luggage = choices(cabin_luggage_amounts, cabin_luggage_amounts_probabilities)[0]
+
+        cabin_luggage = [cabin_luggage]
+
+        checked_luggage_amounts = [luggage[0] for luggage in self.checked_luggage_amounts]
+        checked_luggage_amounts_probabilities = [luggage[1] for luggage in self.checked_luggage_amounts]
+        checked_luggage_amount = choices(checked_luggage_amounts, checked_luggage_amounts_probabilities)[0]
+
+        checked_luggage = [(randint(90, 230) / 10) for _ in range(checked_luggage_amount)]
+
+        special_baggage_amounts = [luggage[0] for luggage in self.special_baggage_amounts]
+        special_baggage_amounts_probabilities = [luggage[1] for luggage in self.special_baggage_amounts]
+        special_baggage_amount = choices(special_baggage_amounts, special_baggage_amounts_probabilities)[0]
+
+        special_baggage = [(randint(90, 320) / 10) for _ in range(special_baggage_amount)]
+
+        return cabin_luggage, checked_luggage, special_baggage
+
 
 if __name__ == "__main__":
     pass
