@@ -1054,7 +1054,7 @@ def create_random_record(pnr_number: int) -> dict:
 
 
 if __name__ == "__main__":
-    number_of_records = 1_000
+    number_of_records = 1000
 
     gen_pnr_number = iter(GeneratePNR_number())
 
@@ -1062,5 +1062,5 @@ if __name__ == "__main__":
         pnr_number = next(gen_pnr_number)
         pnr_record = create_random_record(pnr_number)
 
-        with open(f'PNR Records/record{pnr_number}', 'w') as fp:
+        with open(f'PNR Records/record{pnr_number}.json', 'w') as fp:
             dump(pnr_record, fp, indent=4)

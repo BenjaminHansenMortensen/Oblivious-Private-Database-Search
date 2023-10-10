@@ -1,0 +1,92 @@
+{
+    "PNR Number": 1,
+    "Payment Information": {
+        "Ticket Number ": 331390749,
+        "Date": "26/11/2025",
+        "Name": "Matthew Georgia Tim Carson",
+        "Address": {
+            "City": "Fayetteville",
+            "Zip Code": "72701",
+            "Street": "2017 North Hartford Drive"
+        },
+        "Phone Number": "+47 40489687",
+        "Email": "matthew.georgia.tim.carson.@outlook.com",
+        "Vendor": "Mastercard",
+        "Type": "Credit",
+        "Bonus Program": "Gold"
+    },
+    "Airline": "SAS",
+    "Travel Agency": "Balslev",
+    "Travel Plan": {
+        "Destination 1": {
+            "IATA Code": "NWH",
+            "Name": "Parlin Field",
+            "City": "Newport",
+            "Time": "15/12/2025, 01:55:00"
+        },
+        "Destination 2": {
+            "IATA Code": "BEK",
+            "Name": "Bareli",
+            "City": "Bareli",
+            "Time": "15/12/2025, 23:35:00"
+        }
+    },
+    "Passengers": {
+        "Passenger 1": {
+            "Name": "Glen Gompf",
+            "Status": {
+                "Destination 1": "no show",
+                "Destination 2": "-"
+            },
+            "Seat": "6B",
+            "Luggage": {
+                "Cabin": [
+                    "*unknown*"
+                ],
+                "Checked": [
+                    14.2
+                ],
+                "Special": []
+            }
+        },
+        "Passenger 2": {
+            "Name": "Jeffrey Bailey Cavallaro",
+            "Status": {
+                "Destination 1": "showed",
+                "Destination 2": "showed"
+            },
+            "Seat": "6A",
+            "Luggage": {
+                "Cabin": [
+                    "*unknown*"
+                ],
+                "Checked": [
+                    17.2,
+                    15.4,
+                    20.0,
+                    16.3,
+                    19.6
+                ],
+                "Special": []
+            }
+        },
+        "Passenger 3": {
+            "Name": "Matthew Georgia Tim Carson",
+            "Status": {
+                "Destination 1": "showed",
+                "Destination 2": "showed"
+            },
+            "Seat": "27F",
+            "Luggage": {
+                "Cabin": [
+                    "*unknown*"
+                ],
+                "Checked": [
+                    16.6,
+                    20.4
+                ],
+                "Special": []
+            }
+        }
+    }
+}
