@@ -1,0 +1,53 @@
+{
+    "PNR Number": 1,
+    "Payment Information": {
+        "Ticket Number ": 288585065,
+        "Date": "27/10/2021",
+        "Name": "Patrick Mccoy Enriquez",
+        "Address": {
+            "City": "Palisade",
+            "Zip Code": "81526",
+            "Street": "715 36.1 Road"
+        },
+        "Phone Number": "+47 98655037",
+        "Email": "patrick.mccoy.enriquez.@outlook.com",
+        "Vendor": "Visa",
+        "Type": "Debit",
+        "Bonus Program": "None"
+    },
+    "Airline": "Norwegian",
+    "Travel Agency": "Solfaktor",
+    "Travel Destinations": {
+        "Destination 1": {
+            "IATA Code": "KHO",
+            "Name": "Khoka Moya",
+            "City": "Khoka Moya",
+            "Time": "23/12/2021, 14:45:00"
+        },
+        "Destination 2": {
+            "IATA Code": "THS",
+            "Name": "Sukhothai",
+            "City": "Sukhothai",
+            "Time": "24/12/2021, 06:50:00"
+        }
+    },
+    "Passengers": {
+        "Passenger 1": {
+            "Name": "Patrick Mccoy Enriquez",
+            "Status": {
+                "Destination 1": "showed",
+                "Destination 2": "showed"
+            },
+            "Seat": "25C",
+            "Luggage": {
+                "Cabin": [
+                    "*unknown*"
+                ],
+                "Checked": [
+                    10.8
+                ],
+                "Special": []
+            }
+        }
+    }
+}
