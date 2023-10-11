@@ -20,13 +20,13 @@
     "Travel Plan": {
         "Destination 1": {
             "IATA Code": "NWH",
-            "Name": "Parlin Field",
+            "Airport Name": "Parlin Field",
             "City": "Newport",
             "Time": "15/12/2025, 01:55:00"
         },
         "Destination 2": {
             "IATA Code": "BEK",
-            "Name": "Bareli",
+            "Airport Name": "Bareli",
             "City": "Bareli",
             "Time": "15/12/2025, 23:35:00"
         }

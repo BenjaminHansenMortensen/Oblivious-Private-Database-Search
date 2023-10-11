@@ -1,5 +1,5 @@
 """ In accordance with poltiregisterforskriften § 60-5.'Opplysningskategorier som kan registreres' we want to
-create mock data based on the data points 1. - 18. that the PNR-register can consist of."""
+create mock data based on the data points 1. - 18. that the PNR-register can consist of. """
 
 # Imports
 from random import randint, choice, choices
@@ -956,7 +956,7 @@ def create_random_record(pnr_number: int) -> dict:
             - Travel Agency
             - Travel Plan
                 - IATA Code
-                - Name
+                - Airport Name
                 - City
                 - Time
             - Passengers
@@ -1014,7 +1014,7 @@ def create_random_record(pnr_number: int) -> dict:
     passenger_luggage = gen_luggage.get_passengers_luggage(passenger_amount)
 
     pnr_record = {'PNR Number': pnr_number,
-                  'Payment Information': {'Ticket Number ': ticket_number,
+                  'Payment Information': {'Ticket Number': ticket_number,
                                           'Date': order_datetime.strftime("%d/%m/%Y"),
                                           'Name': orderer_name,
                                           'Address': {'City': orderer_address[0],
@@ -1030,7 +1030,7 @@ def create_random_record(pnr_number: int) -> dict:
                   'Airline': airline,
                   'Travel Agency': travel_agency,
                   'Travel Plan': {f"Destination {i + 1}": {'IATA Code': travel_plan[i][0],
-                                                           'Name': travel_plan[i][1],
+                                                           'Airport Name': travel_plan[i][1],
                                                            'City': travel_plan[i][2],
                                                            'Time': travel_plan[i][3].strftime("%d/%m/%Y, %H:%M:%S"),
                                                            } for i in range(travel_length)
