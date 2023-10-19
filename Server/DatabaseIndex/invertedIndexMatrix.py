@@ -23,6 +23,7 @@ def read_record(path: str | Path) -> dict:
     except TypeError:
         raise TypeError(f'Cannot covert to Path object')
 
+
     with open(path, 'r') as file:
         record = dict(load(file))
 
@@ -44,13 +45,12 @@ def flatten_and_filter_dictionary(dictionary: dict) -> dict:
     if type(dictionary) != dict:
         raise TypeError('The dictionary is not of type dictionary.')
 
-
     key_filter = ['Date', 'City', 'Zip Code', 'Vendor', 'Type', 'Bonus Program', 'Airline', 'Travel Agency',
-              'IATA Code', 'Airport Name', 'City', 'Status', 'Seat', 'Cabin', 'Checked', 'Special']
+                  'IATA Code', 'Airport Name', 'City', 'Status', 'Seat', 'Cabin', 'Checked', 'Special']
 
     flat_dictionary = {}
 
-    add_keys_and_values(flat_dictionary, dictionary ,key_filter)
+    add_keys_and_values(flat_dictionary, dictionary, key_filter)
 
     return flat_dictionary
 
@@ -99,6 +99,7 @@ def update_index_matrix(record: dict[str, str], memory_location: str | Path):
         raise ValueError('Dictionary is not flat.')
     # TODO Memory Location Error Handling
 
+
     memory_location = memory_location.name
 
     for key, value in record.items():
@@ -108,7 +109,6 @@ def update_index_matrix(record: dict[str, str], memory_location: str | Path):
                 memory_locations.append(memory_location)
         else:
             inverse_index_matrix[value] = [memory_location]
-
 
 
 def get_contents(path: str | Path) -> list[str]:
@@ -132,7 +132,7 @@ def get_contents(path: str | Path) -> list[str]:
     except TypeError:
         raise TypeError('Cannot covert dir to Path object')
 
-    # Traverse the directory and find its contents
+
     contents = [path for path in dir.rglob('*')]
 
     return contents
