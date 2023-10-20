@@ -1,12 +1,14 @@
 """ Handling the communication with the client """
 
 from threading import Thread
-from socket import socket, AF_INET, SOCK_STREAM, SOL_SOCKET, SO_REUSEADDR
+from socket import socket, AF_INET, SOCK_STREAM, SOL_SOCKET, SO_REUSEADDR, timeout
+from ssl import SSLContext, PROTOCOL_TLS_CLIENT, PROTOCOL_TLS_SERVER
 
 
 class Communicate:
     """
-        Establishes a communication channel between the client and server. Allowing them to send and receive json files.
+        Establishes a secure communication channel between the client and server.
+        Allowing them to send and receive json files.
     """
     def __init__(self):
         self.HEADER = 128
@@ -15,12 +17,19 @@ class Communicate:
         self.ADDR = (self.HOST, self.LISTEN_PORT)
         self.SERVER_ADDR = ('localhost', 5005)
         self.FORMAT = 'utf-8'
+
         self.FILE_NAME_MESSAGE = '<FILE NAME>'
         self.FILE_CONTENTS_MESSAGE = '<FILE CONTENTS>'
         self.DISCONNECT_MESSAGE = '<DISCONNECT>'
-        self.listen_host = socket(AF_INET, SOCK_STREAM)
+
+        self.server_context = SSLContext(PROTOCOL_TLS_SERVER)
+        self.server_context.load_cert_chain(certfile='cert.pem', keyfile='key.pem', password='password')
+        self.client_context = SSLContext(PROTOCOL_TLS_CLIENT)
+        self.client_context.load_verify_locations('../Server/cert.pem')
+        self.listen_host = self.server_context.wrap_socket(socket(AF_INET, SOCK_STREAM), server_side=True)
         self.listen_host.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
         self.listen_host.settimeout(0.2)
+
         self.close = False
         self.listen_thread = []
         self.run_thread = Thread(target=self.run)
@@ -80,7 +89,7 @@ class Communicate:
 
         """
 
-        send_host = socket(AF_INET, SOCK_STREAM)
+        send_host = self.client_context.wrap_socket(socket(AF_INET, SOCK_STREAM), server_hostname='localhost')
 
         send_host.connect(self.SERVER_ADDR)
         send_host.send(self.add_padding(self.FILE_NAME_MESSAGE))
@@ -113,6 +122,8 @@ class Communicate:
                 thread = Thread(target=self.receive_json, args=(conn, addr))
                 thread.start()
                 self.listen_thread.append(thread)
+            except timeout:
+                continue
             except Exception:
                 print('[ERROR] incoming connection failed')
 
