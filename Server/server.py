@@ -11,7 +11,7 @@ class Communicate:
         Allowing them to send and receive json files.
     """
     def __init__(self):
-        self.HEADER = 128
+        self.HEADER = 1024
         self.LISTEN_PORT = 5005
         self.HOST = 'localhost'
         self.ADDR = (self.HOST, self.LISTEN_PORT)
@@ -21,6 +21,7 @@ class Communicate:
         self.FILE_NAME_MESSAGE = '<FILE NAME>'
         self.FILE_CONTENTS_MESSAGE = '<FILE CONTENTS>'
         self.DISCONNECT_MESSAGE = '<DISCONNECT>'
+        self.END_FILE_MESSAGE = '<END FILE>'
 
         self.server_context = SSLContext(PROTOCOL_TLS_SERVER)
         self.server_context.load_cert_chain(certfile='cert.pem', keyfile='key.pem', password='password')
@@ -71,9 +72,13 @@ class Communicate:
                 print(f'[RECEIVED] {message} from {address}')
                 file_name = connection.recv(self.HEADER).decode(self.FORMAT).strip()
             elif message == self.FILE_CONTENTS_MESSAGE:
-                file_contents = connection.recv(self.HEADER).decode(self.FORMAT).strip()
-                print(f'[RECEIVED] {message} from {address}')
+                print(f'[RECEIVING] {message} from {address}')
 
+                file_contents = ''
+                while (message := connection.recv(self.HEADER).decode(self.FORMAT).strip()) != self.END_FILE_MESSAGE:
+                    file_contents += message
+
+                print(f'[RECEIVED] {message} from {address}')
                 with open(f'{file_name}.json', 'w') as file:
                     file.write(file_contents)
 
@@ -96,8 +101,15 @@ class Communicate:
         send_host.send(self.add_padding(f'{file_name}'))
         send_host.send(self.add_padding(self.FILE_CONTENTS_MESSAGE))
         send_host.send(self.add_padding(f'{file_contents}'))
+        send_host.send(self.add_padding(self.END_FILE_MESSAGE))
         send_host.send(self.add_padding(self.DISCONNECT_MESSAGE))
         send_host.close()
+
+    def get_file_contents(self, file_path):
+        with open(file_path, 'r') as f:
+            contents = f.read()
+
+        return contents
 
     def run(self):
         """
