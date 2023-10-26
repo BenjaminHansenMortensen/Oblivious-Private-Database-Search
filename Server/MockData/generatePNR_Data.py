@@ -198,7 +198,6 @@ class GenerateName:
                 full_name (str) : A full name.
         """
 
-        gender = self.get_gender()
         first_name = self.get_first_name()
         middle_name = self.get_middle_name()
         last_name = self.get_last_name()
@@ -231,7 +230,7 @@ class GenerateEmail:
 
     def __init__(self):
         self.email_providers = [('gmail', 0.4), ('outlook', 0.15), ('yahoo', 0.05), ('icloud', 0.4)]
-        self.email_suffixes = [('com', 0.7), ('no', 0.25), ('org',0.04), ('gov', 0.01)]
+        self.email_suffixes = [('com', 0.7), ('no', 0.25), ('org', 0.04), ('gov', 0.01)]
 
     def get_email(self, full_name: str) -> str:
         """
