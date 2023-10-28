@@ -130,7 +130,7 @@ def get_contents(path: str | Path) -> list[str]:
         if not dir.is_dir() or not dir.exists():
             raise NotADirectoryError
     except TypeError:
-        raise TypeError('Cannot covert dir to Path object')
+        raise TypeError('Cannot covert directory to Path object')
 
 
     contents = [path for path in dir.rglob('*')]
