@@ -1,4 +1,4 @@
-""" To build the database we want to index the records to create an inverse index martix with the indecies and full files """
+""" MP-SPDZ only supports a few data types, so we have to encode or data to use it. """
 
 #Imports
 from pathlib import Path
@@ -94,7 +94,7 @@ def replace_pointers_with_file_encoded_as_integers(index_pointer_dictionary: dic
     return integer_encoding_dictionary
 
 
-def write(integer_dictionary: dict[int, list[int]], output_path: Path | str) -> None:
+def write_dictionary(integer_dictionary: dict[int, list[int]], output_path: Path | str) -> None:
     """
         Writes the dictionary on the correct format as the server's input into MP-SPDZ.
 
@@ -115,7 +115,6 @@ def write(integer_dictionary: dict[int, list[int]], output_path: Path | str) -> 
     elif all(type(key) != int for key in integer_dictionary.keys()):
         raise TypeError('Not all keys are integers')
     elif all(type(value) != list for value in integer_dictionary.values()):
-
         raise TypeError('Not all values are integers')
 
     output = ''
@@ -137,5 +136,5 @@ if __name__ == "__main__":
     base_path = Path('../MockData/PNR Records/')
     index_integer_dictionary = replace_pointers_with_file_encoded_as_integers(inverted_index_matrix, base_path)
 
-    output_path = Path('../MP-SPDZ Inputs/Circuit_Only_Input-P0')
-    write(index_integer_dictionary, output_path)
+    output_path = Path('../MP-SPDZ Inputs/Circuit_Only_Input-P1')
+    write_dictionary(index_integer_dictionary, output_path)
