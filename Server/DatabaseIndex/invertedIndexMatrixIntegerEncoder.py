@@ -8,13 +8,14 @@ from hashlib import sha256
 
 def convert_file_to_integers(contents: str) -> list[int]:
     """
-        Converts each character of a file to its ascii integer encoding.
+        Converts each character of a file to its ascii code.
 
         Parameters:
+            :raises TypeError
             - file (dict) : The file to be converted.
 
         Returns:
-            integer_encodings (list) = The file encoded as ascii integers.
+            integer_encodings (list) = The file encoded as ascii code.
     """
 
     if type(contents) != str:
@@ -26,21 +27,23 @@ def convert_file_to_integers(contents: str) -> list[int]:
     for character in contents:
         integer_encodings.append(ord(character))
 
-    padding_amount = 6000 - len(integer_encodings)   # 6000 is the upper bound of character for the largest file.
+    file_length_upper_bound = 6000
+    padding_amount = file_length_upper_bound - len(integer_encodings)
     for i in range(padding_amount):
         integer_encodings.append(0)
 
     return integer_encodings
 
 
-def convert_index_to_integer(index: str) -> int:
+def convert_string_to_unique_integer(index: str) -> int:
     """
-        Converts an index to a integer by hashing the index then converting the digest from binary to decimals.
+        Converts an index to an integer by hashing the index then converting the digest from binary to decimal.
 
         Parameters:
             - index (str) : The index to be converted.
 
         Returns:
+            :raises TypeError
             decimal_digest (int) = The index encoded as integers.
     """
 
@@ -53,53 +56,112 @@ def convert_index_to_integer(index: str) -> int:
     return decimal_digest
 
 
-def replace_pointers_with_file_encoded_as_integers(index_pointer_dictionary: dict, base_path: Path | str)\
-        -> dict[int, list]:
+def encode_inverted_index_matrix(inverted_index_matrix: dict[str, list[str]]) -> dict[int, list[int]]:
     """
-        Replaces each file pointer with the ascii integer encoding of the file.
+        Encodes the indices and pointers of the inverted index matrix to integers.
 
         Parameters:
-            - index_pointer_dictionary (dict) : The inverse index matrix dictionary with memory address pointers.
+            - inverted_index_matrix (dict[str, list[str]]) : The inverted index matrix to be encoded.
 
         Returns:
-            integer_encoding_dictionary (dict) = The new inverse index matrix with files.
+            :raises TypeError
+            encoded_inverted_index_matrix (dict[int, list[int]]) : The encoded inverted index matrix.
+
+    """
+
+    if type(inverted_index_matrix) != dict:
+        raise TypeError('Is not of type dictionary.')
+    elif all(type(value) != list for value in inverted_index_matrix.values()):
+        raise TypeError('Dictionary is not formatted correctly.')
+    elif all(type(key) != str for key in inverted_index_matrix.keys()):
+        raise TypeError('Dictionary is not encoded as strings.')
+    for pointers in inverted_index_matrix.values():
+        for pointer in pointers:
+            if type(pointer) != str:
+                raise TypeError('Dictionary is not encoded as strings.')
+
+    encoded_inverted_index_matrix = {}
+    for index in inverted_index_matrix.keys():
+
+        integer_pointers = []
+        for pointer in inverted_index_matrix[index]:
+            integer_pointer = convert_string_to_unique_integer(pointer)
+            integer_pointers.append(integer_pointer)
+
+        integer_index = convert_string_to_unique_integer(index)
+        encoded_inverted_index_matrix[integer_index] = integer_pointers
+
+    return encoded_inverted_index_matrix
+
+
+def get_encoded_database(index_pointer_dictionary: dict, base_path: Path | str) -> list[list[int]]:
+    """
+        Encodes the file hash as integers and the file contents as ascii integers, on the form record1
+        -> [hash, char 1, ... , char n]
+
+        Parameters:
+            - index_pointer_dictionary (dict) : The inverse index matrix dictionary with pointers.
+            - base_path (Path | str) : The path to the database files.
+
+        Returns:
+            :raises TypeError
+            encoded_database (list[list[int]]) : The encoded database as integers.
+
     """
 
     try:
-        path = Path(base_path)
+        base_path = Path(base_path)
 
-        if not path.is_dir() or not path.exists():
-            raise NotADirectoryError
     except TypeError:
-        raise TypeError('Cannot covert base path to Path object')
-    if type(index_pointer_dictionary) != dict:
-        raise TypeError('Inverse index matrix is not a dictionary.')
-    elif all(type(value) == dict for value in index_pointer_dictionary.values()):
-        raise ValueError('Dictionary is not flat.')
+        raise TypeError('Cannot covert base path to Path object.')
+    if type(inverted_index_matrix) != dict:
+        raise TypeError('Is not of type dictionary.')
+    elif all(type(value) != list for value in inverted_index_matrix.values()):
+        raise TypeError('Dictionary is not formatted correctly.')
+    elif all(type(key) != str for key in inverted_index_matrix.keys()):
+        raise TypeError('Dictionary is not encoded as string.')
+    for pointers in inverted_index_matrix.values():
+        for pointer in pointers:
+            if type(pointer) != str:
+                raise TypeError('Dictionary is not encoded as string.')
 
-    integer_encoding_dictionary = {}
+    visited_pointers = set()
+
+    encoded_database = []
     for index in index_pointer_dictionary.keys():
+
         files = []
         for pointer in index_pointer_dictionary[index]:
+            if pointer in visited_pointers:
+                continue
+
+            visited_pointers.add(pointer)
+
             file_path = base_path / pointer
             with file_path.open(mode='r') as f:
                 contents = f.read()
             integer_encoding = convert_file_to_integers(contents)
 
-            files.append(integer_encoding)
+            files += integer_encoding
 
-        integer_index = convert_index_to_integer(index)
-        integer_encoding_dictionary[integer_index] = files
+        if len(files) == 0:
+            continue
 
-    return integer_encoding_dictionary
+        integer_index = convert_string_to_unique_integer(index)
+        encoded_database.append([integer_index] + files)
+
+    return encoded_database
 
 
-def write_dictionary(integer_dictionary: dict[int, list[int]], output_path: Path | str) -> None:
+def write_dictionary(inverted_index_matrix: dict[int, list[int]], database: list[list[int]], output_path: Path | str):
     """
-        Writes the dictionary on the correct format as the server's input into MP-SPDZ.
+        Writes the encoded inverted index matrix and encoded database on the correct format as the server's input into
+        MP-SPDZ.
 
         Parameters:
-            - integer_dictionary (dict[int, list[int]]) : The dictionary to be written.
+            - inverted_index_matrix (dict[int, list[int]]) : The encoded inverted index matrix to be written.
+            - database (list[list[int]]) : The encoded database to be written.
+            - output_path (Path | str) : The output where the dictionary will be written to.
 
         Returns:
 
@@ -109,20 +171,32 @@ def write_dictionary(integer_dictionary: dict[int, list[int]], output_path: Path
         output_path = Path(output_path)
 
     except TypeError:
-        raise TypeError('Cannot covert output path to Path object')
-    if type(integer_dictionary) != dict:
-        raise TypeError('Is not of type dictionary')
-    elif all(type(key) != int for key in integer_dictionary.keys()):
-        raise TypeError('Not all keys are integers')
-    elif all(type(value) != list for value in integer_dictionary.values()):
-        raise TypeError('Not all values are integers')
+        raise TypeError('Cannot covert output path to Path object.')
+    if type(inverted_index_matrix) != dict:
+        raise TypeError('Is not of type dictionary.')
+    elif all(type(value) != list for value in inverted_index_matrix.values()):
+        raise TypeError('Dictionary is not formatted correctly.')
+    elif all(type(key) != int for key in inverted_index_matrix.keys()):
+        raise TypeError('Dictionary is not encoded as integers.')
+    for pointers in inverted_index_matrix.values():
+        for pointer in pointers:
+            if type(pointer) != int:
+                raise TypeError('Dictionary is not encoded as integers.')
+    if all(type(file) != list for file in database):
+        raise TypeError('The database is not encoded correctly.')
+    for file in database:
+        for character in file:
+            if type(character) != int:
+                raise TypeError('The database is not encoded as integers.')
 
     output = ''
-    for key in integer_dictionary.keys():
+    for key in inverted_index_matrix.keys():
         output += f'{key} '
-        for value in integer_dictionary[key]:
-            for character in value:
-                output += f'{character} '
+        for pointer in inverted_index_matrix[key]:
+            output += f'{pointer} '
+    for file in database:
+        for character in file:
+            output += f'{character} '
 
     with output_path.open(mode='w') as f:
         f.write(output)
@@ -134,7 +208,8 @@ if __name__ == "__main__":
         inverted_index_matrix = load(f)
 
     base_path = Path('../MockData/PNR Records/')
-    index_integer_dictionary = replace_pointers_with_file_encoded_as_integers(inverted_index_matrix, base_path)
+    encoded_database = get_encoded_database(inverted_index_matrix, base_path)
+    encoded_inverted_index_matrix = encode_inverted_index_matrix(inverted_index_matrix)
 
-    output_path = Path('../MP-SPDZ Inputs/Circuit_Only_Input-P1-0-0')
-    write_dictionary(index_integer_dictionary, output_path)
+    output_path = Path('../MP-SPDZ Inputs/Circuit_Only_Input-P1-0')
+    write_dictionary(encoded_inverted_index_matrix, encoded_database, output_path)
