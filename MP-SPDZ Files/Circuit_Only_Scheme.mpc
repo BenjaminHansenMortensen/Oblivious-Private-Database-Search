@@ -1,42 +1,24 @@
 # Run all commands from the MP-SPDZ folder
-# Run P0: ./mascot-party.x -p 0 -N 2 -IF sommer23/Demo/Inputs/Input classifier_single_db_ors          Input from sommer23/Demo/Inputs/Input-P0-0
-# Run P1: ./mascot-party.x -p 1 -N 2 -IF sommer23/Demo/Inputs/Input-Single classifier_single_db_ors   Input from sommer23/Demo/Inputs/Input-Single-P1-0
-
-# P0 measurement
-measurement_rf = sint.get_input_from(0)
-measurement_pri = sint.get_input_from(0)
-
-# Finds the best cluster for the measurments given a database
-def classify(database, number_of_signatures, measurement_rf, measurement_pri):
-	"""
-	classifying the measurment in given database
-	"""
-	temp = sint.Tensor([size_of_largest_database, 3])
-	res = sfix.Tensor([10, 2])
+# Run ./compile.py Circuit_Only_Scheme
+# Run P0: ./atlas-party.x Circuit_Only_Scheme -p 0 -N 3 -IF ../PycharmProjects/MasterThesis/Client/MP-SPDZ\ Inputs/Circuit_Only_Input -OF ../PycharmProjects/MasterThesis/Client/MP-SPDZ\ Outputs/Circuit_Only_Output
+# Run P1: ./atlas-party.x Circuit_Only_Scheme -p 1 -N 3 -IF ../PycharmProjects/MasterThesis/Server/MP-SPDZ\ Inputs/Circuit_Only_Input
+# Run P2: ./atlas-party.x Circuit_Only_Scheme -p 2 -N 3
 
 
-	@for_range(start = 0, stop = number_of_signatures)
-	def _(i):
-		mask = contained(measurement_rf, measurement_pri, database[i][1], database[i][2])
-		temp[i][0] = mask * database[i][0]
+number_of_indices = 21
+max_amount_of_files_pointed_to = 1
+index = 1
+file_size_upper_bound = 6000
+files = file_size_upper_bound * max_amount_of_files_pointed_to + index
 
-		ge, g = mahalanobis_distance(database[i], measurement_rf, measurement_pri)
+search_query = sint.get_input_from(0)
+database = sint.input_tensor_from(1, [number_of_indices, files])
 
-		temp[i][1] = mask * ge
-		temp[i][2] = mask * g
+for index in range(number_of_indices):
+    match = (search_query == database[index][0])
+    for content in range(files):
+        database[index][content] = database[index][content] * match
 
-	temp.sort(key_indices = (0), n_bits = 8)
+database.print_reveal_nested()
 
-	@for_range(start = 0, stop = 10)
-	def _(j):
-		counter =  size_of_largest_database-1-j
-		res[j][0] = temp[counter][0]
-		res[j][1] = sfix(temp[counter][1]) / sfix(temp[counter][2])
 
-	return res
-
-database = sint.input_tensor_from(1, [n, number_of_features])
-res = classify(database, n, measurement_rf, measurement_pri)
-
-# Shows P0 the best result to their measurement
-res.print_reveal_nested()

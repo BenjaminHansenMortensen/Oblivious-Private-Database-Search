@@ -136,5 +136,5 @@ if __name__ == "__main__":
     base_path = Path('../MockData/PNR Records/')
     index_integer_dictionary = replace_pointers_with_file_encoded_as_integers(inverted_index_matrix, base_path)
 
-    output_path = Path('../MP-SPDZ Inputs/Circuit_Only_Input-P1')
+    output_path = Path('../MP-SPDZ Inputs/Circuit_Only_Input-P1-0-0')
     write_dictionary(index_integer_dictionary, output_path)

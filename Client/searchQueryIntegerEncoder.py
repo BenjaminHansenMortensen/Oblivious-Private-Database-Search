@@ -7,7 +7,7 @@ from pathlib import Path
 
 def convert_search_query_to_integer(search_query: str) -> int:
     """
-        Converts a search query to a integer by hashing the index then converting the digest from binary to decimals.
+        Converts a search query to an integer by hashing the index then converting the digest from binary to decimals.
 
         Parameters:
             - search_query (str) : The search query to be converted.
@@ -78,5 +78,5 @@ if __name__ == "__main__":
     search_query = ['1']
     integer_search_query = convert_search_queries_to_integers(search_query)
 
-    output_path = Path('MP-SPDZ Inputs/Circuit_Only_Input-P0')
+    output_path = Path('MP-SPDZ Inputs/Circuit_Only_Input-P0-0-0')
     write_list(integer_search_query, output_path)
