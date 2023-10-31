@@ -1,21 +1,43 @@
 # Run all commands from the MP-SPDZ folder
-# Run ./compile.py Circuit_Only_Scheme
-# Run P0: ./atlas-party.x Circuit_Only_Scheme -p 0 -N 3 -IF ../PycharmProjects/MasterThesis/Client/MP-SPDZ\ Inputs/Circuit_Only_Input -OF ../PycharmProjects/MasterThesis/Client/MP-SPDZ\ Outputs/Circuit_Only_Output
-# Run P1: ./atlas-party.x Circuit_Only_Scheme -p 1 -N 3 -IF ../PycharmProjects/MasterThesis/Server/MP-SPDZ\ Inputs/Circuit_Only_Input
-# Run P2: ./atlas-party.x Circuit_Only_Scheme -p 2 -N 3
+# Run ./compile.py MP-SPDZ_Only_Scheme
+# Run P0: ./atlas-party.x MP-SPDZ_Only_Scheme -p 0 -N 3 -IF ../PycharmProjects/MasterThesis/Client/MP-SPDZ\ Inputs/Circuit_Only_Input -OF ../PycharmProjects/MasterThesis/Client/MP-SPDZ\ Outputs/MP-SPDZ_Only_Output
+# Run P1: ./atlas-party.x MP-SPDZ_Only_Scheme -p 1 -N 3 -IF ../PycharmProjects/MasterThesis/Server/MP-SPDZ\ Inputs/MP-SPDZ_Only_Input
+# Run P2: ./atlas-party.x MP-SPDZ_Only_Scheme -p 2 -N 3
 
 
 from oram import OptimalORAM
 
 
-def not_in(target, iterable, size):
+def not_in(target, set, size):
+    """
+        Checks if the target is not in the  set.
+
+        Parameters:
+            - target (sint) : The item to be compared against the set.
+            - set (sint.ORAM) : The set of items.
+
+        Returns:
+            - (sint) : Outcome.
+    """
+
     counter = sint(0)
     for element in range(size):
-        counter += (target == iterable[element])
+        counter += (target == set[element])
 
     return (counter == 0)
 
 def search_indexing_oram():
+    """
+        Checks if each search query matches with any of the indices in the inverted index matrix. If so it adds the
+        pointers for that index to a set.
+
+        Parameters:
+            -
+
+        Returns:
+            - pointers (set) : The pointers collected from the comparison.
+    """
+
     size_counter = sint(0)
     pointers = OptimalORAM(number_of_files + 1)
     for i in range(size_of_search_queries):
@@ -35,6 +57,17 @@ def search_indexing_oram():
     return pointers
 
 def search_indexing():
+    """
+        Checks if each search query matches with any of the indices in the inverted index matrix. If so it adds the
+        pointers to an array.
+
+        Parameters:
+            -
+
+        Returns:
+            - pointers (sint.Array) : The pointers collected from the comparison.
+    """
+
     counter = 0
     pointers = sint.Array(number_of_indices * size_of_set_of_pointers * size_of_search_queries)
     for i in range(size_of_search_queries):
@@ -56,7 +89,17 @@ def search_indexing():
 
     return pointers
 
-def input_is_set_retrieve_files_oram(pointers):   # Takes 182.23 sec with just one file...
+def input_is_set_retrieve_files_oram(pointers):
+    """
+        Based on the pointers (as a set) the corresponding file is retrieved to the client.
+
+        Parameters:
+            - pointers (sint.ORAM) : The pointers to the files.
+
+        Returns:
+            - files (sint.ORAM) : The files.
+    """
+
     size_counter = sint(0)
     files = OptimalORAM(number_of_files * file_size_length_upper_bound)
     for i in range(number_of_files):
@@ -75,7 +118,17 @@ def input_is_set_retrieve_files_oram(pointers):   # Takes 182.23 sec with just o
 
     return files
 
-def input_is_set_retrieve_files(pointers):   # Takes 0.1631 sec with just one file :)
+def input_is_set_retrieve_files(pointers):
+    """
+        Based on the pointers (as a set) the corresponding file is retrieved to the client.
+
+        Parameters:
+            - pointers (sint.ORAM) : The pointers to the files.
+
+        Returns:
+            - files (sint.Array) : The files.
+    """
+
     counter = 0
     files = sint.Array(number_of_files * number_of_files * file_size_length_upper_bound)
     for i in range(number_of_files):
@@ -95,6 +148,16 @@ def input_is_set_retrieve_files(pointers):   # Takes 0.1631 sec with just one fi
     return files
 
 def retrieve_files(pointers):   # Takes 0.133 sec with just one file, huge memory requirements...
+    """
+        Based on the pointers (as an array) the corresponding file is retrieved to the client.
+
+        Parameters:
+            - pointers (sint.Array) : The pointers to the files.
+
+        Returns:
+            - files (sint.Array) : The files.
+    """
+
     counter = 0
     files = sint.Array(number_of_files * file_size_length_upper_bound * number_of_indices * size_of_set_of_pointers * size_of_search_queries)
     for i in range(number_of_indices * size_of_set_of_pointers * size_of_search_queries):
@@ -113,24 +176,63 @@ def retrieve_files(pointers):   # Takes 0.133 sec with just one file, huge memor
 
     return files
 
-# Results: Time = 0.140 seconds, Data sent = 15.9 MB, for one file and one query
 def test_searching_no_oram_retrieval_no_oram():
+    """
+        Searching the database pointers using the inverted index matrix to find the intersection between the indices and
+         search queries. Then extracts the file pointers from the indices in the intersection to retrieve the files from
+        the database and reveal them to the client.
+
+        Using the approach: Searching (Array solution) and Retrival (Array solution)
+
+        Parameters:
+            -
+
+        Returns:
+            -
+    """
+
     # Pointers is an array of size number_of_files * size_of_set_of_pointers * size_of_search_queries
     pointers = search_indexing()
 
     # Files is an array of size number_of_files * file_size_length_upper_bound * number_of_indices * size_of_set_of_pointers * size_of_search_queries
     files = retrieve_files(pointers)
 
-# Results: Time = 0.163 seconds, Global data sent = 9.3 MB, for one file and one query
 def test_searching_oram_retrival_no_oram():
+    """
+        Searching the database pointers using the inverted index matrix to find the intersection between the indices and
+         search queries. Then extracts the file pointers from the indices in the intersection to retrieve the files from
+        the database and reveal them to the client.
+
+        Using the approach: Searching (ORAM solution) and Retrival (Array solution)
+
+        Parameters:
+            -
+
+        Returns:
+            -
+    """
+
     # Pointers is a set of size number_of_files
     pointers = search_indexing_oram()
 
     # Files is an array of size number_of_files * number_of_files * file_size_length_upper_bound
     files = input_is_set_retrieve_files(pointers)
 
-#   Results: Time = 172.337 seconds, Global data sent = 10596.8 MB, for one file and one query
 def test_searching_oram_retrival_oram():
+    """
+        Searching the database pointers using the inverted index matrix to find the intersection between the indices and
+        search queries. Then extracts the file pointers from the indices in the intersection to retrieve the files from
+        the database and reveal them to the client.
+
+        Using the approach: Searching (ORAM solution) and Retrival (ORAM solution)
+
+        Parameters:
+            -
+
+        Returns:
+            -
+    """
+
     # Pointers is a set of size number_of_files
     pointers = search_indexing_oram()
 
@@ -154,6 +256,12 @@ inverted_index_matrix = sint.input_tensor_from(1, [number_of_indices, index_leng
 database = sint.input_tensor_from(1, [number_of_files, file_signature_length + file_size_length_upper_bound])
 
 # Testing different combinations of approaches
+
+#   Results: Time = 172.337 seconds, Global data sent = 10596.8 MB, for one file and one query
 #test_searching_oram_retrival_oram()
-test_searching_no_oram_retrieval_no_oram()
+
+# Results: Time = 0.135 seconds, Data sent = 15.9 MB, for one file and one query
+#test_searching_no_oram_retrieval_no_oram()
+
+# Results: Time = 0.16 seconds, Global data sent = 9.3 MB, for one file and one query
 #test_searching_oram_retrival_no_oram()

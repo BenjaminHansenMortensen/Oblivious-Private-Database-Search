@@ -248,5 +248,5 @@ if __name__ == "__main__":
     encoded_database = get_encoded_database(inverted_index_matrix, base_path)
     encoded_inverted_index_matrix = encode_inverted_index_matrix(inverted_index_matrix)
 
-    output_path = Path('../MP-SPDZ Inputs/Circuit_Only_Input-P1-0')
+    output_path = Path('../MP-SPDZ Inputs/MP-SPDZ_Only_Input-P1-0')
     write_dictionary(encoded_inverted_index_matrix, encoded_database, output_path)
