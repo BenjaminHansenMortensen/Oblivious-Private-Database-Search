@@ -6,6 +6,38 @@ from json import load
 from hashlib import sha256
 
 
+def get_size_of_largest_set_of_pointers(inverted_index_matrix: dict[str, list[str]]) -> int:
+    """
+        Traverses the inverted index matrix to ind the largest set of pointers among the indices.
+
+        Parameters:
+            :raises TypeError
+             - inverted_index_matrix (dict[str, list[str]]) : The inverted index matrix to be traversed.
+
+        Returns:
+            size_of_largest_set (int) : The size of the largest set of pointers.
+    """
+
+    if type(inverted_index_matrix) != dict:
+        raise TypeError('Is not of type dictionary.')
+    elif all(type(value) != list for value in inverted_index_matrix.values()):
+        raise TypeError('Dictionary is not formatted correctly.')
+    elif all(type(key) != str for key in inverted_index_matrix.keys()):
+        raise TypeError('Dictionary is not encoded as strings.')
+    for pointers in inverted_index_matrix.values():
+        for pointer in pointers:
+            if type(pointer) != str:
+                raise TypeError('Dictionary is not encoded as strings.')
+
+    max = 1
+    for pointers in inverted_index_matrix.values():
+        size_of_set = len(pointers)
+        if  size_of_set > max:
+            max = size_of_set
+
+    return max
+
+
 def convert_file_to_integers(contents: str) -> list[int]:
     """
         Converts each character of a file to its ascii code.
@@ -88,6 +120,11 @@ def encode_inverted_index_matrix(inverted_index_matrix: dict[str, list[str]]) ->
             integer_pointer = convert_string_to_unique_integer(pointer)
             integer_pointers.append(integer_pointer)
 
+        size_of_largest_set_of_pointers = get_size_of_largest_set_of_pointers(inverted_index_matrix)
+        padding_amount = size_of_largest_set_of_pointers - len(integer_pointers)
+        for i in range(padding_amount):
+            integer_pointers.append(0)
+
         integer_index = convert_string_to_unique_integer(index)
         encoded_inverted_index_matrix[integer_index] = integer_pointers
 
@@ -147,7 +184,7 @@ def get_encoded_database(index_pointer_dictionary: dict, base_path: Path | str) 
         if len(files) == 0:
             continue
 
-        integer_index = convert_string_to_unique_integer(index)
+        integer_index = convert_string_to_unique_integer(pointer)
         encoded_database.append([integer_index] + files)
 
     return encoded_database
