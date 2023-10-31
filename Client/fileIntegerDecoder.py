@@ -4,6 +4,7 @@
 from pathlib import Path
 from json import load, dump
 
+
 def read_file(file_path: Path | str) -> str:
     """
         Reads the integer encoded file.
@@ -28,7 +29,8 @@ def read_file(file_path: Path | str) -> str:
 
     return contents
 
-def decode_file(contents: list[int]) -> list[str]:
+
+def decode_file(contents: list[int]) -> list[dict]:
     """
         Decodes the file from ascii integers to ascii characters.
 
@@ -37,7 +39,7 @@ def decode_file(contents: list[int]) -> list[str]:
 
         Returns:
             :raises TypeError
-            - decoded_file (list[str]) : The string representation of the .json file.
+            - files (list[dict]) : The dictionary representation of the json file.
     """
 
     if type(contents) != list:
@@ -52,13 +54,30 @@ def decode_file(contents: list[int]) -> list[str]:
 
         decoded_contents.append(chr(ascii_value))
 
-    return decoded_contents
+    files = []
+    start = 0
+    open_close = 0
+    for i in range(len(decoded_contents)):
+        match decoded_contents[i]:
+            case '{':
+                open_close += 1
+            case'}':
+                open_close -= 1
 
-def write_file(contents: list[str], output_path: Path | str):
+        if decoded_contents[i] == '}' and open_close == 0:
+            file = eval(''.join(decoded_contents[start : i + 1]))
+            files.append(file)
+            start = i
+
+    return files
+
+
+def write_file(files: list[dict], output_path: Path | str):
     """
-        Writes the string as json file.
+        Writes the json files.
 
         Parameters:
+            - files (list[dict]) : The files to be written.
             - file_path (Path | str) : Path to the file.
 
         Returns:
@@ -72,25 +91,10 @@ def write_file(contents: list[str], output_path: Path | str):
             raise ValueError('Directory does not exist.')
     except TypeError:
         raise TypeError('Cannot covert output path to Path object')
-    if type(contents) != list:
+    if type(files) != list:
         raise TypeError('Is not of type list.')
-    elif all(type(value) != str for value in contents):
-        raise TypeError('Contents is not ascii characters encoded.')
-
-    files = []
-    start = 0
-    open_close = 0
-    for i in range(len(contents)):
-        match contents[i]:
-            case '{':
-                open_close += 1
-            case'}':
-                open_close -= 1
-
-        if contents[i] == '}' and open_close == 0:
-            file = eval(''.join(contents[start : i + 1]))
-            files.append(file)
-            start = i
+    elif all(type(file) != dict for file in files):
+        raise TypeError('Not all values are decoded files.')
 
     for i in range(len(files)):
         file = files[i]
@@ -102,7 +106,7 @@ def write_file(contents: list[str], output_path: Path | str):
 if __name__ == "__main__":
     file_path = Path('MP-SPDZ Outputs/MP-SPDZ_Only_Output-P0-0')
     contents = read_file(file_path)
-    decoded_contents = decode_file(contents)
+    files = decode_file(contents)
     output_path = Path('Retrieved Records/')
-    write_file(decoded_contents, output_path)
+    write_file(files, output_path)
 

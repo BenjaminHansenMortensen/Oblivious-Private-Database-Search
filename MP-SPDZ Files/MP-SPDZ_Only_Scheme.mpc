@@ -26,6 +26,7 @@ def not_in(target, set, size):
 
     return (counter == 0)
 
+
 def search_indexing_oram():
     """
         Checks if each search query matches with any of the indices in the inverted index matrix. If so it adds the
@@ -55,6 +56,7 @@ def search_indexing_oram():
                 size_counter += (pointers[size_counter] != 0)
 
     return pointers
+
 
 def search_indexing():
     """
@@ -88,6 +90,7 @@ def search_indexing():
 
     return pointers, pointers_size
 
+
 def input_is_set_retrieve_files_oram(pointers):
     """
         Based on the pointers (as a set) the corresponding file is retrieved to the client.
@@ -116,6 +119,7 @@ def input_is_set_retrieve_files_oram(pointers):
             size_counter += match
 
     return files
+
 
 def input_is_set_retrieve_files(pointers):
     """
@@ -146,6 +150,7 @@ def input_is_set_retrieve_files(pointers):
 
     return files
 
+
 def retrieve_files(pointers, pointers_size):
     """
         Based on the pointers (as an array) the corresponding file is retrieved to the client.
@@ -175,6 +180,7 @@ def retrieve_files(pointers, pointers_size):
 
     return files
 
+
 def test_searching_no_oram_retrieval_no_oram():
     """
         Searching the database pointers using the inverted index matrix to find the intersection between the indices and
@@ -195,6 +201,8 @@ def test_searching_no_oram_retrieval_no_oram():
 
     # Files is an array of size number_of_files * file_size_length_upper_bound * number_of_indices * size_of_set_of_pointers * size_of_search_queries
     files = retrieve_files(pointers, size)
+    files.print_reveal_nested()
+
 
 def test_searching_oram_retrival_no_oram():
     """
@@ -218,6 +226,7 @@ def test_searching_oram_retrival_no_oram():
     files = input_is_set_retrieve_files(pointers)
     files.print_reveal_nested()
 
+
 def test_searching_oram_retrival_oram():
     """
         Searching the database pointers using the inverted index matrix to find the intersection between the indices and
@@ -239,6 +248,12 @@ def test_searching_oram_retrival_oram():
     # Files is an array of size number_of_files * file_size_length_upper_bound
     files = input_is_set_retrieve_files_oram(pointers)
 
+    # array = sint.Array(number_of_files * file_size_length_upper_bound)
+    # for i in range(number_of_files * file_size_length_upper_bound):
+    #     array.assign(files[i] , i)
+    # array.print_reveal_nested()
+
+
 # Defining global variables
 size_of_search_queries = 1
 
@@ -259,11 +274,11 @@ database = sint.input_tensor_from(1, [number_of_files, file_signature_length + f
 # Testing different combinations of approaches
 
 # Results: Time = 0.135 seconds, Data sent = 15.9 MB, for one file and one query
-#test_searching_no_oram_retrieval_no_oram()
+# test_searching_no_oram_retrieval_no_oram()
 
 # Results: Time = 0.156 seconds, Global data sent = 9.3 MB, for one file and one query
 test_searching_oram_retrival_no_oram()
 
 #   Results: Time = 172.337 seconds, Global data sent = 10596.8 MB, for one file and one query
-#test_searching_oram_retrival_oram()
+# test_searching_oram_retrival_oram()
 
