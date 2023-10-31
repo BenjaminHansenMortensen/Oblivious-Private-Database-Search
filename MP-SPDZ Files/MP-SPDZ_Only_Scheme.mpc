@@ -1,6 +1,6 @@
 # Run all commands from the MP-SPDZ folder
 # Run ./compile.py MP-SPDZ_Only_Scheme
-# Run P0: ./atlas-party.x MP-SPDZ_Only_Scheme -p 0 -N 3 -IF ../PycharmProjects/MasterThesis/Client/MP-SPDZ\ Inputs/Circuit_Only_Input -OF ../PycharmProjects/MasterThesis/Client/MP-SPDZ\ Outputs/MP-SPDZ_Only_Output
+# Run P0: ./atlas-party.x MP-SPDZ_Only_Scheme -p 0 -N 3 -IF ../PycharmProjects/MasterThesis/Client/MP-SPDZ\ Inputs/MP-SPDZ_Only_Input -OF ../PycharmProjects/MasterThesis/Client/MP-SPDZ\ Outputs/MP-SPDZ_Only_Output
 # Run P1: ./atlas-party.x MP-SPDZ_Only_Scheme -p 1 -N 3 -IF ../PycharmProjects/MasterThesis/Server/MP-SPDZ\ Inputs/MP-SPDZ_Only_Input
 # Run P2: ./atlas-party.x MP-SPDZ_Only_Scheme -p 2 -N 3
 
@@ -66,10 +66,12 @@ def search_indexing():
 
         Returns:
             - pointers (sint.Array) : The pointers collected from the comparison.
+            - pointers_size (int) : size of the pointers array
     """
 
     counter = 0
-    pointers = sint.Array(number_of_indices * size_of_set_of_pointers * size_of_search_queries)
+    pointers_size = number_of_indices * size_of_set_of_pointers * size_of_search_queries
+    pointers = sint.Array(pointers_size)
     for i in range(size_of_search_queries):
         search_query = search_queries[i]
 
@@ -78,16 +80,13 @@ def search_indexing():
 
             match = (search_query == index)
 
-
             for l in range(1, index_length + size_of_set_of_pointers):
                 pointer = inverted_index_matrix[j][l]
                 pointers[counter * size_of_set_of_pointers + (l - 1)] = match * pointer
 
             counter += 1
 
-
-
-    return pointers
+    return pointers, pointers_size
 
 def input_is_set_retrieve_files_oram(pointers):
     """
@@ -147,7 +146,7 @@ def input_is_set_retrieve_files(pointers):
 
     return files
 
-def retrieve_files(pointers):   # Takes 0.133 sec with just one file, huge memory requirements...
+def retrieve_files(pointers, pointers_size):
     """
         Based on the pointers (as an array) the corresponding file is retrieved to the client.
 
@@ -159,8 +158,8 @@ def retrieve_files(pointers):   # Takes 0.133 sec with just one file, huge memor
     """
 
     counter = 0
-    files = sint.Array(number_of_files * file_size_length_upper_bound * number_of_indices * size_of_set_of_pointers * size_of_search_queries)
-    for i in range(number_of_indices * size_of_set_of_pointers * size_of_search_queries):
+    files = sint.Array(number_of_files * file_size_length_upper_bound * pointers_size)
+    for i in range(pointers_size):
         pointer = pointers[i]
 
         for j in range(number_of_files):
@@ -192,10 +191,10 @@ def test_searching_no_oram_retrieval_no_oram():
     """
 
     # Pointers is an array of size number_of_files * size_of_set_of_pointers * size_of_search_queries
-    pointers = search_indexing()
+    pointers, size = search_indexing()
 
     # Files is an array of size number_of_files * file_size_length_upper_bound * number_of_indices * size_of_set_of_pointers * size_of_search_queries
-    files = retrieve_files(pointers)
+    files = retrieve_files(pointers, size)
 
 def test_searching_oram_retrival_no_oram():
     """
@@ -217,6 +216,7 @@ def test_searching_oram_retrival_no_oram():
 
     # Files is an array of size number_of_files * number_of_files * file_size_length_upper_bound
     files = input_is_set_retrieve_files(pointers)
+    files.print_reveal_nested()
 
 def test_searching_oram_retrival_oram():
     """
@@ -255,13 +255,15 @@ search_queries = sint.input_tensor_from(0, [size_of_search_queries])
 inverted_index_matrix = sint.input_tensor_from(1, [number_of_indices, index_length + size_of_set_of_pointers])
 database = sint.input_tensor_from(1, [number_of_files, file_signature_length + file_size_length_upper_bound])
 
-# Testing different combinations of approaches
 
-#   Results: Time = 172.337 seconds, Global data sent = 10596.8 MB, for one file and one query
-#test_searching_oram_retrival_oram()
+# Testing different combinations of approaches
 
 # Results: Time = 0.135 seconds, Data sent = 15.9 MB, for one file and one query
 #test_searching_no_oram_retrieval_no_oram()
 
-# Results: Time = 0.16 seconds, Global data sent = 9.3 MB, for one file and one query
-#test_searching_oram_retrival_no_oram()
+# Results: Time = 0.156 seconds, Global data sent = 9.3 MB, for one file and one query
+test_searching_oram_retrival_no_oram()
+
+#   Results: Time = 172.337 seconds, Global data sent = 10596.8 MB, for one file and one query
+#test_searching_oram_retrival_oram()
+
