@@ -113,6 +113,7 @@ def encode_inverted_index_matrix(inverted_index_matrix: dict[str, list[str]]) ->
                 raise TypeError('Dictionary is not encoded as strings.')
 
     encoded_inverted_index_matrix = {}
+    size_of_largest_set_of_pointers = get_size_of_largest_set_of_pointers(inverted_index_matrix)
     for index in inverted_index_matrix.keys():
 
         integer_pointers = []
@@ -120,7 +121,6 @@ def encode_inverted_index_matrix(inverted_index_matrix: dict[str, list[str]]) ->
             integer_pointer = convert_string_to_unique_integer(pointer)
             integer_pointers.append(integer_pointer)
 
-        size_of_largest_set_of_pointers = get_size_of_largest_set_of_pointers(inverted_index_matrix)
         padding_amount = size_of_largest_set_of_pointers - len(integer_pointers)
         for i in range(padding_amount):
             integer_pointers.append(0)
@@ -151,13 +151,13 @@ def get_encoded_database(index_pointer_dictionary: dict, base_path: Path | str) 
 
     except TypeError:
         raise TypeError('Cannot covert base path to Path object.')
-    if type(inverted_index_matrix) != dict:
+    if type(index_pointer_dictionary) != dict:
         raise TypeError('Is not of type dictionary.')
-    elif all(type(value) != list for value in inverted_index_matrix.values()):
+    elif all(type(value) != list for value in index_pointer_dictionary.values()):
         raise TypeError('Dictionary is not formatted correctly.')
-    elif all(type(key) != str for key in inverted_index_matrix.keys()):
+    elif all(type(key) != str for key in index_pointer_dictionary.keys()):
         raise TypeError('Dictionary is not encoded as string.')
-    for pointers in inverted_index_matrix.values():
+    for pointers in index_pointer_dictionary.values():
         for pointer in pointers:
             if type(pointer) != str:
                 raise TypeError('Dictionary is not encoded as string.')
@@ -231,6 +231,7 @@ def write_dictionary(inverted_index_matrix: dict[int, list[int]], database: list
         output += f'{key} '
         for pointer in inverted_index_matrix[key]:
             output += f'{pointer} '
+
     for file in database:
         for character in file:
             output += f'{character} '
@@ -239,14 +240,14 @@ def write_dictionary(inverted_index_matrix: dict[int, list[int]], database: list
         f.write(output)
 
 
-if __name__ == "__main__":
-    index_path = Path('InvertedIndexMatrix.json')
+def run():
+    index_path = Path('Server/DatabaseIndex/InvertedIndexMatrix.json')
     with index_path.open(mode='r') as f:
         inverted_index_matrix = load(f)
 
-    base_path = Path('../MockData/PNR Records/')
+    base_path = Path('Server/MockData/PNR Records/')
     encoded_database = get_encoded_database(inverted_index_matrix, base_path)
     encoded_inverted_index_matrix = encode_inverted_index_matrix(inverted_index_matrix)
 
-    output_path = Path('../MP-SPDZ Inputs/MP-SPDZ_Only_Input-P1-0')
+    output_path = Path('Server/MP-SPDZ Inputs/MP-SPDZ_Only_Input-P1-0')
     write_dictionary(encoded_inverted_index_matrix, encoded_database, output_path)

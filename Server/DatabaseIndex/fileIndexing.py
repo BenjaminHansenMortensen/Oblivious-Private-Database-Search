@@ -81,9 +81,9 @@ def add_keys_and_values(flat_dictionary: dict, dictionary: dict, key_filter: lis
             flat_dictionary[f'{parent_key} {key}'] = value
 
 
-def update_inverse_index_matrix(inverse_index_matrix: dict, record: dict[str, str], memory_location: str | Path):
+def update_index(indexing: dict, record: dict[str, str], memory_location: str | Path):
     """
-        Updates the keywords (index) and locations of a record to the inverse index matrix.
+        Updates the keywords (index) and locations of a record to the index matrix.
 
         Parameters:
             - record (dict[str, str]) : The flattened record.
@@ -101,13 +101,7 @@ def update_inverse_index_matrix(inverse_index_matrix: dict, record: dict[str, st
 
     memory_location = memory_location.name
 
-    for key, value in record.items():
-        if value in list(inverse_index_matrix.keys()):
-            memory_locations = inverse_index_matrix[value]
-            if memory_location not in memory_locations:
-                memory_locations.append(memory_location)
-        else:
-            inverse_index_matrix[value] = [memory_location]
+    indexing[memory_location] = [value for value in record.values()]
 
 
 def get_contents(path: str | Path) -> list[str]:
@@ -138,13 +132,14 @@ def get_contents(path: str | Path) -> list[str]:
 
 
 def run():
-    inverse_index_matrix = {}
+    indexing = {}
     path = 'Server/MockData/PNR Records/'
     files = get_contents(path)
     for file in files:
         record = read_record(file)
         record = flatten_and_filter_dictionary(record)
-        update_inverse_index_matrix(inverse_index_matrix, record, file)
+        update_index(indexing, record, file)
 
-    with open(f'Server/DatabaseIndex/InvertedIndexMatrix.json', 'w') as fp:
-        dump(inverse_index_matrix, fp, indent=4)
+    print(indexing)
+    with open(f'Server/DatabaseIndex/Indexing.json', 'w') as fp:
+        dump(indexing, fp, indent=4)

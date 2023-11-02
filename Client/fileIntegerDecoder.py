@@ -67,7 +67,7 @@ def decode_file(contents: list[int]) -> list[dict]:
         if decoded_contents[i] == '}' and open_close == 0:
             file = eval(''.join(decoded_contents[start : i + 1]))
             files.append(file)
-            start = i
+            start = i + 1
 
     return files
 
@@ -94,6 +94,8 @@ def write_file(files: list[dict], output_path: Path | str):
     if type(files) != list:
         raise TypeError('Is not of type list.')
     elif all(type(file) != dict for file in files):
+        if len(files) == 0:
+            return
         raise TypeError('Not all values are decoded files.')
 
     for i in range(len(files)):
@@ -103,10 +105,10 @@ def write_file(files: list[dict], output_path: Path | str):
             dump(file, fp, indent=4)
 
 
-if __name__ == "__main__":
-    file_path = Path('MP-SPDZ Outputs/MP-SPDZ_Only_Output-P0-0')
+def run():
+    file_path = Path('Client/MP-SPDZ Outputs/MP-SPDZ_Only_Output-P0-0')
     contents = read_file(file_path)
     files = decode_file(contents)
-    output_path = Path('Retrieved Records/')
+    output_path = Path('Client/Retrieved Records/')
     write_file(files, output_path)
 

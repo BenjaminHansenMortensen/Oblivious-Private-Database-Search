@@ -24,9 +24,9 @@ class Communicate:
         self.END_FILE_MESSAGE = '<END FILE>'
 
         self.server_context = SSLContext(PROTOCOL_TLS_SERVER)
-        self.server_context.load_cert_chain(certfile='cert.pem', keyfile='key.pem', password='password')
+        self.server_context.load_cert_chain(certfile='Server/Networking/cert.pem', keyfile='Server/Networking/key.pem', password='password')
         self.client_context = SSLContext(PROTOCOL_TLS_CLIENT)
-        self.client_context.load_verify_locations('../../Client/Networking/cert.pem')
+        self.client_context.load_verify_locations('Client/Networking/cert.pem')
         self.listen_host = self.server_context.wrap_socket(socket(AF_INET, SOCK_STREAM), server_side=True)
         self.listen_host.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
         self.listen_host.settimeout(0.2)
