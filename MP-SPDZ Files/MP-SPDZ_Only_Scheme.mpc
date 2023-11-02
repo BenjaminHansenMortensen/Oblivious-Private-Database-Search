@@ -267,7 +267,7 @@ def test_searching_oram_retrival_oram():
     # Files is an array of size number_of_files * file_size_length_upper_bound
     files = retrieve_files_input_is_set_oram(pointers)
 
-    array = sint.Array(number_of_files * file_size_length_upper_bound)
+    array = sint.Array(number_of_files * file_size_length_upper_bound)   # Almost doubles the time execution
     for i in range(number_of_files * file_size_length_upper_bound):
         array.assign(files[i] , i)
     array.print_reveal_nested()
@@ -298,5 +298,5 @@ database = sint.input_tensor_from(1, [number_of_files, file_signature_length + f
 # test_searching_oram_retrival()
 
 # Results: Time = 330.524 seconds, Global data sent = 9278.5 MB, for one file and one query
-#test_searching_oram_retrival_oram()
+# test_searching_oram_retrival_oram()
 
