@@ -43,7 +43,7 @@ def flatten_and_filter_dictionary(dictionary: dict) -> dict:
     """
 
     if type(dictionary) != dict:
-        raise TypeError('The dictionary is not of type dictionary.')
+        raise TypeError('The provided dictionary is not of type dictionary.')
 
     key_filter = ['Date', 'City', 'Zip Code', 'Vendor', 'Type', 'Bonus Program', 'Airline', 'Travel Agency',
                   'IATA Code', 'Airport Name', 'City', 'Status', 'Seat', 'Cabin', 'Checked', 'Special']
@@ -101,7 +101,16 @@ def update_index(indexing: dict, record: dict[str, str], memory_location: str | 
 
     memory_location = memory_location.name
 
-    indexing[memory_location] = [value for value in record.values()]
+    values = set()
+    for value in record.values():
+        values.add(value)
+
+    if memory_location in indexing.keys():
+        existing_values = indexing[memory_location]
+        for value in existing_values:
+            values.add(value)
+
+    indexing[memory_location] = list(values)
 
 
 def get_contents(path: str | Path) -> list[str]:

@@ -41,7 +41,7 @@ def update_mpc_script():
 
 if __name__ == "__main__":
     #generate_data()
-    #generate_indexing()
+    generate_indexing()
     encode_database_and_indexing()
     #generate_inverse_index_matrix()
     #encode_database_and_inverse_index_matrix()
