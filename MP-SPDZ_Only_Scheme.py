@@ -40,13 +40,13 @@ def update_mpc_script():
         f.write(script)
 
 if __name__ == "__main__":
-    #generate_data()
+    generate_data()
     generate_indexing()
     encode_database_and_indexing()
     #generate_inverse_index_matrix()
     #encode_database_and_inverse_index_matrix()
     encode_query()
-    #update_mpc_script()
-    #run(['./compile_and_run.sh'])
-    run(['./run.sh'])
+    update_mpc_script()
+    run(['./compile_and_run.sh'])
+    #run(['./run.sh'])
     decode_retrieval()

@@ -100,7 +100,8 @@ def write_file(files: list[dict], output_path: Path | str):
 
     for i in range(len(files)):
         file = files[i]
-        file_path = output_path / f'record{i + 1}'
+        pnr_number = file['PNR Number']
+        file_path = output_path / f'record{pnr_number}.json'
         with file_path.open('w') as fp:
             dump(file, fp, indent=4)
 
