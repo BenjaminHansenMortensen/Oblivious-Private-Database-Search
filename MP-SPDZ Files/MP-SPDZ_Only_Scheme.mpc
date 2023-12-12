@@ -14,7 +14,7 @@ def not_in(target, set, size):
 
         Parameters:
             - target (sint) : The item to be compared against the set.
-            - set (sint.ORAM) : The set of items.
+            - set (sint.ORAM | sint.Array) : The set of items.
 
         Returns:
             - (sint) : Outcome.
@@ -27,26 +27,39 @@ def not_in(target, set, size):
     return (counter == 0)
 
 
-def _in(target, set, size):
+def search_indexing(indexing):
     """
-        Checks if the target is in the  set.
+        Checks if each search query matches with any of the indices. If so it adds the
+        file as a pointer to an array.
 
         Parameters:
-            - target (sint) : The item to be compared against the set.
-            - set (sint.ORAM) : The set of items.
+            -
 
         Returns:
-            - (sint) : Outcome.
+            - pointers (sint.Array) : The pointers collected from the comparison.
     """
 
-    counter = sint(0)
-    for element in range(size):
-        counter += (target == set[element])
+    counter = 0
+    pointers = sint.Array(number_of_files)
+    for i in range(size_of_search_queries):
+        search_query = search_queries[i]
 
-    return (counter != 0)
+        for j in range(number_of_files):
+            file = indexing[j][0]
+
+            for l in range(1, index_length + size_of_set_of_attributes):
+                attribute = indexing[j][l]
+
+                match = (search_query == attribute)
+
+                pointers[counter] += match * file * not_in(file, pointers, number_of_files)
+
+        counter += 0
+
+    return pointers, number_of_files
 
 
-def search_inverse_index_matrix_oram():
+def search_inverse_index_matrix_oram(inverted_index_matrix):
     """
         Checks if each search query matches with any of the indices in the inverted index matrix. If so it adds the
         pointers for that index to a set.
@@ -77,7 +90,7 @@ def search_inverse_index_matrix_oram():
     return pointers
 
 
-def search_inverse_index_matrix():
+def search_inverse_index_matrix(inverted_index_matrix):
     """
         Checks if each search query matches with any of the indices in the inverted index matrix. If so it adds the
         pointers to an array.
@@ -202,6 +215,32 @@ def retrieve_files(pointers, pointers_size):
 
 def test_searching_retrieval():
     """
+        Searching the database pointers using the indexing to see if any attributes of the file matches any of the
+        search queries. Noting down the files with a match to retrieve the files from the database and reveal them to
+        the client.
+
+        Using the approach: Searching (Array solution) and Retrival (Array solution)
+
+        Parameters:
+            -
+
+        Returns:
+            -
+    """
+
+    # Indexing
+    indexing = sint.input_tensor_from(1, [number_of_files, index_length + size_of_set_of_attributes])
+
+    # Pointers is an array of size number_of_files * size_of_set_of_pointers * size_of_search_queries
+    pointers, size = search_indexing(indexing)
+
+    # Files is an array of size number_of_files * file_size_length_upper_bound * number_of_indices
+    files = retrieve_files(pointers, size)
+    files.print_reveal_nested()
+
+
+def test_inverse_searching_retrieval():
+    """
         Searching the database pointers using the inverted index matrix to find the intersection between the indices and
          search queries. Then extracts the file pointers from the indices in the intersection to retrieve the files from
         the database and reveal them to the client.
@@ -215,15 +254,18 @@ def test_searching_retrieval():
             -
     """
 
+    # Indexing
+    inverted_index_matrix = sint.input_tensor_from(1, [number_of_indices, index_length + size_of_set_of_pointers])
+
     # Pointers is an array of size number_of_files * size_of_set_of_pointers * size_of_search_queries
-    pointers, size = search_inverse_index_matrix()
+    pointers, size = search_inverse_index_matrix(inverted_index_matrix)
 
     # Files is an array of size number_of_files * file_size_length_upper_bound * number_of_indices * size_of_set_of_pointers * size_of_search_queries
     files = retrieve_files(pointers, size)
     files.print_reveal_nested()
 
 
-def test_searching_oram_retrival():
+def test_inverse_searching_oram_retrival():
     """
         Searching the database pointers using the inverted index matrix to find the intersection between the indices and
          search queries. Then extracts the file pointers from the indices in the intersection to retrieve the files from
@@ -238,15 +280,18 @@ def test_searching_oram_retrival():
             -
     """
 
+    # Indexing
+    inverted_index_matrix = sint.input_tensor_from(1, [number_of_indices, index_length + size_of_set_of_pointers])
+
     # Pointers is a set of size number_of_files
-    pointers = search_inverse_index_matrix_oram()
+    pointers = search_inverse_index_matrix_oram(inverted_index_matrix)
 
     # Files is an array of size number_of_files * number_of_files * file_size_length_upper_bound
     files = retrieve_files_input_is_set(pointers)
     files.print_reveal_nested()
 
 
-def test_searching_oram_retrival_oram():
+def test_inverse_searching_oram_retrival_oram():
     """
         Searching the database pointers using the inverted index matrix to find the intersection between the indices and
         search queries. Then extracts the file pointers from the indices in the intersection to retrieve the files from
@@ -261,8 +306,11 @@ def test_searching_oram_retrival_oram():
             -
     """
 
+    # Indexing
+    inverted_index_matrix = sint.input_tensor_from(1, [number_of_indices, index_length + size_of_set_of_pointers])
+
     # Pointers is a set of size number_of_files
-    pointers = search_inverse_index_matrix_oram()
+    pointers = search_inverse_index_matrix_oram(inverted_index_matrix)
 
     # Files is an array of size number_of_files * file_size_length_upper_bound
     files = retrieve_files_input_is_set_oram(pointers)
@@ -277,26 +325,29 @@ def test_searching_oram_retrival_oram():
 size_of_search_queries = 1
 
 index_length = 1
-number_of_indices = 15
+number_of_indices = 8
 size_of_set_of_pointers = 1
+size_of_set_of_attributes = 12
 
 file_signature_length = 1
-number_of_files = 1
+number_of_files = 10
 file_size_length_upper_bound = 6000
 
 # Inputs from parties
 search_queries = sint.input_tensor_from(0, [size_of_search_queries])
-inverted_index_matrix = sint.input_tensor_from(1, [number_of_indices, index_length + size_of_set_of_pointers])
 database = sint.input_tensor_from(1, [number_of_files, file_signature_length + file_size_length_upper_bound])
 
 # Testing different combinations of approaches
 
+# Results: Time = 1.492 seconds, Data sent = 178.9 MB, for ten file and one query
+test_searching_retrieval()
+
 # Results: Time = 1.1 seconds, Data sent = 126.5 MB, for four file and one query
-# test_searching_retrieval()
+# test_inverse_searching_retrieval()
 
 # Results: Time = 0.665 seconds, Global data sent = 34.7 MB, for four file and one query
-# test_searching_oram_retrival()
+# test_inverse_searching_oram_retrival()
 
 # Results: Time = 330.524 seconds, Global data sent = 9278.5 MB, for one file and one query
-# test_searching_oram_retrival_oram()
+# test_inverse_searching_oram_retrival_oram()
 

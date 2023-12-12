@@ -1,9 +1,10 @@
-""" MP-SPDZ only supports a few data types, so we have to encode or data to use it. """
+""" MP-SPDZ only supports a few data types, so we have to encode our data to use it. """
 
 #Imports
 from pathlib import Path
 from json import load
 from hashlib import sha256
+from re import sub
 
 
 def get_size_of_largest_set_of_pointers(inverted_index_matrix: dict[str, list[str]]) -> int:
@@ -24,10 +25,6 @@ def get_size_of_largest_set_of_pointers(inverted_index_matrix: dict[str, list[st
         raise TypeError('Dictionary is not formatted correctly.')
     elif all(type(key) != str for key in inverted_index_matrix.keys()):
         raise TypeError('Dictionary is not encoded as strings.')
-    for pointers in inverted_index_matrix.values():
-        for pointer in pointers:
-            if type(pointer) != str:
-                raise TypeError('Dictionary is not encoded as strings.')
 
     max = 1
     for pointers in inverted_index_matrix.values():
@@ -40,20 +37,21 @@ def get_size_of_largest_set_of_pointers(inverted_index_matrix: dict[str, list[st
 
 def convert_file_to_integers(contents: str) -> list[int]:
     """
-        Converts each character of a file to its ascii code.
+        Converts each character of a file to its ascii value.
 
         Parameters:
             :raises TypeError
             - file (dict) : The file to be converted.
 
         Returns:
-            integer_encodings (list) = The file encoded as ascii code.
+            integer_encodings (list) = The file encoded as ascii value.
     """
 
     if type(contents) != str:
         raise TypeError('Inverse index matrix is not a string.')
 
-    contents = contents.strip().replace(' ', '').replace('\n', '')
+    contents = contents.strip().replace('\n', '')
+    contents = sub(r'\s+(?=([^"]*"[^"]*")*[^"]*$)', '', contents)   # Removes all whitespace outside quotes
 
     integer_encodings = []
     for character in contents:
@@ -90,7 +88,7 @@ def convert_string_to_unique_integer(index: str) -> int:
 
 def encode_inverted_index_matrix(inverted_index_matrix: dict[str, list[str]]) -> dict[int, list[int]]:
     """
-        Encodes the indices and pointers of the inverted index matrix to integers.
+        Encodes the indices and pointers of the inverted index matrix to integers (hashes in decimal form).
 
         Parameters:
             - inverted_index_matrix (dict[str, list[str]]) : The inverted index matrix to be encoded.
@@ -133,7 +131,7 @@ def encode_inverted_index_matrix(inverted_index_matrix: dict[str, list[str]]) ->
 
 def get_encoded_database(index_pointer_dictionary: dict, base_path: Path | str) -> list[list[int]]:
     """
-        Encodes the file hash as integers and the file contents as ascii integers, on the form record1
+        Encodes the file hash as integers and the file contents as ascii values, on the form record1
         -> [hash, char 1, ... , char n]
 
         Parameters:
@@ -227,14 +225,14 @@ def write_dictionary(inverted_index_matrix: dict[int, list[int]], database: list
                 raise TypeError('The database is not encoded as integers.')
 
     output = ''
+    for file in database:
+        for character in file:
+            output += f'{character} '
+
     for key in inverted_index_matrix.keys():
         output += f'{key} '
         for pointer in inverted_index_matrix[key]:
             output += f'{pointer} '
-
-    for file in database:
-        for character in file:
-            output += f'{character} '
 
     with output_path.open(mode='w') as f:
         f.write(output)

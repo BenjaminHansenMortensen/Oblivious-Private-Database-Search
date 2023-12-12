@@ -140,6 +140,5 @@ def run():
         record = flatten_and_filter_dictionary(record)
         update_index(indexing, record, file)
 
-    print(indexing)
     with open(f'Server/DatabaseIndex/Indexing.json', 'w') as fp:
         dump(indexing, fp, indent=4)

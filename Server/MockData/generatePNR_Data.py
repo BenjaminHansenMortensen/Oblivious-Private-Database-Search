@@ -1053,7 +1053,7 @@ def create_random_record(pnr_number: int) -> dict:
 
 
 def run():
-    number_of_records = 1
+    number_of_records = 10
 
     gen_pnr_number = iter(GeneratePNR_number())
 
