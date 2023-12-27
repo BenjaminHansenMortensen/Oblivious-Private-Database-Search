@@ -1,6 +1,6 @@
 #!/bin/bash
 
-cp MP-SPDZ\ Files/MP-SPDZ_Only_Scheme.mpc ../../MP-SPDZ/Programs/Source/MP-SPDZ_Only_Scheme.mpc
+cp MP-SPDZ\ Scripts/MP-SPDZ_Only_Scheme.mpc ../../MP-SPDZ/Programs/Source/MP-SPDZ_Only_Scheme.mpc
 
 cd ../../MP-SPDZ/
 

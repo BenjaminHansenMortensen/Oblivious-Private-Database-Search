@@ -25,7 +25,7 @@ def update_mpc_script():
         contents = [path for path in f.rglob('*')]
     number_of_files = len(contents)
 
-    with open('MP-SPDZ Files/MP-SPDZ_Only_Scheme.mpc', 'r') as f:
+    with open('MP-SPDZ Scripts/MP-SPDZ_Only_Scheme.mpc', 'r') as f:
         script = f.read()
 
     pointer_set_size = get_size_of_largest_set_of_pointers(inverted_index_matrix)
@@ -36,7 +36,7 @@ def update_mpc_script():
     script = sub(r'size_of_set_of_pointers = [\d]*', f'size_of_set_of_pointers = {pointer_set_size}', script)
     script = sub(r'size_of_set_of_attributes = [\d]*', f'size_of_set_of_attributes = {attribute_set_size}', script)
 
-    with open('MP-SPDZ Files/MP-SPDZ_Only_Scheme.mpc', 'w') as f:
+    with open('MP-SPDZ Scripts/MP-SPDZ_Only_Scheme.mpc', 'w') as f:
         f.write(script)
 
 if __name__ == "__main__":
@@ -47,6 +47,6 @@ if __name__ == "__main__":
     #encode_database_and_inverse_index_matrix()
     encode_query()
     update_mpc_script()
-    run(['./compile_and_run.sh'])
-    #run(['./run.sh'])
+    run(['./MP-SPDZ_Only_Scheme/compile_and_run.sh'])
+    #run(['./MP-SPDZ_Only_Scheme/run.sh'])
     decode_retrieval()
