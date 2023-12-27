@@ -2,6 +2,7 @@ from subprocess import run
 from json import load
 from pathlib import Path
 from re import sub
+from os import chdir
 
 from Server.MockData.generatePNR_Data import run as generate_data
 from Server.DatabaseIndex.invertedIndexMatrix import run as generate_inverse_index_matrix
@@ -42,6 +43,8 @@ def update_mpc_script():
         f.write(script)
 
 if __name__ == "__main__":
+    chdir(Path.cwd().parent)
+
     generate_data()
     generate_indexing()
     encode_database_and_indexing()
@@ -49,6 +52,6 @@ if __name__ == "__main__":
     #encode_database_and_inverse_index_matrix()
     encode_query()
     update_mpc_script()
-    run(['./MP-SPDZ_Only_Scheme/compile_and_run.sh'])
-    #run(['./MP-SPDZ_Only_Scheme/run.sh'])
+    run(['./MP-SPDZ Only Scheme/compile_and_run.sh'])
+    #run(['./MP-SPDZ Only Scheme/run.sh'])
     decode_retrieval()

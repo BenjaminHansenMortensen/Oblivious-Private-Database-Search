@@ -328,7 +328,7 @@ size_of_search_queries = 1
 index_length = 1
 number_of_indices = 10
 size_of_set_of_pointers = 1
-size_of_set_of_attributes = 17
+size_of_set_of_attributes = 10
 
 file_signature_length = 1
 number_of_files = 10
