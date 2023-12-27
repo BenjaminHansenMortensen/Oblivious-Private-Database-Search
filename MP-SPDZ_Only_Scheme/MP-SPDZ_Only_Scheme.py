@@ -15,14 +15,16 @@ from Client.fileIntegerDecoder import run as decode_retrieval
 def update_mpc_script():
     with open('Server/DatabaseIndex/InvertedIndexMatrix.json', 'r') as f:
         inverted_index_matrix = load(f)
-    number_of_indices = len(inverted_index_matrix.keys())
+    #number_of_indices = len(inverted_index_matrix.keys())
 
     with open('Server/DatabaseIndex/Indexing.json', 'r') as f:
         indexing = load(f)
-    #number_of_indices = len(indexing.keys())
+    number_of_indices = len(indexing.keys())
+
+    exclude = ['SampleRecord.json']
 
     with Path('Server/MockData/PNR Records/', mode='r') as f:
-        contents = [path for path in f.rglob('*')]
+        contents = [path for path in f.rglob('*') if path.name not in exclude]
     number_of_files = len(contents)
 
     with open('MP-SPDZ Scripts/MP-SPDZ_Only_Scheme.mpc', 'r') as f:

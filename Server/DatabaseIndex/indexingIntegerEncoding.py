@@ -142,15 +142,12 @@ def write_dictionary(indexing: dict[int, list[int]], database: list[list[int]], 
 
 def run():
     index_path = Path('Server/DatabaseIndex/Indexing.json')
-    #index_path = Path('Indexing.json')
     with index_path.open(mode='r') as f:
         indexing = load(f)
 
     base_path = Path('Server/MockData/PNR Records/')
-    #base_path = Path('../MockData/PNR Records/')
     encoded_database = get_encoded_database(indexing, base_path)
     encoded_indexing = encode_indexing(indexing)
 
     output_path = Path('Server/MP-SPDZ Inputs/MP-SPDZ_Only_Input-P1-0')
-    #output_path = Path('../MP-SPDZ Inputs/MP-SPDZ_Only_Input-P1-0')
     write_dictionary(encoded_indexing, encoded_database, output_path)

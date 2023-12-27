@@ -113,7 +113,7 @@ def update_index(indexing: dict, record: dict[str, str], memory_location: str | 
     indexing[memory_location] = list(values)
 
 
-def get_contents(path: str | Path) -> list[str]:
+def get_contents(path: str | Path) -> list[str | Path]:
     """
         Gets the contents of a directory.
 
@@ -134,8 +134,9 @@ def get_contents(path: str | Path) -> list[str]:
     except TypeError:
         raise TypeError('Cannot covert directory to Path object')
 
+    exclude = ['SampleRecord.json']
 
-    contents = [path for path in dir.rglob('*')]
+    contents = [path for path in dir.rglob('*') if path.name not in exclude]
 
     return contents
 

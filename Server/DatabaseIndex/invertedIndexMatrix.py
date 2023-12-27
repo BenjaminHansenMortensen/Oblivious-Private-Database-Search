@@ -110,7 +110,7 @@ def update_inverse_index_matrix(inverse_index_matrix: dict, record: dict[str, st
             inverse_index_matrix[value] = [memory_location]
 
 
-def get_contents(path: str | Path) -> list[str]:
+def get_contents(path: str | Path) -> list[str | Path]:
     """
         Gets the contents of a directory.
 
@@ -131,8 +131,9 @@ def get_contents(path: str | Path) -> list[str]:
     except TypeError:
         raise TypeError('Cannot covert directory to Path object')
 
+    exclude = ['SampleRecord.json']
 
-    contents = [path for path in dir.rglob('*')]
+    contents = [path for path in dir.rglob('*') if path.name not in exclude]
 
     return contents
 
