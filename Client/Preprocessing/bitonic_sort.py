@@ -3,7 +3,8 @@ from math import log
 from pathlib import Path
 
 
-def compare(indexing: list, working_directory: Path, MP_SPDZ_directory: Path, index: int, permutation: list, descending: bool, mid_point: int):
+def compare(indexing: list, working_directory: Path, MP_SPDZ_directory: Path, index: int, permutation: list,
+            descending: bool, mid_point: int):
     """
 
     :return:
@@ -38,7 +39,8 @@ def init(indexing: list, working_directory: Path, MP_SPDZ_directory: Path, array
         descending = (descending + 1) % 2
 
 
-def merge_partition(indexing: list, working_directory: Path, MP_SPDZ_directory: Path, descending: bool, permutation: list, partition_index: int, partition_mid_point: int):
+def merge_partition(indexing: list, working_directory: Path, MP_SPDZ_directory: Path, descending: bool,
+                    permutation: list, partition_index: int, partition_mid_point: int):
     """
 
     :return:
@@ -51,7 +53,8 @@ def merge_partition(indexing: list, working_directory: Path, MP_SPDZ_directory: 
         compare(indexing, working_directory, MP_SPDZ_directory, index, permutation, descending, partition_mid_point)
 
 
-def merge(indexing: list, working_directory: Path, MP_SPDZ_directory: Path, array_size: int, permutation: list, partition_size, partition_mid_point: int):
+def merge(indexing: list, working_directory: Path, MP_SPDZ_directory: Path, array_size: int, permutation: list,
+          partition_size, partition_mid_point: int):
     """
 
     :return:
@@ -61,12 +64,14 @@ def merge(indexing: list, working_directory: Path, MP_SPDZ_directory: Path, arra
     for partition_index in range(0, array_size, partition_size):
 
         #   Parallelizable to log_(partition_size)(n) processes
-        merge_partition(indexing, working_directory, MP_SPDZ_directory, descending, permutation, partition_index, partition_mid_point)
+        merge_partition(indexing, working_directory, MP_SPDZ_directory, descending, permutation, partition_index,
+                        partition_mid_point)
 
         descending = (descending + 1) % 2
 
 
-def sort_subpartition(indexing: list, working_directory: Path, MP_SPDZ_directory: Path, permutation: list, descending: bool, partition_index: int, subpartition_index: int, subpartition_mid_point: int):
+def sort_subpartition(indexing: list, working_directory: Path, MP_SPDZ_directory: Path, permutation: list,
+                      descending: bool, partition_index: int, subpartition_index: int, subpartition_mid_point: int):
     """
 
     :return:
@@ -79,7 +84,8 @@ def sort_subpartition(indexing: list, working_directory: Path, MP_SPDZ_directory
         compare(indexing, working_directory, MP_SPDZ_directory, index, permutation, descending, subpartition_mid_point)
 
 
-def sort_partition(indexing: list, working_directory: Path, MP_SPDZ_directory: Path, permutation: list, descending: bool, partition_size: int, partition_index: int):
+def sort_partition(indexing: list, working_directory: Path, MP_SPDZ_directory: Path, permutation: list,
+                   descending: bool, partition_size: int, partition_index: int):
     """
 
     :return:
@@ -92,10 +98,12 @@ def sort_partition(indexing: list, working_directory: Path, MP_SPDZ_directory: P
         for subpartition_index in range(0, partition_size, subpartition_size):
 
             #  Parallelizable to log_(subpartition_size)(n) processes
-            sort_subpartition(indexing, working_directory, MP_SPDZ_directory, permutation, descending, partition_index, subpartition_index, subpartition_mid_point)
+            sort_subpartition(indexing, working_directory, MP_SPDZ_directory, permutation, descending, partition_index,
+                              subpartition_index, subpartition_mid_point)
 
 
-def sort(indexing: list, working_directory: Path, MP_SPDZ_directory: Path, array_size: int, permutation: list, partition_size: int):
+def sort(indexing: list, working_directory: Path, MP_SPDZ_directory: Path, array_size: int, permutation: list,
+         partition_size: int):
     """
 
     :return:
@@ -105,7 +113,8 @@ def sort(indexing: list, working_directory: Path, MP_SPDZ_directory: Path, array
     for partition_index in range(0, array_size, partition_size):
 
         #   Parallelizable to log_(partition_size)(n) processes
-        sort_partition(indexing, working_directory, MP_SPDZ_directory, permutation, descending, partition_size, partition_index)
+        sort_partition(indexing, working_directory, MP_SPDZ_directory, permutation, descending, partition_size,
+                       partition_index)
 
         descending = (descending + 1) % 2
 
@@ -134,7 +143,8 @@ def bitonic_sort(array_size: int, working_directory: Path,  MP_SPDZ_directory: P
         partition_size = 2 ** level
         partition_mid_point = partition_size // 2
 
-        merge(indexing, working_directory, MP_SPDZ_directory, array_size, permutation, partition_size, partition_mid_point)
+        merge(indexing, working_directory, MP_SPDZ_directory, array_size, permutation, partition_size,
+              partition_mid_point)
 
         sort(indexing, working_directory, MP_SPDZ_directory, array_size, permutation, partition_size)
 
