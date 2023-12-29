@@ -3,6 +3,7 @@
 from pathlib import Path
 from os import chdir
 from Server.MockData.generatePNR_Data import run as create_database
+from Client.Preprocessing.bitonic_sort import bitonic_sort as permute_and_encrypt_database
 
 
 def directory_validation() -> tuple[Path, Path]:
@@ -34,7 +35,9 @@ def directory_validation() -> tuple[Path, Path]:
 if __name__ == '__main__':
     MP_SPDZ_directory, working_directory = directory_validation()
 
-    # Initialize the database
+    # Initializes the database
     database_size = 2**4
     create_database(database_size)
 
+    # Creates a new secret database
+    indexing = permute_and_encrypt_database(database_size, working_directory, MP_SPDZ_directory)
