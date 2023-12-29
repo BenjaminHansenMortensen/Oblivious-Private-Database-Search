@@ -16,7 +16,7 @@ class GeneratePNR_number:
         Jf. § 60-5. 1.
         Generates a PNR-number for a record in the PNR-registry of an order.
     """
-    def __iter__(self):
+    def __iter__(self, init_number: int = 0):
         """
             Initializes the PNR-number
 
@@ -27,7 +27,7 @@ class GeneratePNR_number:
                 pnr_number (iterator) : The PNR-number iterator.
         """
 
-        self.pnr_number = 0
+        self.pnr_number = init_number
 
         return self
 
@@ -1052,8 +1052,8 @@ def create_random_record(pnr_number: int) -> dict:
     return pnr_record
 
 
-def run():
-    number_of_records = 10
+def run(size: int):
+    number_of_records = size
 
     gen_pnr_number = iter(GeneratePNR_number())
 

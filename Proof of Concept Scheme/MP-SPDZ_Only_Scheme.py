@@ -14,6 +14,16 @@ from Client.searchQueryIntegerEncoder import run as encode_query
 from Client.fileIntegerDecoder import run as decode_retrieval
 
 def update_mpc_script():
+    """
+        Updates the .mpc script with the values required to take the database and indexing as inputs.
+
+        Parameters:
+            -
+
+        Returns:
+            -
+    """
+
     with open('Server/DatabaseIndex/InvertedIndexMatrix.json', 'r') as f:
         inverted_index_matrix = load(f)
     #number_of_indices = len(inverted_index_matrix.keys())
@@ -45,13 +55,13 @@ def update_mpc_script():
 if __name__ == "__main__":
     chdir(Path.cwd().parent)
 
-    generate_data()
+    generate_data(10)
     generate_indexing()
     encode_database_and_indexing()
     #generate_inverse_index_matrix()
     #encode_database_and_inverse_index_matrix()
     encode_query()
     update_mpc_script()
-    run(['./MP-SPDZ Only Scheme/compile_and_run.sh'])
+    run(['./Proof of Concept Scheme/compile_and_run.sh'])
     #run(['./MP-SPDZ Only Scheme/run.sh'])
     decode_retrieval()
