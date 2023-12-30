@@ -1,8 +1,8 @@
 # Run all commands from the MP-SPDZ folder
-# Run ./compile.py MP-SPDZ_Only_Scheme
-# Run P0: ./atlas-party.x MP-SPDZ_Only_Scheme -p 0 -N 3 -IF ../PycharmProjects/MasterThesis/Client/MP-SPDZ\ Inputs/MP-SPDZ_Only_Input -OF ../PycharmProjects/MasterThesis/Client/MP-SPDZ\ Outputs/MP-SPDZ_Only_Output
-# Run P1: ./atlas-party.x MP-SPDZ_Only_Scheme -p 1 -N 3 -IF ../PycharmProjects/MasterThesis/Server/MP-SPDZ\ Inputs/MP-SPDZ_Only_Input
-# Run P2: ./atlas-party.x MP-SPDZ_Only_Scheme -p 2 -N 3
+# Run ./compile.py MP_SPDZ_Only_Scheme
+# Run P0: ./atlas-party.x MP_SPDZ_Only_Scheme -p 0 -N 3 -IF ../PycharmProjects/MasterThesis/Client/MP_SPDZ_Inputs/MP_SPDZ_Only_Input -OF ../PycharmProjects/MasterThesis/Client/MPSPDZ_Outputs/MP_SPDZ_Only_Output &
+# Run P1: ./atlas-party.x MP_SPDZ_Only_Scheme -p 1 -N 3 -IF ../PycharmProjects/MasterThesis/Server/MP_SPDZ_Inputs/MP_SPDZ_Only_Input &
+# Run P2: ./atlas-party.x MP_SPDZ_Only_Scheme -p 2 -N 3
 
 
 from oram import OptimalORAM
@@ -326,15 +326,15 @@ def test_inverse_searching_oram_retrival_oram():
 size_of_search_queries = 1
 
 index_length = 1
-number_of_indices = 10
+number_of_indices = 1
 size_of_set_of_pointers = 1
-size_of_set_of_attributes = 10
+size_of_set_of_attributes = 8
 
 file_signature_length = 1
-number_of_files = 10
+number_of_files = 1
 file_size_length_upper_bound = 6000
 
-# Inputs from parties
+# Inputs from parties    #run(['./MP-SPDZ Only Scheme/run.sh'])
 search_queries = sint.input_tensor_from(0, [size_of_search_queries])
 database = sint.input_tensor_from(1, [number_of_files, file_signature_length + file_size_length_upper_bound])
 

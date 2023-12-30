@@ -131,7 +131,7 @@ def get_contents(path: str | Path) -> list[str | Path]:
     except TypeError:
         raise TypeError('Cannot covert directory to Path object')
 
-    exclude = ['SampleRecord.json']
+    exclude = ['Sample_Record.json']
 
     contents = [path for path in dir.rglob('*') if path.name not in exclude]
 
@@ -140,12 +140,12 @@ def get_contents(path: str | Path) -> list[str | Path]:
 
 def run():
     inverse_index_matrix = {}
-    path = 'Server/MockData/PNR Records/'
+    path = 'Server/PNR_Records/'
     files = get_contents(path)
     for file in files:
         record = read_record(file)
         record = flatten_and_filter_dictionary(record)
         update_inverse_index_matrix(inverse_index_matrix, record, file)
 
-    with open(f'Server/DatabaseIndex/InvertedIndexMatrix.json', 'w') as fp:
+    with open(f'Server/Indexing/Index_Files/Inverted_Index_Matrix.json', 'w') as fp:
         dump(inverse_index_matrix, fp, indent=4)

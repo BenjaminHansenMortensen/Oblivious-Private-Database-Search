@@ -107,9 +107,9 @@ def write_file(files: list[dict], output_path: Path | str):
 
 
 def run():
-    file_path = Path('Client/MP-SPDZ Outputs/MP-SPDZ_Only_Output-P0-0')
+    file_path = Path('Client/MP_SPDZ_Outputs/MP_SPDZ_Only_Output-P0-0')
     contents = read_file(file_path)
     files = decode_file(contents)
-    output_path = Path('Client/Retrieved Records/')
+    output_path = Path('Client/Retrieved_Records/')
     write_file(files, output_path)
 

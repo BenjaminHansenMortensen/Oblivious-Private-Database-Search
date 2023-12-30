@@ -3,9 +3,9 @@
 #Imports
 from pathlib import Path
 from json import load
-from Server.DatabaseIndex.invertedIndexMatrixIntegerEncoder import (get_size_of_largest_set_of_pointers,
-                                                                    convert_file_to_integers,
-                                                                    convert_string_to_unique_integer)
+from Server.Encoding.inverted_index_matrix_encoder import (get_size_of_largest_set_of_pointers,
+                                                           convert_file_to_integers,
+                                                           convert_string_to_unique_integer)
 
 
 def get_encoded_database(indexing: dict, base_path: Path | str) -> list[list[int]]:
@@ -141,13 +141,13 @@ def write_dictionary(indexing: dict[int, list[int]], database: list[list[int]], 
 
 
 def run():
-    index_path = Path('Server/DatabaseIndex/Indexing.json')
+    index_path = Path('Server/Indexing/Index_Files/Indexing.json')
     with index_path.open(mode='r') as f:
         indexing = load(f)
 
-    base_path = Path('Server/MockData/PNR Records/')
+    base_path = Path('Server/PNR_Records/')
     encoded_database = get_encoded_database(indexing, base_path)
     encoded_indexing = encode_indexing(indexing)
 
-    output_path = Path('Server/MP-SPDZ Inputs/MP-SPDZ_Only_Input-P1-0')
+    output_path = Path('Server/MP_SPDZ_Inputs/MP_SPDZ_Only_Input-P1-0')
     write_dictionary(encoded_indexing, encoded_database, output_path)

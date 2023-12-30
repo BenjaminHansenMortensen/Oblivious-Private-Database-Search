@@ -239,13 +239,13 @@ def write_dictionary(inverted_index_matrix: dict[int, list[int]], database: list
 
 
 def run():
-    index_path = Path('Server/DatabaseIndex/InvertedIndexMatrix.json')
+    index_path = Path('Server/Indexing/Index_Files/Inverted_Index_Matrix.json')
     with index_path.open(mode='r') as f:
         inverted_index_matrix = load(f)
 
-    base_path = Path('Server/MockData/PNR Records/')
+    base_path = Path('Server/PNR_Records/')
     encoded_database = get_encoded_database(inverted_index_matrix, base_path)
     encoded_inverted_index_matrix = encode_inverted_index_matrix(inverted_index_matrix)
 
-    output_path = Path('Server/MP-SPDZ Inputs/MP-SPDZ_Only_Input-P1-0')
+    output_path = Path('Server/MP_SPDZ_Inputs/MP_SPDZ_Only_Input-P1-0')
     write_dictionary(encoded_inverted_index_matrix, encoded_database, output_path)

@@ -78,5 +78,5 @@ def run():
     search_query = ['1']
     integer_search_query = convert_search_queries_to_integers(search_query)
 
-    output_path = Path('Client/MP-SPDZ Inputs/MP-SPDZ_Only_Input-P0-0')
+    output_path = Path('Client/MP_SPDZ_Inputs/MP_SPDZ_Only_Input-P0-0')
     write_list(integer_search_query, output_path)

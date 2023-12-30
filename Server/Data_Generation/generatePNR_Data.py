@@ -385,7 +385,7 @@ class GenerateTravelPlan:
     """
 
     def __init__(self):
-        self.airport_data = read_json('Server/MockData/airport_data.json')
+        self.airport_data = read_json('Server/Data_Generation/Supplementary_Data/airport_data.json')
         self.flight_path_lengths = [(2, 0.75), (3, 0.2), (4, 0.045), (5, 0.004), (6, 0.001)]
 
     def get_path_length(self) -> int:
@@ -1061,5 +1061,5 @@ def run(size: int):
         pnr_number = next(gen_pnr_number)
         pnr_record = create_random_record(pnr_number)
 
-        with open(f'Server/MockData/PNR Records/record{pnr_number}.json', 'w') as fp:
+        with open(f'Server/PNR_Records/record{pnr_number}.json', 'w') as fp:
             dump(pnr_record, fp, indent=4)

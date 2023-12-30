@@ -2,7 +2,7 @@
 
 from pathlib import Path
 from os import chdir
-from Server.MockData.generatePNR_Data import run as create_database
+from Server.Data_Generation.generatePNR_Data import run as create_database
 from Client.Preprocessing.bitonic_sort import bitonic_sort as permute_and_encrypt_database
 
 
