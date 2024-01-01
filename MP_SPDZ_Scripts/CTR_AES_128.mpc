@@ -1,0 +1,22 @@
+from circuit import Circuit
+
+sb128 = sbits.get_type(128)
+
+# The number of blocks to be encrypted
+number_of_blocks = 376
+
+# Party 0 inputs
+counters = sbitvec([sb128.get_input_from(0) for _ in range(number_of_blocks)])
+keys = sbitvec([sb128.get_input_from(0) for _ in range(number_of_blocks)])
+
+# Party 1 inputs
+plaintexts = sbitvec([sb128.get_input_from(1) for _ in range(number_of_blocks)])
+
+# Key streams derivation and plaintext encryption
+aes128 = Circuit('aes_128')
+key_streams = aes128(counters, keys)
+ciphertexts = key_streams.bit_xor(plaintexts)
+
+# Reveal ciphertexts to party 0
+for i in range(number_of_blocks):
+    print_ln('%s', ciphertexts.elements()[i].reveal())
