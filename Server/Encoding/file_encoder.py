@@ -117,7 +117,3 @@ def encode_file(file_path: Path) -> list[str]:
     encoded_file = group(encoded_file)
 
     return encoded_file
-
-print(Path.cwd())
-base_path = Path.cwd().parent / "PNR_Records" / "record1.json"
-print(encode_file(base_path))
