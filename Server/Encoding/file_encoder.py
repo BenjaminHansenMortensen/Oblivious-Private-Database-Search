@@ -2,6 +2,9 @@
 
 from pathlib import Path
 from re import sub
+from Oblivious_Database_Query_Scheme.run import get_encoding_base as encoding_base
+from Oblivious_Database_Query_Scheme.run import get_max_file_length as max_file_length
+from Oblivious_Database_Query_Scheme.run import get_block_size as block_size
 
 
 def read_file(file_path: Path) -> str:
@@ -19,7 +22,7 @@ def read_file(file_path: Path) -> str:
     if not file_path.exists() and not file_path.is_file():
         raise FileNotFoundError(f"Did not find file at {file_path}.")
     if file_path.suffix != ".json":
-        raise ValueError("File is not on the correct format.")
+        raise ValueError("File is not in the correct format.")
 
     with file_path.open(mode='r') as f:
         file_content = f.read()
@@ -31,7 +34,7 @@ def read_file(file_path: Path) -> str:
     return file_content
 
 
-def add_padding(file: list[str], padded_length: int = 6016) -> list[str]:
+def add_padding(file: list[str]) -> list[str]:
     """
         Pads the file til desired length.
 
@@ -44,10 +47,10 @@ def add_padding(file: list[str], padded_length: int = 6016) -> list[str]:
             - file (list[str]) = The padded file.
     """
 
-    if padded_length % 128 != 0:
-        raise ValueError("Padded length has to be divisible by 128, due to the use of AES-128 for encryption.")
+    if max_file_length() % block_size() != 0:
+        raise ValueError("Padded length has to be divisible by the block size.")
 
-    padding_amount = padded_length - len(file)
+    padding_amount = max_file_length() - len(file)
     for i in range(padding_amount):
         file.append("00")
 
@@ -66,11 +69,9 @@ def group(file: list[str]) -> list[str]:
             - encode_file (list[str]) = The file grouped into blocks.
     """
 
-    hexadecimal = 16
-
     encode_file = []
-    for i in range(0, len(file), hexadecimal):
-        block = "0x" + "".join(file[i:i + hexadecimal])
+    for i in range(0, len(file), encoding_base()):
+        block = "0x" + "".join(file[i:i + encoding_base()])
         encode_file.append(block)
 
     return encode_file
@@ -116,3 +117,7 @@ def encode_file(file_path: Path) -> list[str]:
     encoded_file = group(encoded_file)
 
     return encoded_file
+
+print(Path.cwd())
+base_path = Path.cwd().parent / "PNR_Records" / "record1.json"
+print(encode_file(base_path))
