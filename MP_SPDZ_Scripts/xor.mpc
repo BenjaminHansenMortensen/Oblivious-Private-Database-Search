@@ -1,0 +1,18 @@
+from Oblivious_Database_Query_Scheme.getters import get_block_size as block_size
+from Oblivious_Database_Query_Scheme.getters import get_number_of_blocks as number_of_blocks
+
+sb128 = sbits.get_type(block_size())
+
+# Party 0 inputs
+key_streams = sbitvec([sb128.get_input_from(0) for _ in range(number_of_blocks())])
+
+# Party 1 inputs
+plaintexts = sbitvec([sb128.get_input_from(1) for _ in range(number_of_blocks())])
+
+# Key streams derivation and plaintext encryption
+ciphertexts = key_streams.bit_xor(plaintexts)
+
+# Reveal ciphertexts to party 0
+# OBS: Printing as decimal yields incorrect answer! Use .print_reg() to print as hexadecimal.
+for i in range(number_of_blocks()):
+    ciphertexts.elements()[i].reveal().print_reg()

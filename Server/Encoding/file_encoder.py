@@ -2,9 +2,9 @@
 
 from pathlib import Path
 from re import sub
-from Oblivious_Database_Query_Scheme.run import get_encoding_base as encoding_base
-from Oblivious_Database_Query_Scheme.run import get_max_file_length as max_file_length
-from Oblivious_Database_Query_Scheme.run import get_block_size as block_size
+from Oblivious_Database_Query_Scheme.getters import get_encoding_base as encoding_base
+from Oblivious_Database_Query_Scheme.getters import get_max_file_length as max_file_length
+from Oblivious_Database_Query_Scheme.getters import get_block_size as block_size
 
 
 def read_file(file_path: Path) -> str:
@@ -71,7 +71,7 @@ def group(file: list[str]) -> list[str]:
 
     encode_file = []
     for i in range(0, len(file), encoding_base()):
-        block = "0x" + "".join(file[i:i + encoding_base()])
+        block = "".join(file[i:i + encoding_base()])
         encode_file.append(block)
 
     return encode_file
