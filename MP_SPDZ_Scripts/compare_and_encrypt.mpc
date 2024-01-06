@@ -1,0 +1,33 @@
+from Oblivious_Database_Query_Scheme.getters import get_block_size as block_size
+from Oblivious_Database_Query_Scheme.getters import get_number_of_blocks as number_of_blocks
+
+sb128 = sbits.get_type(block_size())
+
+# Party 0 swap indicator
+swap = sbit.get_input_from(0)
+
+# Party 0 key streams
+key_streams_a = sbitvec([sb128.get_input_from(0) for _ in range(number_of_blocks())])
+key_streams_b = sbitvec([sb128.get_input_from(0) for _ in range(number_of_blocks())])
+
+# Party 1 plaintexts
+plaintexts_a = sbitvec([sb128.get_input_from(1) for _ in range(number_of_blocks())])
+plaintexts_b = sbitvec([sb128.get_input_from(1) for _ in range(number_of_blocks())])
+
+# Sorts plaintexts
+ordered_plaintexts_a = sbitvec([(swap).if_else(plaintexts_b.elements()[i], plaintexts_a.elements()[i]) for i in range(number_of_blocks())])
+ordered_plaintexts_b = sbitvec([(swap).if_else(plaintexts_a.elements()[i], plaintexts_b.elements()[i]) for i in range(number_of_blocks())])
+
+# Ciphertexts
+ciphertexts_a = key_streams_a.bit_xor(ordered_plaintexts_a)
+ciphertexts_b = key_streams_b.bit_xor(ordered_plaintexts_b)
+
+
+# Reveal ciphertexts to party 0
+# OBS: Printing as decimal yields incorrect answer! Use .print_reg() to print as hexadecimal.
+for i in range(number_of_blocks()):
+    ciphertexts_a.elements()[i].reveal().print_reg()
+for i in range(number_of_blocks()):
+    ciphertexts_b.elements()[i].reveal().print_reg()
+
+

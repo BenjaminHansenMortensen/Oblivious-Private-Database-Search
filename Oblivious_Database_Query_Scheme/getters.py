@@ -130,11 +130,11 @@ def get_server_MP_SPDZ_output_path() -> Path:
     return server_MP_SPDZ_output_path
 
 
-def get_xor_mpc_script_path():
-    """ Getter for the xor_script_path """
+def get_compare_and_encrypt_mpc_script_path():
+    """ Getter for the compare_and_encrypt_script_path """
     global working_directory
-    xor_script_path = working_directory / "MP_SPDZ_Scripts" / "xor.mpc"
-    return xor_script_path
+    compare_and_encrypt_script_path = working_directory / "MP_SPDZ_Scripts" / "compare_and_encrypt.mpc"
+    return compare_and_encrypt_script_path
 
 
 def get_MP_SPDZ_scripts_directory():
