@@ -34,12 +34,14 @@ if __name__ == '__main__':
 
     # Preprocesses the indexing and AES key_streams
 
-    #import time
+    import time
 
-    #start_time = time.time()
+    start_time = time.time()
     # Creates a new secret database
-    #indexing, encryption_keys = permute_and_encrypt_database()
-
-    #print("--- %s seconds ---" % (time.time() - start_time))
-    from subprocess import run
-    run("./Oblivious_Database_Query_Scheme/compile_and_run.sh")
+    indexing, encryption_keys = permute_and_encrypt_database()
+    for i in range(len(encryption_keys)):
+        print(f"{i} : {encryption_keys[i][0]}")
+    print(indexing)
+    print("--- %s seconds ---" % (time.time() - start_time))
+    #from subprocess import run
+    #run("./Oblivious_Database_Query_Scheme/compile_and_run.sh")

@@ -171,7 +171,8 @@ def compare_init(encryption_keys: list[list[str]], record_indexing: dict, index:
     name_record_a, name_record_b = [record_indexing[index_a], record_indexing[index_b]]
     record_a, record_b = encode_file(name_record_a), encode_file(name_record_b)
     records = [record_a, record_b]
-
+    print(f"plaintext {index_a} : {record_a[0]}")
+    print(f"plaintext {index_b} : {record_b[0]}")
     swap = 0
     # Compares them based on permutation
     permutation_a, permutation_b = permutation[index_a], permutation[index_b]
@@ -193,13 +194,6 @@ def compare_init(encryption_keys: list[list[str]], record_indexing: dict, index:
     write_as_MP_SPDZ_inputs(swap, records, key_streams)
     encrypt_record()
     write_MP_SDPZ_output_to_encrypted_database(file_names)
-
-    if not swap:
-        print(f"{index_a}   plaintext: {records[0][0]}, key_stream: {key_streams[0][0]}")
-        print(f"{index_b}   plaintext: {records[1][0]}, key_stream: {key_streams[1][0]}")
-    else:
-        print(f"{index_a}   plaintext: {records[1][0]}, key_stream: {key_streams[0][0]}")
-        print(f"{index_b}   plaintext: {records[0][0]}, key_stream: {key_streams[1][0]}")
 
 
 def compare(encryption_keys: list[list[str]], index: int, permutation: list, descending: bool, mid_point: int):
@@ -224,7 +218,6 @@ def compare(encryption_keys: list[list[str]], index: int, permutation: list, des
     permutation_a, permutation_b = permutation[index], permutation[index + mid_point]
     if (permutation_a > permutation_b and not descending) or (permutation_b > permutation_a and descending):
         # Swaps indexing
-        index_record_a, index_record_b = index_record_b, index_record_a
         permutation_a, permutation_b = permutation_b, permutation_a
         swap = 1
 
@@ -240,13 +233,6 @@ def compare(encryption_keys: list[list[str]], index: int, permutation: list, des
     write_as_MP_SPDZ_inputs(swap, records, key_streams, new_key_streams)
     reencrypt_record()
     write_MP_SDPZ_output_to_encrypted_database(file_names)
-
-    if not swap:
-        print(f"{index}   ciphertext: {records[0][0]}, new_key_stream: {new_key_streams[0][0]}")
-        print(f"{index + mid_point}   ciphertext: {records[1][0]}, key_stream: {new_key_streams[1][0]}")
-    else:
-        print(f"{index + mid_point}   ciphertext: {records[0][0]}, key_stream: {new_key_streams[0][0]}")
-        print(f"{index}   ciphertext: {records[1][0]}, new_key_stream: {new_key_streams[1][0]}")
 
 
 def init(indexing: dict, permutation: list) -> list[list[str]]:
@@ -372,15 +358,12 @@ def bitonic_sort() -> tuple[dict, list[list[str]]]:
     encryption_keys = init(record_indexing, permutation)
 
     # Completes the sorting of the encrypted database
-    #for level in range(2, int(log(database_size(), 2) + 1)):  # Skip 2**1 as it was done in the initiation
-    #    partition_size = 2 ** level
-    #    partition_mid_point = partition_size // 2
+    for level in range(2, int(log(database_size(), 2) + 1)):  # Skip 2**1 as it was done in the initiation
+        partition_size = 2 ** level
+        partition_mid_point = partition_size // 2
 
-    #    merge(encryption_keys, permutation, partition_size, partition_mid_point)
+        merge(encryption_keys, permutation, partition_size, partition_mid_point)
 
-    #    sort(encryption_keys, permutation, partition_size)
-
-    for i in range(len(encryption_keys)):
-        print(f"stored keys {i}: {encryption_keys[i][0]}")
+        sort(encryption_keys, permutation, partition_size)
 
     return index_translation, encryption_keys
