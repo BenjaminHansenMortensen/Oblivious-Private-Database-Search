@@ -137,6 +137,13 @@ def get_compare_and_encrypt_mpc_script_path():
     return compare_and_encrypt_script_path
 
 
+def get_compare_and_reencrypt_mpc_script_path():
+    """ Getter for the compare_and_encrypt_script_path """
+    global working_directory
+    compare_and_encrypt_script_path = working_directory / "MP_SPDZ_Scripts" / "compare_and_reencrypt.mpc"
+    return compare_and_encrypt_script_path
+
+
 def get_MP_SPDZ_scripts_directory():
     """ Getter for the MP_SPDZ_scripts_directory in the MP_SPDZ directory """
     global MP_SPDZ_directory

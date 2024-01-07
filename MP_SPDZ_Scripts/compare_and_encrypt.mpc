@@ -3,16 +3,16 @@ from Oblivious_Database_Query_Scheme.getters import get_number_of_blocks as numb
 
 sb128 = sbits.get_type(block_size())
 
-# Party 0 swap indicator
-swap = sbit.get_input_from(0)
+# Party 0 plaintexts
+plaintexts_a = sbitvec([sb128.get_input_from(0) for _ in range(number_of_blocks())])
+plaintexts_b = sbitvec([sb128.get_input_from(0) for _ in range(number_of_blocks())])
 
-# Party 0 key streams
-key_streams_a = sbitvec([sb128.get_input_from(0) for _ in range(number_of_blocks())])
-key_streams_b = sbitvec([sb128.get_input_from(0) for _ in range(number_of_blocks())])
+# Party 1 swap plaintexts indicator
+swap = sbit.get_input_from(1)
 
-# Party 1 plaintexts
-plaintexts_a = sbitvec([sb128.get_input_from(1) for _ in range(number_of_blocks())])
-plaintexts_b = sbitvec([sb128.get_input_from(1) for _ in range(number_of_blocks())])
+# Party 1 key streams
+key_streams_a = sbitvec([sb128.get_input_from(1) for _ in range(number_of_blocks())])
+key_streams_b = sbitvec([sb128.get_input_from(1) for _ in range(number_of_blocks())])
 
 # Sorts plaintexts
 ordered_plaintexts_a = sbitvec([(swap).if_else(plaintexts_b.elements()[i], plaintexts_a.elements()[i]) for i in range(number_of_blocks())])
@@ -29,5 +29,3 @@ for i in range(number_of_blocks()):
     ciphertexts_a.elements()[i].reveal().print_reg()
 for i in range(number_of_blocks()):
     ciphertexts_b.elements()[i].reveal().print_reg()
-
-
