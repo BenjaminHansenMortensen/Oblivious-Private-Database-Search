@@ -6,11 +6,13 @@ from subprocess import Popen, PIPE
 from threading import Thread
 from socket import socket, AF_INET, SOCK_STREAM, SOL_SOCKET, SO_REUSEADDR, timeout
 from ssl import SSLContext, PROTOCOL_TLS_CLIENT, PROTOCOL_TLS_SERVER
+
 from Oblivious_Database_Query_Scheme.getters import get_block_size as block_size
 from Oblivious_Database_Query_Scheme.getters import get_encoding_base as encoding_base
 from Oblivious_Database_Query_Scheme.getters import get_client_MP_SPDZ_input_path as MP_SPDZ_input_path
 from Oblivious_Database_Query_Scheme.getters import get_working_directory as working_directory
 from Oblivious_Database_Query_Scheme.getters import get_MP_SPDZ_directory as MP_SPDZ_directory
+
 from Client.Preprocessing.key_stream_generator import get_key_streams
 
 
@@ -28,11 +30,11 @@ class Communicate:
         self.SERVER_ADDR = ('localhost', 5005)
         self.FORMAT = 'utf-8'
 
-        self.SENDING_JSON_MESSAGE = '<SENDING JSON>'
         self.INIT_MESSAGE = '<INIT>'
         self.ENCRYPT_EXECUTION_MESSAGE = '<ENCRYPT EXECUTION>'
         self.REENCRYPT_EXECUTION_MESSAGE = '<REENCRYPT EXECUTION>'
         self.SENDING_INDICES_MESSAGE = '<SENDING INDICES>'
+        self.SENDING_JSON_MESSAGE = '<SENDING JSON>'
         self.FILE_NAME_MESSAGE = '<FILE NAME>'
         self.FILE_CONTENTS_MESSAGE = '<FILE CONTENTS>'
         self.DISCONNECT_MESSAGE = '<DISCONNECT>'
@@ -49,7 +51,6 @@ class Communicate:
         self.key_streams = []
 
         self.close = False
-        self.listen_thread = []
         self.run_thread = Thread(target=self.run)
         self.run_thread.start()
 
@@ -153,7 +154,6 @@ class Communicate:
         self.wait(send_host)
         send_host.close()
 
-
     def send_indices_and_encrypt(self, index_a: int, index_b: int, swap: bool):
         """
 
@@ -171,9 +171,8 @@ class Communicate:
 
         encryption_key_streams = self.get_key_streams()
         self.key_streams.extend(encryption_key_streams)
-        self.write_as_MP_SPDZ_inputs(swap, encryption_key_streams)
+        self.write_as_MP_SPDZ_inputs(int(swap), encryption_key_streams)
         self.run_MP_SPDZ("compare_and_encrypt")
-
 
     def send_indices_and_reencrypt(self, index_a: int, index_b: int, swap: bool):
         """
@@ -193,7 +192,7 @@ class Communicate:
         decryption_key_streams = [self.key_streams[index_a], self.key_streams[index_b]]
         encryption_key_streams = self.get_key_streams()
         self.key_streams[index_a], self.key_streams[index_b] = encryption_key_streams
-        self.write_as_MP_SPDZ_inputs(swap, encryption_key_streams, decryption_key_streams)
+        self.write_as_MP_SPDZ_inputs(int(swap), encryption_key_streams, decryption_key_streams)
         self.run_MP_SPDZ("compare_and_reencrypt")
 
     def get_file_contents(self, file_path):
@@ -222,7 +221,8 @@ class Communicate:
             value = value - (1 << block_size())
         return value
 
-    def write_as_MP_SPDZ_inputs(self, swap: int, encryption_key_streams: list[list[str]], decryption_key_streams: list[list[str]] = None):
+    def write_as_MP_SPDZ_inputs(self, swap: int, encryption_key_streams: list[list[str]],
+                                                 decryption_key_streams: list[list[str]] = None):
         """
 
         """
@@ -256,8 +256,6 @@ class Communicate:
 
         client_output, client_error = client_MP_SPDZ_process.communicate()
 
-        # client_MP_SPDZ_process.wait()
-
         client_MP_SPDZ_process.kill()
 
         chdir(working_directory())
@@ -283,9 +281,6 @@ class Communicate:
             try:
                 conn, addr = self.listen_host.accept()
                 self.receive(conn, addr)
-                #thread = Thread(target=self.receive, args=(conn, addr))
-                #thread.start()
-                #self.listen_thread.append(thread)
             except timeout:
                 continue
             except Exception:
@@ -302,9 +297,6 @@ class Communicate:
 
         """
 
-        #for thread in self.listen_thread:
-        #    thread.join()
-        #self.listen_host.close()
         self.close = True
         self.run_thread.join()
         print(f'[CLOSED] {self.ADDR}')

@@ -11,6 +11,7 @@ from datetime import timedelta, datetime
 from json import dump
 from Oblivious_Database_Query_Scheme.getters import get_PNR_records_directory as PNR_records_directory
 
+
 class GeneratePNR_number:
     """
         Jf. § 60-5. 1.

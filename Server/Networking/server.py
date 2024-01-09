@@ -8,6 +8,7 @@ from threading import Thread
 from subprocess import Popen, PIPE
 from socket import socket, AF_INET, SOCK_STREAM, SOL_SOCKET, SO_REUSEADDR, timeout
 from ssl import SSLContext, PROTOCOL_TLS_CLIENT, PROTOCOL_TLS_SERVER
+
 from Oblivious_Database_Query_Scheme.getters import get_working_directory as working_directory
 from Oblivious_Database_Query_Scheme.getters import get_number_of_blocks as number_of_blocks
 from Oblivious_Database_Query_Scheme.getters import get_block_size as block_size
@@ -18,6 +19,7 @@ from Oblivious_Database_Query_Scheme.getters import get_server_MP_SPDZ_input_pat
 from Oblivious_Database_Query_Scheme.getters import get_server_MP_SPDZ_output_path as MP_SPDZ_output_path
 from Oblivious_Database_Query_Scheme.getters import get_encrypted_PNR_records_directory as encrypted_PNR_records_directory
 from Oblivious_Database_Query_Scheme.getters import get_PNR_records_directory as PNR_records_directory
+
 from Server.Encoding.file_encoder import encode_file
 
 
@@ -34,11 +36,11 @@ class Communicate:
         self.CLIENT_ADDR = ('localhost', 5500)
         self.FORMAT = 'utf-8'
 
-        self.SENDING_JSON_MESSAGE = '<SENDING JSON>'
         self.INIT_MESSAGE = '<INIT>'
         self.ENCRYPT_EXECUTION_MESSAGE = '<ENCRYPT EXECUTION>'
         self.REENCRYPT_EXECUTION_MESSAGE = '<REENCRYPT EXECUTION>'
         self.SENDING_INDICES_MESSAGE = '<SENDING INDICES>'
+        self.SENDING_JSON_MESSAGE = '<SENDING JSON>'
         self.FILE_NAME_MESSAGE = '<FILE NAME>'
         self.FILE_CONTENTS_MESSAGE = '<FILE CONTENTS>'
         self.DISCONNECT_MESSAGE = '<DISCONNECT>'
@@ -52,10 +54,9 @@ class Communicate:
         self.client_context.load_verify_locations('Client/Networking/Keys/cert.pem')
         self.listen_host = self.server_context.wrap_socket(socket(AF_INET, SOCK_STREAM), server_side=True)
         self.listen_host.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
-        self.listen_host.settimeout(0.2)
+        self.listen_host.settimeout(0.1)
 
         self.close = False
-        self.listen_thread = []
         self.run_thread = Thread(target=self.run)
         self.run_thread.start()
 
@@ -65,10 +66,11 @@ class Communicate:
         """
 
         message = connection.recv(self.HEADER).decode(self.FORMAT).strip()
-        print(f'[RECEIVED] {message} from {address}')
         if message == self.SENDING_JSON_MESSAGE:
+            print(f'[RECEIVED] {message} from {address}')
             self.receive_json(connection, address)
         elif message == self.INIT_MESSAGE:
+            print(f'[RECEIVED] {message} from {address}')
             self.init_encrypted_database(connection, address)
             connection.send(self.add_padding(self.DISCONNECT_MESSAGE))
         elif message == self.ENCRYPT_EXECUTION_MESSAGE:
@@ -170,7 +172,7 @@ class Communicate:
 
         """
 
-        self.records_indexing = sorted(
+        self.records_indexing = sorted(   # Sorting the records for clarity, but is not required
             [path for path in PNR_records_directory().glob('*') if path.name not in excluded_PNR_records()],
             key=lambda x: int(findall(r"\d+", string=x.name)[0]))
 
@@ -200,12 +202,12 @@ class Communicate:
                 break
 
         if index_a is not None and index_b is not None:
-            # Get files
             record_path_a, record_path_b = self.records_indexing[index_a], self.records_indexing[index_b]
             record_a, record_b = self.get_records(record_path_a), self.get_records(record_path_b)
             self.write_as_MP_SPDZ_inputs([record_a, record_b])
             self.run_MP_SPDZ(MP_SPDZ_script_name)
-            record_path_a, record_path_b = encrypted_PNR_records_directory() / f"{index_a}.txt", encrypted_PNR_records_directory() / f"{index_b}.txt"
+            record_path_a = encrypted_PNR_records_directory() / f"{index_a}.txt"
+            record_path_b = encrypted_PNR_records_directory() / f"{index_b}.txt"
             self.records_indexing[index_a], self.records_indexing[index_b] = record_path_a, record_path_b
             self.write_MP_SDPZ_output_to_encrypted_database([record_path_a, record_path_b])
 
@@ -252,15 +254,12 @@ class Communicate:
         server_output, server_error = server_MP_SPDZ_process.communicate()
         empty_party_output, empty_party_error = empty_party_MP_SPDZ_process.communicate()
 
-        # server_MP_SPDZ_process.wait()
-        # empty_party_MP_SPDZ_process.wait()
-
         server_MP_SPDZ_process.kill()
         empty_party_MP_SPDZ_process.kill()
 
         chdir(working_directory())
 
-    def write_MP_SDPZ_output_to_encrypted_database(self, file_names: list[str]):
+    def write_MP_SDPZ_output_to_encrypted_database(self, file_names: list[Path]):
         """   """
 
         with open(MP_SPDZ_output_path().parent / f"{MP_SPDZ_output_path().name}-P0-0", "r") as file:
@@ -294,9 +293,6 @@ class Communicate:
             try:
                 conn, addr = self.listen_host.accept()
                 self.receive(conn, addr)
-                #thread = Thread(target=self.receive, args=(conn, addr))
-                #thread.start()
-                #self.listen_thread.append(thread)
             except timeout:
                 continue
             except Exception as e:
@@ -313,9 +309,6 @@ class Communicate:
 
         """
 
-        #for thread in self.listen_thread:
-        #    thread.join()
-        #self.listen_host.close()
         self.close = True
         self.run_thread.join()
         print(f'[CLOSED] {self.ADDR}')

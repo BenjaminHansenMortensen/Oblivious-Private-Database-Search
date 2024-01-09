@@ -64,7 +64,7 @@ def get_number_of_blocks() -> int:
 
 def get_database_size() -> int:
     """ Getter for the database_size variable """
-    database_size = 2**3
+    database_size = 2**4
     return database_size
 
 
