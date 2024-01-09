@@ -9,7 +9,7 @@ from pandas import read_json, DataFrame
 from math import acos, cos, sin, radians
 from datetime import timedelta, datetime
 from json import dump
-
+from Oblivious_Database_Query_Scheme.getters import get_PNR_records_directory as PNR_records_directory
 
 class GeneratePNR_number:
     """
@@ -1060,6 +1060,8 @@ def run(size: int):
     for _ in range(number_of_records):
         pnr_number = next(gen_pnr_number)
         pnr_record = create_random_record(pnr_number)
+        pnr_record_path = PNR_records_directory() / f'record{pnr_number}.json'
 
-        with open(f'Server/PNR_Records/record{pnr_number}.json', 'w') as fp:
-            dump(pnr_record, fp, indent=4)
+        with pnr_record_path.open('w') as file:
+            dump(pnr_record, file, indent=4)
+            file.close()

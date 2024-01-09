@@ -24,8 +24,9 @@ def read_file(file_path: Path) -> str:
     if file_path.suffix != ".json":
         raise ValueError("File is not in the correct format.")
 
-    with file_path.open(mode='r') as f:
-        file_content = f.read()
+    with file_path.open(mode='r') as file:
+        file_content = file.read()
+        file.close()
 
     # Removes all whitespace outside of quotes, leaving keys and values intact.
     file_content = file_content.strip().replace('\n', '')
