@@ -3,9 +3,12 @@
 #Imports
 from pathlib import Path
 from json import load, dump
+from Oblivious_Database_Query_Scheme.getters import get_PNR_records_directory as PNR_records_directory
+from Oblivious_Database_Query_Scheme.getters import get_excluded_PNR_records as excluded_PNR_records
+from Oblivious_Database_Query_Scheme.getters import get_inverted_index_matrix_path as inverted_index_matrix_path
 
 
-def read_record(path: str | Path) -> dict:
+def read_record(record_path: str | Path) -> dict:
     """
         Reads a record file.
 
@@ -15,16 +18,8 @@ def read_record(path: str | Path) -> dict:
         Returns:
             record (dict) = The record.
     """
-    try:
-        path = Path(path)
 
-        if not path.is_file() or path.suffix != '.json':
-            raise ValueError('Did not find .json file')
-    except TypeError:
-        raise TypeError(f'Cannot covert to Path object')
-
-
-    with open(path, 'r') as file:
+    with record_path.open('r') as file:
         record = dict(load(file))
 
     return record
@@ -41,9 +36,6 @@ def flatten_and_filter_dictionary(dictionary: dict) -> dict:
             :raises TypeError
             flat_dictionary (dict) = The flattened dictionary.
     """
-
-    if type(dictionary) != dict:
-        raise TypeError('The dictionary is not of type dictionary.')
 
     key_filter = ['Date', 'City', 'Zip Code', 'Vendor', 'Type', 'Bonus Program', 'Airline', 'Travel Agency',
                   'IATA Code', 'Airport Name', 'City', 'Status', 'Seat', 'Cabin', 'Checked', 'Special']
@@ -72,7 +64,7 @@ def add_keys_and_values(flat_dictionary: dict, dictionary: dict, key_filter: lis
     for key, value in dictionary.items():
         if key in key_filter:
             continue
-        elif type(value) == dict:
+        elif type(value) is dict:
             if parent_key != '':
                 key = f'{parent_key} {key}'
 
@@ -81,7 +73,7 @@ def add_keys_and_values(flat_dictionary: dict, dictionary: dict, key_filter: lis
             flat_dictionary[f'{parent_key} {key}'] = value
 
 
-def update_inverse_index_matrix(inverse_index_matrix: dict, record: dict[str, str], memory_location: str | Path):
+def update_inverse_index_matrix(inverse_index_matrix: dict, record: dict[str, str], pointer: int):
     """
         Updates the keywords (index) and locations of a record to the inverse index matrix.
 
@@ -93,59 +85,22 @@ def update_inverse_index_matrix(inverse_index_matrix: dict, record: dict[str, st
 
     """
 
-    if type(record) != dict:
-        raise TypeError(' Record is not a dictionary.')
-    elif all(type(value) == dict for value in record.values()):
-        raise ValueError('Dictionary is not flat.')
-    # TODO Memory Location Error Handling
-
-    memory_location = memory_location.name
-
     for key, value in record.items():
         if value in list(inverse_index_matrix.keys()):
-            memory_locations = inverse_index_matrix[value]
-            if memory_location not in memory_locations:
-                memory_locations.append(memory_location)
+            pointers = inverse_index_matrix[value]
+            if pointer not in pointers:
+                pointers.append(pointer)
         else:
-            inverse_index_matrix[value] = [memory_location]
-
-
-def get_contents(path: str | Path) -> list[str | Path]:
-    """
-        Gets the contents of a directory.
-
-        Parameters:
-            - path (str | Path) : The path to the directory.
-
-        Returns:
-            :raises: NotADirectoryError, TypeError
-            contents (list[str]) : All the contents of the directory.
-
-    """
-
-    try:
-        dir = Path(path)
-
-        if not dir.is_dir() or not dir.exists():
-            raise NotADirectoryError
-    except TypeError:
-        raise TypeError('Cannot covert directory to Path object')
-
-    exclude = ['Sample_Record.json']
-
-    contents = [path for path in dir.rglob('*') if path.name not in exclude]
-
-    return contents
+            inverse_index_matrix[value] = [pointer]
 
 
 def run():
     inverse_index_matrix = {}
-    path = 'Server/PNR_Records/'
-    files = get_contents(path)
-    for file in files:
-        record = read_record(file)
+    records_path = [path for path in PNR_records_directory().glob('*') if path.name not in excluded_PNR_records()]
+    for pointer in range(len(records_path)):
+        record = read_record(records_path[pointer])
         record = flatten_and_filter_dictionary(record)
-        update_inverse_index_matrix(inverse_index_matrix, record, file)
+        update_inverse_index_matrix(inverse_index_matrix, record, pointer)
 
-    with open(f'Server/Indexing/Index_Files/Inverted_Index_Matrix.json', 'w') as fp:
-        dump(inverse_index_matrix, fp, indent=4)
+    with inverted_index_matrix_path().open('w') as file:
+        dump(inverse_index_matrix, file, indent=4)

@@ -3,9 +3,9 @@
 #Imports
 from pathlib import Path
 from json import load
-from Server.Encoding.inverted_index_matrix_encoder import (get_size_of_largest_set_of_pointers,
-                                                           convert_file_to_integers,
-                                                           convert_string_to_unique_integer)
+from Server.Encoding.inverted_index_matrix_integer_encoder import (get_size_of_largest_set_of_pointers,
+                                                                   convert_file_to_integers,
+                                                                   convert_string_to_unique_integer)
 
 
 def get_encoded_database(indexing: dict, base_path: Path | str) -> list[list[int]]:

@@ -6,10 +6,10 @@ from os import chdir
 
 from Server.Data_Generation.generatePNR_Data import run as generate_data
 from Server.Indexing.indexing import run as generate_indexing
-from Server.Encoding.index_encoder import run as encode_database_and_indexing
+from Server.Encoding.index_integer_encoder import run as encode_database_and_indexing
 from Server.Indexing.inverted_index_matrix import run as generate_inverse_index_matrix
-from Server.Encoding.inverted_index_matrix_encoder import run as encode_database_and_inverse_index_matrix
-from Server.Encoding.inverted_index_matrix_encoder import (get_size_of_largest_set_of_pointers)
+from Server.Encoding.inverted_index_matrix_integer_encoder import run as encode_database_and_inverse_index_matrix
+from Server.Encoding.inverted_index_matrix_integer_encoder import (get_size_of_largest_set_of_pointers)
 from Client.Encoding.query_encoder import run as encode_query
 from Client.Encoding.file_decoder import run as decode_retrieval
 

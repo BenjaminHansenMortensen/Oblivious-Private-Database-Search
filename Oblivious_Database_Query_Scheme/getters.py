@@ -157,6 +157,18 @@ def get_MP_SDPZ_compile_path():
     MP_SPDZ_compile_path = MP_SPDZ_directory / "compile.py"
     return MP_SPDZ_compile_path
 
+def get_inverted_index_matrix_path():
+    """ Getter for the inverted_index_matrix_path """
+    global working_directory
+    inverted_index_matrix_path = working_directory / "Server" / "Indexing" / "Index_Files" / "Inverted_Index_Matrix.json"
+    return inverted_index_matrix_path
+
+def get_encrypted_inverted_index_matrix_path():
+    """ Getter for the encrypted_inverted_index_matrix_path """
+    global working_directory
+    encrypted_inverted_index_matrix_path = working_directory / "Server" / "Indexing" / "Index_Files" / "Encrypted_Inverted_Index_Matrix.json"
+    return encrypted_inverted_index_matrix_path
+
 
 working_directory = Path.cwd().parent
 MP_SPDZ_directory = Path.cwd().parent.parent.parent / "MP-SPDZ"
