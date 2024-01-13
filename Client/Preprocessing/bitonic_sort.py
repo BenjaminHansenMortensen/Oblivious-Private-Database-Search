@@ -161,7 +161,7 @@ def bitonic_sort(client: Communicate):
     if not log(database_size(), 2).is_integer():
         raise ValueError("Array size has to be of power 2.")
 
-    # Creates new indexing of the shuffeled database
+    # Creates new indexing of the shuffled database
     permutation = random.permutation(database_size()).tolist()
     index_translation = dict(enumerate(permutation))
 

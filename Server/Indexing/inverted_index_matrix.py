@@ -73,7 +73,7 @@ def add_keys_and_values(flat_dictionary: dict, dictionary: dict, key_filter: lis
             flat_dictionary[f'{parent_key} {key}'] = value
 
 
-def update_inverse_index_matrix(inverse_index_matrix: dict, record: dict[str, str], pointer: int):
+def update_inverse_index_matrix(inverse_index_matrix: dict, record: dict[str, str], pointer: str):
     """
         Updates the keywords (index) and locations of a record to the inverse index matrix.
 
@@ -89,9 +89,9 @@ def update_inverse_index_matrix(inverse_index_matrix: dict, record: dict[str, st
         if value in list(inverse_index_matrix.keys()):
             pointers = inverse_index_matrix[value]
             if pointer not in pointers:
-                pointers.append(str(pointer))
+                pointers.append(pointer)
         else:
-            inverse_index_matrix[value] = [str(pointer)]
+            inverse_index_matrix[value] = [pointer]
 
 
 def run():
@@ -101,7 +101,7 @@ def run():
     for pointer in range(len(records_path)):
         record = read_record(records_path[pointer])
         record = flatten_and_filter_dictionary(record)
-        update_inverse_index_matrix(inverse_index_matrix, record, pointer)
+        update_inverse_index_matrix(inverse_index_matrix, record, str(pointer))
 
     with inverted_index_matrix_path().open('w') as file:
         dump(inverse_index_matrix, file, indent=4)

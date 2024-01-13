@@ -2,7 +2,7 @@
 
 from subprocess import run
 from os import chdir
-from json import dump, load
+from json import load
 from Oblivious_Database_Query_Scheme.getters import working_directory_validation, MP_SPDZ_directory_validation
 from Oblivious_Database_Query_Scheme.getters import get_MP_SPDZ_directory as MP_SPDZ_directory
 from Oblivious_Database_Query_Scheme.getters import get_working_directory as working_directory
@@ -15,6 +15,8 @@ from Oblivious_Database_Query_Scheme.getters import get_permutation_indexing_pat
 from Oblivious_Database_Query_Scheme.getters import get_encrypted_inverted_index_matrix_path as encrypted_inverted_index_matrix_path
 from Oblivious_Database_Query_Scheme.getters import get_encrypted_PNR_records_directory as encrypted_PNR_records_directory
 from Oblivious_Database_Query_Scheme.getters import get_records_encryption_key_streams_directory as encryption_key_streams_directory
+from Oblivious_Database_Query_Scheme.getters import get_if_else_circuit_path as if_else_circuit_path
+from Oblivious_Database_Query_Scheme.getters import get_MP_SPDZ_circuits_directory as MP_SPDZ_circuits_directory
 
 
 from Client.Networking.client import Communicate as Client
@@ -31,11 +33,13 @@ def setup_MPC_scripts():
 
     chdir(MP_SPDZ_directory())
 
-    run([f"cp", f"{compare_and_encrypt_mpc_script_path()}", f"{MP_SDPZ_scripts_directory() / compare_and_encrypt_mpc_script_path().name}"])
+    run(["cp", f"{if_else_circuit_path()}", f"{MP_SPDZ_circuits_directory() / if_else_circuit_path().name}"])
+
+    run(["cp", f"{compare_and_encrypt_mpc_script_path()}", f"{MP_SDPZ_scripts_directory() / compare_and_encrypt_mpc_script_path().name}"])
     run([f"{MP_SPDZ_compile_path()}", f"{compare_and_encrypt_mpc_script_path().name}", "-F", "128"])
-    run([f"cp", f"{compare_and_reencrypt_mpc_script_path()}", f"{MP_SDPZ_scripts_directory() / compare_and_reencrypt_mpc_script_path().name}"])
+    run(["cp", f"{compare_and_reencrypt_mpc_script_path()}", f"{MP_SDPZ_scripts_directory() / compare_and_reencrypt_mpc_script_path().name}"])
     run([f"{MP_SPDZ_compile_path()}", f"{compare_and_reencrypt_mpc_script_path().name}", "-F", "128"])
-    run([f"cp", f"{aes_128_mpc_script_path()}", f"{MP_SDPZ_scripts_directory() / aes_128_mpc_script_path().name}"])
+    run(["cp", f"{aes_128_mpc_script_path()}", f"{MP_SDPZ_scripts_directory() / aes_128_mpc_script_path().name}"])
     run([f"{MP_SPDZ_compile_path()}", f"{aes_128_mpc_script_path().name}", "-F", "128"])
 
     chdir(working_directory())
@@ -84,20 +88,21 @@ if __name__ == '__main__':
 
         pointers = encrypted_inverted_index_matrix[encrypted_query]
 
-        true_index = indexing[pointers[0]]
+        for pointer in pointers:
+            true_index = indexing[pointer]
 
-        ciphertext_path = encrypted_PNR_records_directory() / f"{true_index}.txt"
+            ciphertext_path = encrypted_PNR_records_directory() / f"{true_index}.txt"
 
-        key_streams_path = encryption_key_streams_directory() / f"{true_index}.txt"
-        with key_streams_path.open("r") as file:
-            record_encryption_keys = file.read().split(" ")
-            file.close()
+            key_streams_path = encryption_key_streams_directory() / f"{true_index}.txt"
+            with key_streams_path.open("r") as file:
+                record_encryption_keys = file.read().split(" ")
+                file.close()
 
-        with ciphertext_path.open("r") as file:
-            ciphertexts = file.read().split(" ")
-            file.close()
+            with ciphertext_path.open("r") as file:
+                ciphertexts = file.read().split(" ")
+                file.close()
 
-        decrypt_files([ciphertexts], [record_encryption_keys])
+            decrypt_files([ciphertexts], [record_encryption_keys])
 
     server.kill()
     client.kill()

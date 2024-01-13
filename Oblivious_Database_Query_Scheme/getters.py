@@ -162,11 +162,25 @@ def get_aes_128_mpc_script_path():
     return aes_128_mpc_script_path
 
 
+def get_if_else_circuit_path():
+    """ Getter for the if_else_circuit_path variable """
+    global working_directory
+    if_else_circuit_path = working_directory / "MP_SPDZ_Circuits" / "if_else128.txt"
+    return if_else_circuit_path
+
+
 def get_MP_SPDZ_scripts_directory():
     """ Getter for the MP_SPDZ_scripts_directory in the MP_SPDZ directory """
     global MP_SPDZ_directory
     MP_SPDZ_scripts_path = MP_SPDZ_directory / "Programs" / "Source"
     return MP_SPDZ_scripts_path
+
+
+def get_MP_SPDZ_circuits_directory():
+    """ Getter for the MP_SPDZ_circuits_directory in the MP_SPDZ directory """
+    global MP_SPDZ_directory
+    MP_SPDZ_circuits_path = MP_SPDZ_directory / "Programs" / "Circuits"
+    return MP_SPDZ_circuits_path
 
 
 def get_MP_SDPZ_compile_path():

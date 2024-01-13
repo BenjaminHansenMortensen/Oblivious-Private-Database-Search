@@ -2,7 +2,7 @@
 
 from time import sleep
 from os import chdir
-from re import findall
+from re import search
 from subprocess import Popen, PIPE
 from threading import Thread
 from socket import socket, AF_INET, SOCK_STREAM, SOL_SOCKET, SO_REUSEADDR, timeout
@@ -171,8 +171,10 @@ class Communicate:
 
         with open(MP_SPDZ_output_path().parent / f"{MP_SPDZ_output_path()}-P{player_id}-0", 'r') as file:
             hexadecimals_pattern = r"0x([a-fA-F0-9]+)"
-            encrypted_query = findall(hexadecimals_pattern, file.read())
-        return encrypted_query[0]
+            encrypted_query = search(hexadecimals_pattern, file.read()).group()
+            encrypted_query = f"{int(encrypted_query, 16):0{32}x}"
+
+        return encrypted_query
 
     def wait(self, connection):
         """
