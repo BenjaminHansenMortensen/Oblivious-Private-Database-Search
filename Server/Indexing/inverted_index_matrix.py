@@ -89,14 +89,15 @@ def update_inverse_index_matrix(inverse_index_matrix: dict, record: dict[str, st
         if value in list(inverse_index_matrix.keys()):
             pointers = inverse_index_matrix[value]
             if pointer not in pointers:
-                pointers.append(pointer)
+                pointers.append(str(pointer))
         else:
-            inverse_index_matrix[value] = [pointer]
+            inverse_index_matrix[value] = [str(pointer)]
 
 
 def run():
     inverse_index_matrix = {}
     records_path = [path for path in PNR_records_directory().glob('*') if path.name not in excluded_PNR_records()]
+
     for pointer in range(len(records_path)):
         record = read_record(records_path[pointer])
         record = flatten_and_filter_dictionary(record)

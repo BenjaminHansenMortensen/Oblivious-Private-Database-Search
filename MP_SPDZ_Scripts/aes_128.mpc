@@ -1,0 +1,16 @@
+from circuit import Circuit
+
+sb128 = sbits.get_type(128)
+
+# Party 0 query digest
+query_digest = sbitvec([sb128().get_input_from(0)])
+
+# Party 1 key
+key = sbitvec([sb128().get_input_from(1)])
+
+# AES encryption of the query digest
+aes128 = Circuit('aes_128')
+ciphertext = aes128(key, query_digest)
+
+# Reveal ciphertexts to party 0
+ciphertext.elements()[0].reveal().print_reg()

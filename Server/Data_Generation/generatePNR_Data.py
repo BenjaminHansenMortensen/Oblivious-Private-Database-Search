@@ -566,7 +566,7 @@ class GenerateTravelInformation:
     """
 
     def __init__(self):
-        self.airlines = [('SAS', 0.4), ('Norwegian', 0.4), ('Widerøe', 0.2)]
+        self.airlines = [('SAS', 0.4), ('Norwegian', 0.4), ('Wideroe', 0.2)]
         self.travel_agencies = [('Balslev', 0.125), ('TUI', 0.125), ('norsktur', 0.125), ('Solfaktor', 0.125),
                                 ('Ving', 0.125), ('Chater', 0.125), ('Apollo', 0.125), ('Expedia', 0.125)]
 

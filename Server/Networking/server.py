@@ -13,14 +13,22 @@ from Oblivious_Database_Query_Scheme.getters import get_working_directory as wor
 from Oblivious_Database_Query_Scheme.getters import get_number_of_blocks as number_of_blocks
 from Oblivious_Database_Query_Scheme.getters import get_block_size as block_size
 from Oblivious_Database_Query_Scheme.getters import get_encoding_base as encoding_base
+from Oblivious_Database_Query_Scheme.getters import get_database_size as database_size
 from Oblivious_Database_Query_Scheme.getters import get_MP_SPDZ_directory as MP_SPDZ_directory
 from Oblivious_Database_Query_Scheme.getters import get_excluded_PNR_records as excluded_PNR_records
 from Oblivious_Database_Query_Scheme.getters import get_server_MP_SPDZ_input_path as MP_SPDZ_input_path
 from Oblivious_Database_Query_Scheme.getters import get_server_MP_SPDZ_output_path as MP_SPDZ_output_path
 from Oblivious_Database_Query_Scheme.getters import get_encrypted_PNR_records_directory as encrypted_PNR_records_directory
 from Oblivious_Database_Query_Scheme.getters import get_PNR_records_directory as PNR_records_directory
+from Oblivious_Database_Query_Scheme.getters import get_compare_and_encrypt_mpc_script_path as compare_and_encrypt_mpc_script_path
+from Oblivious_Database_Query_Scheme.getters import get_compare_and_reencrypt_mpc_script_path as compare_and_reencrypt_mpc_script_path
+from Oblivious_Database_Query_Scheme.getters import get_aes_128_mpc_script_path as aes_128_ctr_mpc_script_path
 
 from Server.Encoding.file_encoder import encode_file
+from Server.Data_Generation.generatePNR_Data import run as create_database
+from Server.Indexing.inverted_index_matrix import run as create_indexing
+from Server.Indexing.indexing_encryptor import run as encrypt_indexing
+
 
 
 class Communicate:
@@ -36,17 +44,20 @@ class Communicate:
         self.CLIENT_ADDR = ('localhost', 5500)
         self.FORMAT = 'utf-8'
 
-        self.INIT_MESSAGE = '<INIT>'
+        self.INIT_MESSAGE = '<PRE-PROCESSING>'
         self.ENCRYPT_EXECUTION_MESSAGE = '<ENCRYPT EXECUTION>'
         self.REENCRYPT_EXECUTION_MESSAGE = '<REENCRYPT EXECUTION>'
         self.SENDING_INDICES_MESSAGE = '<SENDING INDICES>'
         self.SENDING_JSON_MESSAGE = '<SENDING JSON>'
         self.FILE_NAME_MESSAGE = '<FILE NAME>'
         self.FILE_CONTENTS_MESSAGE = '<FILE CONTENTS>'
+        self.ENCRYPT_QUERY = '<ENCRYPT QUERY>'
         self.DISCONNECT_MESSAGE = '<DISCONNECT>'
         self.END_FILE_MESSAGE = '<END FILE>'
 
         self.records_indexing = None
+
+        self.indexing_encryption_key = None
 
         self.server_context = SSLContext(PROTOCOL_TLS_SERVER)
         self.server_context.load_cert_chain(certfile='Server/Networking/Keys/cert.pem', keyfile='Server/Networking/Keys/key.pem')
@@ -74,9 +85,12 @@ class Communicate:
             self.init_encrypted_database(connection, address)
             connection.send(self.add_padding(self.DISCONNECT_MESSAGE))
         elif message == self.ENCRYPT_EXECUTION_MESSAGE:
-            self.MP_SPDZ_execution(connection, address, "compare_and_encrypt")
+            self.MP_SPDZ_record_encryption(connection, address, compare_and_encrypt_mpc_script_path().stem)
         elif message == self.REENCRYPT_EXECUTION_MESSAGE:
-            self.MP_SPDZ_execution(connection, address, "compare_and_reencrypt")
+            self.MP_SPDZ_record_encryption(connection, address, compare_and_reencrypt_mpc_script_path().stem)
+        elif message == self.ENCRYPT_QUERY:
+            print(f'[RECEIVED] {message} from {address}')
+            self.encrypt_query(connection, address)
 
     def add_padding(self, message):
         """
@@ -92,6 +106,28 @@ class Communicate:
         message = message.encode(self.FORMAT)
         message += b' ' * (self.HEADER - len(message))
         return message
+
+    def create_database(self):
+        """
+
+        """
+
+        create_database(database_size())
+
+    def create_indexing(self):
+        """
+
+        """
+
+        create_indexing()
+
+    def encrypt_indexing(self):
+        """
+
+        """
+
+        encryption_key = encrypt_indexing()
+        self.indexing_encryption_key = encryption_key
 
     def receive_json(self, connection, address):
         """
@@ -148,6 +184,15 @@ class Communicate:
         send_host.send(self.add_padding(self.DISCONNECT_MESSAGE))
         send_host.close()
 
+    def encrypt_query(self, connection, address):
+        """
+
+        """
+
+        connection.send(self.add_padding(self.DISCONNECT_MESSAGE))
+        self.write_as_MP_SPDZ_inputs(1, [[self.indexing_encryption_key]])
+        self.run_MP_SPDZ(aes_128_ctr_mpc_script_path().stem, 1)
+
     def wait(self, connection):
         """
 
@@ -172,9 +217,7 @@ class Communicate:
 
         """
 
-        self.records_indexing = sorted(   # Sorting the records for clarity, but is not required
-            [path for path in PNR_records_directory().glob('*') if path.name not in excluded_PNR_records()],
-            key=lambda x: int(findall(r"\d+", string=x.name)[0]))
+        self.records_indexing = [path for path in PNR_records_directory().glob('*') if path.name not in excluded_PNR_records()]
 
         for i in range(len(self.records_indexing)):
             record_path = self.records_indexing[i]
@@ -188,7 +231,7 @@ class Communicate:
 
         connection.send(self.add_padding(self.DISCONNECT_MESSAGE))
 
-    def MP_SPDZ_execution(self, connection, address, MP_SPDZ_script_name: str):
+    def MP_SPDZ_record_encryption(self, connection, address, MP_SPDZ_script_name: str):
         """
 
         """
@@ -204,13 +247,12 @@ class Communicate:
         if index_a is not None and index_b is not None:
             record_path_a, record_path_b = self.records_indexing[index_a], self.records_indexing[index_b]
             record_a, record_b = self.get_records(record_path_a), self.get_records(record_path_b)
-            self.write_as_MP_SPDZ_inputs([record_a, record_b])
-            self.run_MP_SPDZ(MP_SPDZ_script_name)
+            self.write_as_MP_SPDZ_inputs(0, [record_a, record_b])
+            self.run_MP_SPDZ(MP_SPDZ_script_name, 0)
             record_path_a = encrypted_PNR_records_directory() / f"{index_a}.txt"
             record_path_b = encrypted_PNR_records_directory() / f"{index_b}.txt"
             self.records_indexing[index_a], self.records_indexing[index_b] = record_path_a, record_path_b
             self.write_MP_SDPZ_output_to_encrypted_database([record_path_a, record_path_b])
-
 
     def twos_complement(self, hexadecimal_string: str):
         """  """
@@ -219,11 +261,11 @@ class Communicate:
             value = value - (1 << block_size())
         return value
 
-    def write_as_MP_SPDZ_inputs(self, records: list[list[str]]):
-        with open(MP_SPDZ_input_path().parent / f"{MP_SPDZ_input_path()}-P0-0", 'w') as file:
+    def write_as_MP_SPDZ_inputs(self, player_id: int, records: list[list[str]]):
+        with open(MP_SPDZ_input_path().parent / f"{MP_SPDZ_input_path()}-P{player_id}-0", 'w') as file:
             for i in range(len(records)):
                 for block in range(len(records[i])):
-                    file.write(f"{self.twos_complement(records[i][block])} ")
+                    file.write(f"{int(records[i][block], 16)} ")
                 file.write("\n")
             file.close()
 
@@ -235,12 +277,12 @@ class Communicate:
         encoded_record_a = self.get_file_contents(record_path)
         return encoded_record_a.split(' ')
 
-    def run_MP_SPDZ(self, MP_SPDZ_script_name: str):
+    def run_MP_SPDZ(self, MP_SPDZ_script_name: str, player_id: int):
         chdir(MP_SPDZ_directory())
 
         server_MP_SPDZ_process = Popen([f"{MP_SPDZ_directory() / 'replicated-field-party.x'}",
                                         f"{MP_SPDZ_script_name}",
-                                        "-p", "0",
+                                        "-p", f"{player_id}",
                                         "-IF", f"{MP_SPDZ_input_path()}",
                                         "-OF", f"{MP_SPDZ_output_path()}"]
                                        , stdout=PIPE, stderr=PIPE

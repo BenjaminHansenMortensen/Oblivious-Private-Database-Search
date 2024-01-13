@@ -2,7 +2,9 @@
 
 from math import log
 from numpy import random
+from json import dump
 from Oblivious_Database_Query_Scheme.getters import get_database_size as database_size
+from Oblivious_Database_Query_Scheme.getters import get_permutation_indexing_path as permutation_indexing_path
 from Client.Networking.client import Communicate
 
 
@@ -139,7 +141,16 @@ def sort(client: Communicate, permutation: list, partition_size: int):
         descending = (descending + 1) % 2
 
 
-def bitonic_sort(client: Communicate) -> dict:
+def write_indexing(indexing: dict):
+    """
+
+    """
+
+    with permutation_indexing_path().open('w') as file:
+        dump(indexing, file, indent=4)
+        file.close()
+
+def bitonic_sort(client: Communicate):
     """
     :param client:
     :param array_size:
@@ -166,4 +177,5 @@ def bitonic_sort(client: Communicate) -> dict:
 
         sort(client, permutation, partition_size)
 
-    return index_translation
+    client.write_encryption_keys()
+    write_indexing(index_translation)
