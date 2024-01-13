@@ -19,11 +19,10 @@ from Oblivious_Database_Query_Scheme.getters import get_if_else_circuit_path as 
 from Oblivious_Database_Query_Scheme.getters import get_MP_SPDZ_circuits_directory as MP_SPDZ_circuits_directory
 
 
-from Client.Networking.client import Communicate as Client
-from Client.Preprocessing.bitonic_sort import bitonic_sort as permute_and_encrypt_database
+from Client.client import Communicator as Client
 from Client.Encoding.file_decryptor import run as decrypt_files
 
-from Server.Networking.server import Communicate as Server
+from Server.server import Communicator as Server
 
 
 def setup_MPC_scripts():
@@ -63,10 +62,9 @@ if __name__ == '__main__':
     server.create_indexing()
 
     # Creates a new secret database
-    client.send_init()
-    permute_and_encrypt_database(client)
+    client.send_database_preprocessing_message()
 
-    with permutation_indexing_path().open('r') as file:
+    with permutation_indexing_path().open("r") as file:
         indexing = load(file)
         file.close()
 
@@ -84,7 +82,7 @@ if __name__ == '__main__':
         if search_query == "exit":
             break
 
-        encrypted_query = client.send_query(search_query)
+        encrypted_query = client.send_encrypt_query_message(search_query)
 
         pointers = encrypted_inverted_index_matrix[encrypted_query]
 

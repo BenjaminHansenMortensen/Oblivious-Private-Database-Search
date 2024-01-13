@@ -220,6 +220,26 @@ def get_records_encryption_key_streams_directory():
     records_encryption_keys_directory = working_directory / "Client" / "Records_Encryption_Key_Streams"
     return records_encryption_keys_directory
 
+def get_client_networking_key_path():
+    """ Getter for the client_networking_key_path """
+    client_networking_key_path = working_directory / "Client" / "Networking" / "key.pem"
+    return client_networking_key_path
+
+def get_client_networking_certificate_path():
+    """ Getter for the client_networking_key_path """
+    client_networking_certificate_path = working_directory / "Client" / "Networking" / "cert.pem"
+    return client_networking_certificate_path
+
+def get_server_networking_key_path():
+    """ Getter for the server_networking_key_path """
+    server_networking_key_path = working_directory / "Server" / "Networking" / "key.pem"
+    return server_networking_key_path
+
+def get_server_networking_certificate_path():
+    """ Getter for the client_networking_key_path """
+    server_networking_certificate_path = working_directory / "Server" / "Networking" / "cert.pem"
+    return server_networking_certificate_path
+
 
 working_directory = Path.cwd().parent
 MP_SPDZ_directory = Path.cwd().parent.parent.parent / "mp-spdz-0.3.8"

@@ -2,13 +2,11 @@
 
 from math import log
 from numpy import random
-from json import dump
 from Oblivious_Database_Query_Scheme.getters import get_database_size as database_size
-from Oblivious_Database_Query_Scheme.getters import get_permutation_indexing_path as permutation_indexing_path
-from Client.Networking.client import Communicate
+#from Client.Networking.client_communicator import Communicator
 
 
-def compare_init(client: Communicate, index: int, permutation: list, descending: bool, mid_point: int):
+def compare_init(client, index: int, permutation: list, descending: bool, mid_point: int):
     """  """
 
     index_a, index_b = index, index + mid_point
@@ -24,10 +22,10 @@ def compare_init(client: Communicate, index: int, permutation: list, descending:
     permutation[index_a], permutation[index_b] = permutation_a, permutation_b
 
     # Executes the mpc encryption and comparison
-    client.send_indices_and_encrypt(index_a, index_b, swap)
+    client.send_indices_and_encrypt(swap, index_a, index_b)
 
 
-def compare(client: Communicate, index: int, permutation: list, descending: bool, mid_point: int):
+def compare(client, index: int, permutation: list, descending: bool, mid_point: int):
     """
 
     :return:
@@ -47,10 +45,10 @@ def compare(client: Communicate, index: int, permutation: list, descending: bool
     permutation[index], permutation[index + mid_point] = permutation_a, permutation_b
 
     # Executes the mpc encryption and comparison
-    client.send_indices_and_reencrypt(index_record_a, index_record_b, swap)
+    client.send_indices_and_reencrypt(swap, index_record_a, index_record_b)
 
 
-def init(client: Communicate, permutation: list):
+def init(client, permutation: list):
     """
 
     :return:
@@ -68,7 +66,7 @@ def init(client: Communicate, permutation: list):
         descending = (descending + 1) % 2
 
 
-def merge_partition(client: Communicate, descending: bool, permutation: list, partition_index: int, partition_mid_point: int):
+def merge_partition(client, descending: bool, permutation: list, partition_index: int, partition_mid_point: int):
     """
 
     :return:
@@ -81,7 +79,7 @@ def merge_partition(client: Communicate, descending: bool, permutation: list, pa
         compare(client, index, permutation, descending, partition_mid_point)
 
 
-def merge(client: Communicate, permutation: list, partition_size, partition_mid_point: int):
+def merge(client, permutation: list, partition_size, partition_mid_point: int):
     """
 
     :return:
@@ -96,7 +94,7 @@ def merge(client: Communicate, permutation: list, partition_size, partition_mid_
         descending = (descending + 1) % 2
 
 
-def sort_subpartition(client: Communicate, permutation: list, descending: bool, partition_index: int,
+def sort_subpartition(client, permutation: list, descending: bool, partition_index: int,
                       subpartition_index: int, subpartition_mid_point: int):
     """
 
@@ -110,7 +108,7 @@ def sort_subpartition(client: Communicate, permutation: list, descending: bool, 
         compare(client, index, permutation, descending, subpartition_mid_point)
 
 
-def sort_partition(client: Communicate, permutation: list, descending: bool, partition_size: int, partition_index: int):
+def sort_partition(client, permutation: list, descending: bool, partition_size: int, partition_index: int):
     """
 
     :return:
@@ -126,7 +124,7 @@ def sort_partition(client: Communicate, permutation: list, descending: bool, par
             sort_subpartition(client, permutation, descending, partition_index, subpartition_index, subpartition_mid_point)
 
 
-def sort(client: Communicate, permutation: list, partition_size: int):
+def sort(client, permutation: list, partition_size: int):
     """
 
     :return:
@@ -141,16 +139,7 @@ def sort(client: Communicate, permutation: list, partition_size: int):
         descending = (descending + 1) % 2
 
 
-def write_indexing(indexing: dict):
-    """
-
-    """
-
-    with permutation_indexing_path().open('w') as file:
-        dump(indexing, file, indent=4)
-        file.close()
-
-def bitonic_sort(client: Communicate):
+def bitonic_sort(client) -> dict[int, int]:
     """
     :param client:
     :param array_size:
@@ -163,7 +152,7 @@ def bitonic_sort(client: Communicate):
 
     # Creates new indexing of the shuffled database
     permutation = random.permutation(database_size()).tolist()
-    index_translation = dict(enumerate(permutation))
+    permutation_indexing = dict(enumerate(permutation))
 
     # Initializes the encrypted databases and sorts the first level
     init(client, permutation)
@@ -177,5 +166,4 @@ def bitonic_sort(client: Communicate):
 
         sort(client, permutation, partition_size)
 
-    client.write_encryption_keys()
-    write_indexing(index_translation)
+    return permutation_indexing
