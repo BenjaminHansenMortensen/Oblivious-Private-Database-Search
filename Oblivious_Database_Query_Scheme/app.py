@@ -43,7 +43,7 @@ if __name__ == '__main__':
     MP_SPDZ_directory_validation()
 
     # Moves and compiles the MP-SDPZ scripts
-    setup_MPC_scripts()
+    #setup_MPC_scripts()
 
     server = Server()
     client = Client()
@@ -71,7 +71,7 @@ if __name__ == '__main__':
         
         # Encrypted the search query under the server's encryption key
         client.send_encrypt_query_message(search_query)
-        
+
         # Searches and retrieves the records
         client.request_PNR_records()
 

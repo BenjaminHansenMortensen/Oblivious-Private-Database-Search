@@ -3,6 +3,8 @@
 #Imports
 from pathlib import Path
 from json import load, dump
+from random import shuffle
+
 from Oblivious_Database_Query_Scheme.getters import get_PNR_records_directory as PNR_records_directory
 from Oblivious_Database_Query_Scheme.getters import get_excluded_PNR_records as excluded_PNR_records
 from Oblivious_Database_Query_Scheme.getters import get_inverted_index_matrix_path as inverted_index_matrix_path
@@ -94,9 +96,10 @@ def update_inverse_index_matrix(inverse_index_matrix: dict, record: dict[str, st
             inverse_index_matrix[value] = [pointer]
 
 
-def run():
+def run() -> list[Path]:
     inverse_index_matrix = {}
     records_path = [path for path in PNR_records_directory().glob('*') if path.name not in excluded_PNR_records()]
+    shuffle(records_path)
 
     for pointer in range(len(records_path)):
         record = read_record(records_path[pointer])
@@ -105,3 +108,5 @@ def run():
 
     with inverted_index_matrix_path().open('w') as file:
         dump(inverse_index_matrix, file, indent=4)
+
+    return records_path

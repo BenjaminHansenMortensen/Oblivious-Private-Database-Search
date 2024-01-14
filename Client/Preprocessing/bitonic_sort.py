@@ -152,7 +152,6 @@ def bitonic_sort(client) -> dict[int, int]:
     # Creates new indexing of the shuffled database
     permutation = random.permutation(database_size()).tolist()
     permutation_indexing = dict(zip([str(i) for i in range(len(permutation))], permutation))
-    #permutation_indexing = dict(enumerate(permutation))
 
     # Initializes the encrypted databases and sorts the first level
     init(client, permutation)

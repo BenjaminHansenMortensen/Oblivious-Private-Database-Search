@@ -4,14 +4,11 @@ from os import chdir
 from pathlib import Path
 from re import findall
 from subprocess import Popen, PIPE
-from random import  shuffle
 
 from Oblivious_Database_Query_Scheme.getters import get_MP_SPDZ_directory as MP_SPDZ_directory
 from Oblivious_Database_Query_Scheme.getters import get_working_directory as working_directory
 from Oblivious_Database_Query_Scheme.getters import get_number_of_blocks as number_of_blocks
 from Oblivious_Database_Query_Scheme.getters import get_database_size as database_size
-from Oblivious_Database_Query_Scheme.getters import get_PNR_records_directory as PNR_records_directory
-from Oblivious_Database_Query_Scheme.getters import get_excluded_PNR_records as excluded_PNR_records
 from Oblivious_Database_Query_Scheme.getters import get_encrypted_PNR_records_directory as encrypted_PNR_records_directory
 from Oblivious_Database_Query_Scheme.getters import get_server_MP_SPDZ_input_path as MP_SPDZ_input_path
 from Oblivious_Database_Query_Scheme.getters import get_server_MP_SPDZ_output_path as MP_SPDZ_output_path
@@ -45,15 +42,12 @@ class Utilities:
 
         """
 
-        inverted_index_matrix()
+        self.records_indexing = inverted_index_matrix()
 
     def database_preprocessing(self):
         """
 
         """
-
-        self.records_indexing = [path for path in PNR_records_directory().glob('*') if path.name not in excluded_PNR_records()]
-        #shuffle(self.records_indexing)
 
         for i in range(len(self.records_indexing)):
             record_path = self.records_indexing[i]
