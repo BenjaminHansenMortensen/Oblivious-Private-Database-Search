@@ -6,7 +6,7 @@ from json import load, dump
 from hashlib import shake_128
 from cryptography.hazmat.primitives.ciphers import (Cipher, algorithms, modes)
 from Oblivious_Database_Query_Scheme.getters import get_inverted_index_matrix_path as inverted_index_matrix_path
-from Oblivious_Database_Query_Scheme.getters import get_encrypted_inverted_index_matrix_path as encrypted_inverted_index_matrix_path
+from Oblivious_Database_Query_Scheme.getters import get_server_encrypted_inverted_index_matrix_path as encrypted_inverted_index_matrix_path
 from Oblivious_Database_Query_Scheme.getters import get_number_of_bytes as number_of_bytes
 
 

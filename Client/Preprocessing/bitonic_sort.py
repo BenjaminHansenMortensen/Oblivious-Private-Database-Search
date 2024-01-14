@@ -3,7 +3,6 @@
 from math import log
 from numpy import random
 from Oblivious_Database_Query_Scheme.getters import get_database_size as database_size
-#from Client.Networking.client_communicator import Communicator
 
 
 def compare_init(client, index: int, permutation: list, descending: bool, mid_point: int):
@@ -152,7 +151,8 @@ def bitonic_sort(client) -> dict[int, int]:
 
     # Creates new indexing of the shuffled database
     permutation = random.permutation(database_size()).tolist()
-    permutation_indexing = dict(enumerate(permutation))
+    permutation_indexing = dict(zip([str(i) for i in range(len(permutation))], permutation))
+    #permutation_indexing = dict(enumerate(permutation))
 
     # Initializes the encrypted databases and sorts the first level
     init(client, permutation)

@@ -195,11 +195,22 @@ def get_inverted_index_matrix_path():
     inverted_index_matrix_path = working_directory / "Server" / "Indexing" / "Index_Files" / "Inverted_Index_Matrix.json"
     return inverted_index_matrix_path
 
-def get_encrypted_inverted_index_matrix_path():
+def get_server_encrypted_inverted_index_matrix_path():
     """ Getter for the encrypted_inverted_index_matrix_path variable """
     global working_directory
     encrypted_inverted_index_matrix_path = working_directory / "Server" / "Indexing" / "Index_Files" / "Encrypted_Inverted_Index_Matrix.json"
     return encrypted_inverted_index_matrix_path
+
+def get_client_indexing_directory():
+    """ Getter for the client_indexing_directory variable """
+    global working_directory
+    client_indexing_directory = working_directory / "Client" / "Indexing"
+    return client_indexing_directory
+
+def get_client_encrypted_indexing_path():
+    """ Getter for the client_encrypted_indexing_path variable"""
+    client_encrypted_indexing_path = get_client_indexing_directory() / "Encrypted_Inverted_Index_Matrix.json"
+    return client_encrypted_indexing_path
 
 def get_permutation_indexing_path():
     """ Getter for the permutation_indexing_path variable """
@@ -239,6 +250,16 @@ def get_server_networking_certificate_path():
     """ Getter for the client_networking_key_path """
     server_networking_certificate_path = working_directory / "Server" / "Networking" / "cert.pem"
     return server_networking_certificate_path
+
+def get_indexing_encryption_keys_directory():
+    """ Getter for the indexing_encryption_keys_directory variable """
+    indexing_encryption_keys_directory = working_directory / "Server" / "Indexing" / "Keys"
+    return indexing_encryption_keys_directory
+
+def get_indexing_encryption_key_path():
+    """ Getter for the indexing_encryption_key_path variable """
+    indexing_encryption_key_path = working_directory / "Server" / "Indexing" / "Keys" / "Encryption_Key.txt"
+    return indexing_encryption_key_path
 
 
 working_directory = Path.cwd().parent

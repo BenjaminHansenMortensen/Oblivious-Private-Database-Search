@@ -4,6 +4,7 @@ from os import chdir
 from pathlib import Path
 from re import findall
 from subprocess import Popen, PIPE
+from random import  shuffle
 
 from Oblivious_Database_Query_Scheme.getters import get_MP_SPDZ_directory as MP_SPDZ_directory
 from Oblivious_Database_Query_Scheme.getters import get_working_directory as working_directory
@@ -15,6 +16,7 @@ from Oblivious_Database_Query_Scheme.getters import get_encrypted_PNR_records_di
 from Oblivious_Database_Query_Scheme.getters import get_server_MP_SPDZ_input_path as MP_SPDZ_input_path
 from Oblivious_Database_Query_Scheme.getters import get_server_MP_SPDZ_output_path as MP_SPDZ_output_path
 from Oblivious_Database_Query_Scheme.getters import get_aes_128_mpc_script_path as aes_128_mpc_script_path
+from Oblivious_Database_Query_Scheme.getters import get_indexing_encryption_key_path as indexing_encryption_key_path
 
 from Server.Data_Generation.generatePNR_Data import run as generate_PNR_records
 from Server.Indexing.inverted_index_matrix import run as inverted_index_matrix
@@ -51,6 +53,7 @@ class Utilities:
         """
 
         self.records_indexing = [path for path in PNR_records_directory().glob('*') if path.name not in excluded_PNR_records()]
+        #shuffle(self.records_indexing)
 
         for i in range(len(self.records_indexing)):
             record_path = self.records_indexing[i]
@@ -61,6 +64,7 @@ class Utilities:
             with record_copy_path.open("w") as file:
                 file.write(encoded_file)
                 file.close()
+
     def retrieve_and_encrypt_files(self, index_a: int, index_b: int, MP_SPDZ_script_name: str):
         """
 
@@ -140,6 +144,16 @@ class Utilities:
 
         encryption_key = encrypt_indexing()
         self.indexing_encryption_key = encryption_key
+        self.write_indexing_encryption_key()
+
+    def write_indexing_encryption_key(self):
+        """
+
+        """
+
+        with indexing_encryption_key_path().open("w") as file:
+            file.write(self.indexing_encryption_key)
+            file.close()
 
     def encrypt_query(self):
         """
@@ -147,6 +161,18 @@ class Utilities:
         """
 
         player_id = 1
-        self.write_as_MP_SPDZ_inputs(player_id, [[self.indexing_encryption_key]])
+        self.write_as_MP_SPDZ_inputs(player_id, [[self.get_indexing_encryption_key()]])
         MP_SPDZ_script_name = aes_128_mpc_script_path().stem
         self.run_MP_SPDZ(player_id, MP_SPDZ_script_name)
+
+    def get_indexing_encryption_key(self) -> str:
+        """
+
+        """
+
+        if not self.indexing_encryption_key:
+            with indexing_encryption_key_path().open("r") as file:
+                self.indexing_encryption_key = file.read()
+                file.close()
+
+        return self.indexing_encryption_key

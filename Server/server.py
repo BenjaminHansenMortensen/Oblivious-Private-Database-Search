@@ -10,6 +10,8 @@ from Oblivious_Database_Query_Scheme.getters import get_server_networking_certif
 from Oblivious_Database_Query_Scheme.getters import get_client_networking_certificate_path as client_networking_certificate_path
 from Oblivious_Database_Query_Scheme.getters import get_compare_and_encrypt_mpc_script_path as compare_and_encrypt_mpc_script_path
 from Oblivious_Database_Query_Scheme.getters import get_compare_and_reencrypt_mpc_script_path as compare_and_reencrypt_mpc_script_path
+from Oblivious_Database_Query_Scheme.getters import get_server_encrypted_inverted_index_matrix_path as encrypted_inverted_index_matrix_path
+from Oblivious_Database_Query_Scheme.getters import get_encrypted_PNR_records_directory as encrypted_PNR_records_directory
 
 from Server.Utilities.server_utilities import Utilities
 
@@ -33,10 +35,11 @@ class Communicator(Utilities):
         self.ENCRYPT_FILES_MESSAGE = '<ENCRYPT FILES>'
         self.REENCRYPT_FILES_MESSAGE = '<REENCRYPT FILES>'
         self.SENDING_INDICES_MESSAGE = '<SENDING INDICES>'
-        self.SENDING_JSON_MESSAGE = '<SENDING JSON>'
+        self.SENDING_ENCRYPTED_INDEXING_MESSAGE = '<SENDING ENCRYPTED INDEXING>'
         self.FILE_NAME_MESSAGE = '<FILE NAME>'
         self.FILE_CONTENTS_MESSAGE = '<FILE CONTENTS>'
         self.ENCRYPT_QUERY_MESSAGE = '<ENCRYPT QUERY>'
+        self.REQUEST_ENCRYPTED_PNR_RECORD_MESSAGE = '<REQUESTING ENCRYPTED PNR RECORD>'
         self.DISCONNECT_MESSAGE = '<DISCONNECT>'
         self.END_FILE_MESSAGE = '<END FILE>'
 
@@ -65,7 +68,7 @@ class Communicator(Utilities):
         """
 
         message = message.encode(self.FORMAT)
-        message += b' ' * (self.HEADER - len(message))
+        message += b'\x00' * (self.HEADER - len(message))
         return message
 
     def wait(self, connection):
@@ -73,43 +76,10 @@ class Communicator(Utilities):
 
         """
 
-        while (message := connection.recv(self.HEADER).decode(self.FORMAT).strip()) != self.DISCONNECT_MESSAGE:
+        while (message := connection.recv(self.HEADER).decode(self.FORMAT).strip(chr(0))) != self.DISCONNECT_MESSAGE:
             sleep(0.01)
 
-
-    def receive_json(self, connection, address):
-        """
-            Receives the json file and writes it.
-
-            Parameters:
-                - connection (socket) : The connection to the sender.
-                - address (tuple(str, int)) : The address to receive from.
-
-            Returns:
-
-        """
-
-        while True:
-            message = connection.recv(self.HEADER).decode(self.FORMAT).strip()
-            if message == self.DISCONNECT_MESSAGE:
-                print(f'[DISCONNECTED] {address}')
-                return
-            elif message == self.FILE_NAME_MESSAGE:
-                print(f'[RECEIVED] {message} from {address}')
-                file_name = connection.recv(self.HEADER).decode(self.FORMAT).strip()
-            elif message == self.FILE_CONTENTS_MESSAGE:
-                print(f'[RECEIVING] {message} from {address}')
-
-                file_contents = ''
-                while (message := connection.recv(self.HEADER).decode(self.FORMAT).strip()) != self.END_FILE_MESSAGE:
-                    file_contents += message
-
-                print(f'[RECEIVED] {message} from {address}')
-                with open(f'{file_name}.json', 'w') as file:
-                    file.write(file_contents)
-                    file.close()
-
-    def send_json(self, file_name, file_contents):
+    def send_encrypted_indexing(self):
         """
             Sends a json file to an address.
 
@@ -121,16 +91,21 @@ class Communicator(Utilities):
 
         """
 
-        send_host = self.client_context.wrap_socket(socket(AF_INET, SOCK_STREAM), server_hostname='localhost')
+        file_name = encrypted_inverted_index_matrix_path().name
+        with encrypted_inverted_index_matrix_path().open("r") as file:
+            inverted_index_matrix = file.read()
+            file.close()
 
-        send_host.connect(self.CLIENT_ADDR)
-        send_host.send(self.add_padding(self.FILE_NAME_MESSAGE))
-        send_host.send(self.add_padding(f'{file_name}'))
-        send_host.send(self.add_padding(self.FILE_CONTENTS_MESSAGE))
-        send_host.send(self.add_padding(f'{file_contents}'))
-        send_host.send(self.add_padding(self.END_FILE_MESSAGE))
-        send_host.send(self.add_padding(self.DISCONNECT_MESSAGE))
-        send_host.close()
+        connection = self.client_context.wrap_socket(socket(AF_INET, SOCK_STREAM), server_hostname='localhost')
+        connection.connect(self.CLIENT_ADDR)
+        connection.send(self.add_padding(self.SENDING_ENCRYPTED_INDEXING_MESSAGE))
+        connection.send(self.add_padding(self.FILE_NAME_MESSAGE))
+        connection.send(self.add_padding(file_name))
+        connection.send(self.add_padding(self.FILE_CONTENTS_MESSAGE))
+        connection.send(self.add_padding(inverted_index_matrix))
+        connection.send(self.add_padding(self.END_FILE_MESSAGE))
+        connection.send(self.add_padding(self.DISCONNECT_MESSAGE))
+        connection.close()
 
     def received_database_preprocessing_message(self, connection, address):
         """
@@ -147,10 +122,10 @@ class Communicator(Utilities):
         """
 
         while True:
-            message = connection.recv(self.HEADER).decode(self.FORMAT).strip()
+            message = connection.recv(self.HEADER).decode(self.FORMAT).strip(chr(0))
             if message == self.SENDING_INDICES_MESSAGE:
-                index_a = int(connection.recv(self.HEADER).decode(self.FORMAT).strip())
-                index_b = int(connection.recv(self.HEADER).decode(self.FORMAT).strip())
+                index_a = int(connection.recv(self.HEADER).decode(self.FORMAT).strip(chr(0)))
+                index_b = int(connection.recv(self.HEADER).decode(self.FORMAT).strip(chr(0)))
                 connection.send(self.add_padding(self.DISCONNECT_MESSAGE))
                 break
 
@@ -166,16 +141,28 @@ class Communicator(Utilities):
 
         self.encrypt_query()
 
+    def send_encrypted_PNR_record(self, connection, address):
+        """
+
+        """
+
+        index = connection.recv(self.HEADER).decode(self.FORMAT).strip(chr(0))
+        encrypted_PNR_record_path = encrypted_PNR_records_directory() / f"{index}.txt"
+
+        with encrypted_PNR_record_path.open("r") as file:
+            encrypted_PNR_record = file.read()
+            file.close()
+
+        connection.send(self.add_padding(encrypted_PNR_record))
+        connection.send(self.add_padding(self.END_FILE_MESSAGE))
+
     def receive(self, connection, address):
         """
 
         """
 
-        message = connection.recv(self.HEADER).decode(self.FORMAT).strip()
-        if message == self.SENDING_JSON_MESSAGE:
-            print(f'[RECEIVED] {message} from {address}')
-            self.receive_json(connection, address)
-        elif message == self.DATABASE_PREPROCESSING_MESSAGE:
+        message = connection.recv(self.HEADER).decode(self.FORMAT).strip(chr(0))
+        if message == self.DATABASE_PREPROCESSING_MESSAGE:
             print(f'[RECEIVED] {message} from {address}')
             self.received_database_preprocessing_message(connection, address)
             connection.send(self.add_padding(self.DISCONNECT_MESSAGE))
@@ -186,6 +173,9 @@ class Communicator(Utilities):
         elif message == self.ENCRYPT_QUERY_MESSAGE:
             print(f'[RECEIVED] {message} from {address}')
             self.received_encrypt_query_message(connection, address)
+        elif message == self.REQUEST_ENCRYPTED_PNR_RECORD_MESSAGE:
+            print(f'[RECEIVED] {message} from {address}')
+            self.send_encrypted_PNR_record(connection, address)
 
     def run(self):
         """
@@ -210,8 +200,6 @@ class Communicator(Utilities):
                 self.receive(conn, addr)
             except timeout:
                 continue
-            except Exception as e:
-                print(f'[SERVER ERROR] {e}')
 
     def kill(self):
         """

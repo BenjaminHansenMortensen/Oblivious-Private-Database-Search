@@ -8,8 +8,11 @@ from ssl import SSLContext, PROTOCOL_TLS_CLIENT, PROTOCOL_TLS_SERVER
 from Oblivious_Database_Query_Scheme.getters import get_client_networking_key_path as client_networking_key_path
 from Oblivious_Database_Query_Scheme.getters import get_client_networking_certificate_path as client_networking_certificate_path
 from Oblivious_Database_Query_Scheme.getters import get_server_networking_certificate_path as server_networking_certificate_path
+from Oblivious_Database_Query_Scheme.getters import get_client_indexing_directory as indexing_directory
+from Oblivious_Database_Query_Scheme.getters import get_records_encryption_key_streams_directory as encryption_key_streams_directory
 
 from Client.Utilities.client_utilities import Utilities
+from Client.Encoding.file_decryptor import run as decrypt_and_store_files
 
 
 class Communicator(Utilities):
@@ -30,10 +33,11 @@ class Communicator(Utilities):
         self.ENCRYPT_FILES_MESSAGE = '<ENCRYPT FILES>'
         self.REENCRYPT_FILES_MESSAGE = '<REENCRYPT FILES>'
         self.SENDING_INDICES_MESSAGE = '<SENDING INDICES>'
-        self.SENDING_JSON_MESSAGE = '<SENDING JSON>'
+        self.SENDING_ENCRYPTED_INDEXING_MESSAGE = '<SENDING ENCRYPTED INDEXING>'
         self.FILE_NAME_MESSAGE = '<FILE NAME>'
         self.FILE_CONTENTS_MESSAGE = '<FILE CONTENTS>'
         self.ENCRYPT_QUERY_MESSAGE = '<ENCRYPT QUERY>'
+        self.REQUEST_ENCRYPTED_PNR_RECORD_MESSAGE = '<REQUESTING ENCRYPTED PNR RECORD>'
         self.DISCONNECT_MESSAGE = '<DISCONNECT>'
         self.END_FILE_MESSAGE = '<END FILE>'
 
@@ -62,7 +66,7 @@ class Communicator(Utilities):
         """
 
         message = message.encode(self.FORMAT)
-        message += b' ' * (self.HEADER - len(message))
+        message += b'\x00' * (self.HEADER - len(message))
         return message
 
     def wait(self, connection):
@@ -70,10 +74,10 @@ class Communicator(Utilities):
 
         """
 
-        while (message := connection.recv(self.HEADER).decode(self.FORMAT).strip()) != self.DISCONNECT_MESSAGE:
+        while (message := connection.recv(self.HEADER).decode(self.FORMAT).strip(chr(0))) != self.DISCONNECT_MESSAGE:
             sleep(0.01)
 
-    def receive_json(self, connection, address):
+    def receive_encrypted_indexing(self, connection, address):
         """
             Receives the json file and writes it.
 
@@ -86,58 +90,31 @@ class Communicator(Utilities):
         """
 
         while True:
-            message = connection.recv(self.HEADER).decode(self.FORMAT).strip()
+            message = connection.recv(self.HEADER).decode(self.FORMAT).strip(chr(0))
             if message == self.DISCONNECT_MESSAGE:
-                print(f'[DISCONNECTED] {address}')
                 return
             elif message == self.FILE_NAME_MESSAGE:
-                print(f'[RECEIVED] {message} from {address}')
-                file_name = connection.recv(self.HEADER).decode(self.FORMAT).strip()
+                file_name = connection.recv(self.HEADER).decode(self.FORMAT).strip(chr(0))
             elif message == self.FILE_CONTENTS_MESSAGE:
-                print(f'[RECEIVING] {message} from {address}')
-
                 file_contents = ''
-                while (message := connection.recv(self.HEADER).decode(self.FORMAT).strip()) != self.END_FILE_MESSAGE:
+                while (message := connection.recv(self.HEADER).decode(self.FORMAT).strip(chr(0))) != self.END_FILE_MESSAGE:
                     file_contents += message
 
-                print(f'[RECEIVED] {message} from {address}')
-                with open(f'{file_name}.json', 'w') as file:
+                file_path = indexing_directory() / file_name
+                with file_path.open("w") as file:
                     file.write(file_contents)
                     file.close()
-
-    def send_json(self, file_name, file_contents):
-        """
-            Sends a json file to an address.
-
-            Parameters:
-                - json_file (str) : The dictionary to be sent.
-                - address (tuple(str, int)) : The address to send to.
-
-            Returns:
-
-        """
-
-        send_host = self.client_context.wrap_socket(socket(AF_INET, SOCK_STREAM), server_hostname='localhost')
-
-        send_host.connect(self.SERVER_ADDR)
-        send_host.send(self.add_padding(self.FILE_NAME_MESSAGE))
-        send_host.send(self.add_padding(f'{file_name}'))
-        send_host.send(self.add_padding(self.FILE_CONTENTS_MESSAGE))
-        send_host.send(self.add_padding(f'{file_contents}'))
-        send_host.send(self.add_padding(self.END_FILE_MESSAGE))
-        send_host.send(self.add_padding(self.DISCONNECT_MESSAGE))
-        send_host.close()
 
     def send_database_preprocessing_message(self):
         """
 
         """
 
-        send_host = self.client_context.wrap_socket(socket(AF_INET, SOCK_STREAM), server_hostname='localhost')
-        send_host.connect(self.SERVER_ADDR)
-        send_host.send(self.add_padding(self.DATABASE_PREPROCESSING_MESSAGE))
-        self.wait(send_host)
-        send_host.close()
+        connection = self.client_context.wrap_socket(socket(AF_INET, SOCK_STREAM), server_hostname='localhost')
+        connection.connect(self.SERVER_ADDR)
+        connection.send(self.add_padding(self.DATABASE_PREPROCESSING_MESSAGE))
+        self.wait(connection)
+        connection.close()
 
         self.database_preprocessing(self)
 
@@ -146,56 +123,100 @@ class Communicator(Utilities):
 
         """
 
-        send_host = self.client_context.wrap_socket(socket(AF_INET, SOCK_STREAM), server_hostname='localhost')
-        send_host.connect(self.SERVER_ADDR)
-        send_host.send(self.add_padding(self.ENCRYPT_FILES_MESSAGE))
-        send_host.send(self.add_padding(self.SENDING_INDICES_MESSAGE))
-        send_host.send(self.add_padding(f"{index_a}"))
-        send_host.send(self.add_padding(f"{index_b}"))
-        self.wait(send_host)
-        send_host.close()
+        connection = self.client_context.wrap_socket(socket(AF_INET, SOCK_STREAM), server_hostname='localhost')
+        connection.connect(self.SERVER_ADDR)
+        connection.send(self.add_padding(self.ENCRYPT_FILES_MESSAGE))
+        connection.send(self.add_padding(self.SENDING_INDICES_MESSAGE))
+        connection.send(self.add_padding(str(index_a)))
+        connection.send(self.add_padding(str(index_b)))
+        self.wait(connection)
+        connection.close()
 
-        self.encrypt_files(swap)
+        self.encrypt_files(swap, index_a, index_b)
 
     def send_indices_and_reencrypt(self, swap: bool, index_a: int, index_b: int):
         """
 
         """
 
-        send_host = self.client_context.wrap_socket(socket(AF_INET, SOCK_STREAM), server_hostname='localhost')
-        send_host.connect(self.SERVER_ADDR)
-        send_host.send(self.add_padding(self.REENCRYPT_FILES_MESSAGE))
-        send_host.send(self.add_padding(self.SENDING_INDICES_MESSAGE))
-        send_host.send(self.add_padding(f"{index_a}"))
-        send_host.send(self.add_padding(f"{index_b}"))
-        self.wait(send_host)
-        send_host.close()
+        connection = self.client_context.wrap_socket(socket(AF_INET, SOCK_STREAM), server_hostname='localhost')
+        connection.connect(self.SERVER_ADDR)
+        connection.send(self.add_padding(self.REENCRYPT_FILES_MESSAGE))
+        connection.send(self.add_padding(self.SENDING_INDICES_MESSAGE))
+        connection.send(self.add_padding(str(index_a)))
+        connection.send(self.add_padding(str(index_b)))
+        self.wait(connection)
+        connection.close()
 
         self.reencrypt_files(swap, index_a, index_b)
 
-    def send_encrypt_query_message(self, search_query) -> str:
+    def send_encrypt_query_message(self, search_query: str):
         """
 
         """
 
-        send_host = self.client_context.wrap_socket(socket(AF_INET, SOCK_STREAM), server_hostname='localhost')
-        send_host.connect(self.SERVER_ADDR)
-        send_host.send(self.add_padding(self.ENCRYPT_QUERY_MESSAGE))
-        self.wait(send_host)
-        send_host.close()
+        connection = self.client_context.wrap_socket(socket(AF_INET, SOCK_STREAM), server_hostname='localhost')
+        connection.connect(self.SERVER_ADDR)
+        connection.send(self.add_padding(self.ENCRYPT_QUERY_MESSAGE))
+        self.wait(connection)
+        connection.close()
 
-        encrypted_query = self.encrypt_query(search_query)
-        return encrypted_query
+        self.encrypt_query(search_query)
+
+    def request_PNR_records(self):
+        """
+
+        """
+        
+        pointers = self.get_pointers()
+
+        for pointer in pointers:
+            database_index = self.get_permuted_index(pointer)
+
+            encryption_key_streams = self.get_record_key_streams(database_index)
+
+            encrypted_PNR_records = self.request_encrypted_PNR_record(database_index)
+
+            decrypt_and_store_files([encrypted_PNR_records], [encryption_key_streams])
+            
+    def request_encrypted_PNR_record(self, index: int) -> list[str]:
+        """
+        
+        """
+        
+        connection = self.client_context.wrap_socket(socket(AF_INET, SOCK_STREAM), server_hostname='localhost')
+        connection.connect(self.SERVER_ADDR)
+        connection.send(self.add_padding(self.REQUEST_ENCRYPTED_PNR_RECORD_MESSAGE))
+        connection.send(self.add_padding(str(index)))
+        ciphertexts = ''
+        while (message := connection.recv(self.HEADER).decode(self.FORMAT).strip(chr(0))) != self.END_FILE_MESSAGE:
+            ciphertexts += message
+
+        return ciphertexts.split(" ")
+
+    def get_record_key_streams(self, index: str) -> list[str]:
+        """
+
+        """
+
+        key_streams_path = encryption_key_streams_directory() / f"{index}.txt"
+        with key_streams_path.open("r") as file:
+            encryption_key_streams = file.read().split(" ")
+            file.close()
+
+        return encryption_key_streams
+
+
 
     def receive(self, connection, address):
         """
 
         """
 
-        message = connection.recv(self.HEADER).decode(self.FORMAT).strip()
+        message = connection.recv(self.HEADER).decode(self.FORMAT).strip(chr(0))
         print(f'[RECEIVED] {message} from {address}')
-        if message == self.SENDING_JSON_MESSAGE:
-            self.receive_json(connection, address)
+        if message == self.SENDING_ENCRYPTED_INDEXING_MESSAGE:
+            self.receive_encrypted_indexing(connection, address)
 
     def run(self):
         """
@@ -220,8 +241,6 @@ class Communicator(Utilities):
                 self.receive(conn, addr)
             except timeout:
                 continue
-            except Exception as e:
-                print(f'[CLIENT ERROR] {e}')
 
     def kill(self):
         """
