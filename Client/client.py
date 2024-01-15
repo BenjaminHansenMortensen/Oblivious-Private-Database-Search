@@ -2,7 +2,7 @@
 
 from time import sleep
 from threading import Thread
-from socket import socket, AF_INET, SOCK_STREAM, SOL_SOCKET, SO_REUSEADDR, timeout
+from socket import socket, AF_INET, SOCK_STREAM, SOL_SOCKET, SO_REUSEADDR, timeout, SHUT_WR
 from ssl import SSLContext, PROTOCOL_TLS_CLIENT, PROTOCOL_TLS_SERVER
 
 from Oblivious_Database_Query_Scheme.getters import get_client_networking_key_path as client_networking_key_path
@@ -112,8 +112,9 @@ class Communicator(Utilities):
 
         connection = self.client_context.wrap_socket(socket(AF_INET, SOCK_STREAM), server_hostname='localhost')
         connection.connect(self.SERVER_ADDR)
-        connection.send(self.add_padding(self.DATABASE_PREPROCESSING_MESSAGE))
+        connection.sendall(self.add_padding(self.DATABASE_PREPROCESSING_MESSAGE))
         self.wait(connection)
+        connection.shutdown(SHUT_WR)
         connection.close()
 
         self.database_preprocessing(self)
@@ -125,11 +126,12 @@ class Communicator(Utilities):
 
         connection = self.client_context.wrap_socket(socket(AF_INET, SOCK_STREAM), server_hostname='localhost')
         connection.connect(self.SERVER_ADDR)
-        connection.send(self.add_padding(self.ENCRYPT_FILES_MESSAGE))
-        connection.send(self.add_padding(self.SENDING_INDICES_MESSAGE))
-        connection.send(self.add_padding(str(index_a)))
-        connection.send(self.add_padding(str(index_b)))
+        connection.sendall(self.add_padding(self.ENCRYPT_FILES_MESSAGE))
+        connection.sendall(self.add_padding(self.SENDING_INDICES_MESSAGE))
+        connection.sendall(self.add_padding(str(index_a)))
+        connection.sendall(self.add_padding(str(index_b)))
         self.wait(connection)
+        connection.shutdown(SHUT_WR)
         connection.close()
 
         self.encrypt_files(swap, index_a, index_b)
@@ -141,11 +143,12 @@ class Communicator(Utilities):
 
         connection = self.client_context.wrap_socket(socket(AF_INET, SOCK_STREAM), server_hostname='localhost')
         connection.connect(self.SERVER_ADDR)
-        connection.send(self.add_padding(self.REENCRYPT_FILES_MESSAGE))
-        connection.send(self.add_padding(self.SENDING_INDICES_MESSAGE))
-        connection.send(self.add_padding(str(index_a)))
-        connection.send(self.add_padding(str(index_b)))
+        connection.sendall(self.add_padding(self.REENCRYPT_FILES_MESSAGE))
+        connection.sendall(self.add_padding(self.SENDING_INDICES_MESSAGE))
+        connection.sendall(self.add_padding(str(index_a)))
+        connection.sendall(self.add_padding(str(index_b)))
         self.wait(connection)
+        connection.shutdown(SHUT_WR)
         connection.close()
 
         self.reencrypt_files(swap, index_a, index_b)
@@ -157,8 +160,9 @@ class Communicator(Utilities):
 
         connection = self.client_context.wrap_socket(socket(AF_INET, SOCK_STREAM), server_hostname='localhost')
         connection.connect(self.SERVER_ADDR)
-        connection.send(self.add_padding(self.ENCRYPT_QUERY_MESSAGE))
+        connection.sendall(self.add_padding(self.ENCRYPT_QUERY_MESSAGE))
         self.wait(connection)
+        connection.shutdown(SHUT_WR)
         connection.close()
 
         self.encrypt_query(search_query)
@@ -186,11 +190,14 @@ class Communicator(Utilities):
         
         connection = self.client_context.wrap_socket(socket(AF_INET, SOCK_STREAM), server_hostname='localhost')
         connection.connect(self.SERVER_ADDR)
-        connection.send(self.add_padding(self.REQUEST_ENCRYPTED_PNR_RECORD_MESSAGE))
-        connection.send(self.add_padding(str(index)))
+        connection.sendall(self.add_padding(self.REQUEST_ENCRYPTED_PNR_RECORD_MESSAGE))
+        connection.sendall(self.add_padding(str(index)))
         ciphertexts = ''
         while (message := connection.recv(self.HEADER).decode(self.FORMAT).strip(chr(0))) != self.END_FILE_MESSAGE:
             ciphertexts += message
+
+        connection.shutdown(SHUT_WR)
+        connection.close()
 
         return ciphertexts.split(" ")
 
@@ -205,8 +212,6 @@ class Communicator(Utilities):
             file.close()
 
         return encryption_key_streams
-
-
 
     def receive(self, connection, address):
         """
@@ -234,6 +239,7 @@ class Communicator(Utilities):
         print(f'[LISTENING] on (\'{self.HOST}\', {self.LISTEN_PORT})')
         while True:
             if self.close:
+                self.listen_host.close()
                 return
 
             try:

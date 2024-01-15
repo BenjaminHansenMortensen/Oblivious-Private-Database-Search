@@ -68,7 +68,7 @@ if __name__ == '__main__':
         search_query = input("Search Query: ")
         if search_query == "exit":
             break
-        
+
         # Encrypted the search query under the server's encryption key
         client.send_encrypt_query_message(search_query)
 

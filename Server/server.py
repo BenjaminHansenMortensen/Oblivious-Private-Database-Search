@@ -2,7 +2,7 @@
 
 from time import sleep
 from threading import Thread
-from socket import socket, AF_INET, SOCK_STREAM, SOL_SOCKET, SO_REUSEADDR, timeout
+from socket import socket, AF_INET, SOCK_STREAM, SOL_SOCKET, SO_REUSEADDR, timeout, SHUT_WR
 from ssl import SSLContext, PROTOCOL_TLS_CLIENT, PROTOCOL_TLS_SERVER
 
 from Oblivious_Database_Query_Scheme.getters import get_server_networking_key_path as server_networking_key_path
@@ -98,13 +98,14 @@ class Communicator(Utilities):
 
         connection = self.client_context.wrap_socket(socket(AF_INET, SOCK_STREAM), server_hostname='localhost')
         connection.connect(self.CLIENT_ADDR)
-        connection.send(self.add_padding(self.SENDING_ENCRYPTED_INDEXING_MESSAGE))
-        connection.send(self.add_padding(self.FILE_NAME_MESSAGE))
-        connection.send(self.add_padding(file_name))
-        connection.send(self.add_padding(self.FILE_CONTENTS_MESSAGE))
-        connection.send(self.add_padding(inverted_index_matrix))
-        connection.send(self.add_padding(self.END_FILE_MESSAGE))
-        connection.send(self.add_padding(self.DISCONNECT_MESSAGE))
+        connection.sendall(self.add_padding(self.SENDING_ENCRYPTED_INDEXING_MESSAGE))
+        connection.sendall(self.add_padding(self.FILE_NAME_MESSAGE))
+        connection.sendall(self.add_padding(file_name))
+        connection.sendall(self.add_padding(self.FILE_CONTENTS_MESSAGE))
+        connection.sendall(self.add_padding(inverted_index_matrix))
+        connection.sendall(self.add_padding(self.END_FILE_MESSAGE))
+        connection.sendall(self.add_padding(self.DISCONNECT_MESSAGE))
+        connection.shutdown(SHUT_WR)
         connection.close()
 
     def received_database_preprocessing_message(self, connection, address):
@@ -114,7 +115,7 @@ class Communicator(Utilities):
 
         self.database_preprocessing()
 
-        connection.send(self.add_padding(self.DISCONNECT_MESSAGE))
+        connection.sendall(self.add_padding(self.DISCONNECT_MESSAGE))
 
     def MP_SPDZ_record_encryption(self, connection, address, MP_SPDZ_script_name: str):
         """
@@ -126,7 +127,7 @@ class Communicator(Utilities):
             if message == self.SENDING_INDICES_MESSAGE:
                 index_a = int(connection.recv(self.HEADER).decode(self.FORMAT).strip(chr(0)))
                 index_b = int(connection.recv(self.HEADER).decode(self.FORMAT).strip(chr(0)))
-                connection.send(self.add_padding(self.DISCONNECT_MESSAGE))
+                connection.sendall(self.add_padding(self.DISCONNECT_MESSAGE))
                 break
 
         if index_a is not None and index_b is not None:
@@ -137,7 +138,7 @@ class Communicator(Utilities):
 
         """
 
-        connection.send(self.add_padding(self.DISCONNECT_MESSAGE))
+        connection.sendall(self.add_padding(self.DISCONNECT_MESSAGE))
 
         self.encrypt_query()
 
@@ -153,8 +154,8 @@ class Communicator(Utilities):
             encrypted_PNR_record = file.read()
             file.close()
 
-        connection.send(self.add_padding(encrypted_PNR_record))
-        connection.send(self.add_padding(self.END_FILE_MESSAGE))
+        connection.sendall(self.add_padding(encrypted_PNR_record))
+        connection.sendall(self.add_padding(self.END_FILE_MESSAGE))
 
     def receive(self, connection, address):
         """
@@ -165,7 +166,7 @@ class Communicator(Utilities):
         if message == self.DATABASE_PREPROCESSING_MESSAGE:
             print(f'[RECEIVED] {message} from {address}')
             self.received_database_preprocessing_message(connection, address)
-            connection.send(self.add_padding(self.DISCONNECT_MESSAGE))
+            connection.sendall(self.add_padding(self.DISCONNECT_MESSAGE))
         elif message == self.ENCRYPT_FILES_MESSAGE:
             self.MP_SPDZ_record_encryption(connection, address, compare_and_encrypt_mpc_script_path().stem)
         elif message == self.REENCRYPT_FILES_MESSAGE:
@@ -193,6 +194,7 @@ class Communicator(Utilities):
         print(f'[LISTENING] on (\'{self.HOST}\', {self.LISTEN_PORT})')
         while True:
             if self.close:
+                self.listen_host.close()
                 return
 
             try:
