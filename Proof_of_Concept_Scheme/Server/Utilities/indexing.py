@@ -150,5 +150,5 @@ def run():
         record = flatten_and_filter_dictionary(record)
         update_index(indexing, record, file)
 
-    with open(f'Server/Indexing/Index_Files/Indexing.json', 'w') as fp:
+    with open(f'Server/Indexing/Indexing.json', 'w') as fp:
         dump(indexing, fp, indent=4)

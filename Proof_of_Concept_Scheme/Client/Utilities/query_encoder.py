@@ -75,7 +75,7 @@ def write_list(search_queries: list[int], output_path: Path | str) -> None:
 
 
 def run():
-    search_query = ['1']
+    search_query = ['0']
     integer_search_query = convert_search_queries_to_integers(search_query)
 
     output_path = Path('Client/MP_SPDZ_Inputs/MP_SPDZ_Only_Input-P0-0')

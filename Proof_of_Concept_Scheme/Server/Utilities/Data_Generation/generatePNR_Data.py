@@ -386,7 +386,7 @@ class GenerateTravelPlan:
     """
 
     def __init__(self):
-        self.airport_data = read_json('Server/Data_Generation/Supplementary_Data/airport_data.json')
+        self.airport_data = read_json('Server/Utilities/Data_Generation/Supplementary_Data/airport_data.json')
         self.flight_path_lengths = [(2, 0.75), (3, 0.2), (4, 0.045), (5, 0.004), (6, 0.001)]
 
     def get_path_length(self) -> int:

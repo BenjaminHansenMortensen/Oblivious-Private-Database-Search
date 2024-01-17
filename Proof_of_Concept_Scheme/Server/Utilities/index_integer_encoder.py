@@ -3,7 +3,7 @@
 #Imports
 from pathlib import Path
 from json import load
-from Server.Encoding.inverted_index_matrix_integer_encoder import (get_size_of_largest_set_of_pointers,
+from Proof_of_Concept_Scheme.Server.Utilities.inverted_index_matrix_integer_encoder import (get_size_of_largest_set_of_pointers,
                                                                    convert_file_to_integers,
                                                                    convert_string_to_unique_integer)
 
@@ -141,7 +141,7 @@ def write_dictionary(indexing: dict[int, list[int]], database: list[list[int]], 
 
 
 def run():
-    index_path = Path('Server/Indexing/Index_Files/Indexing.json')
+    index_path = Path('Server/Indexing/Indexing.json')
     with index_path.open(mode='r') as f:
         indexing = load(f)
 

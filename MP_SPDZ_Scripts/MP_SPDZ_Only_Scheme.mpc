@@ -1,7 +1,7 @@
 # Run all commands from the MP-SPDZ folder
 # Run ./compile.py MP_SPDZ_Only_Scheme
-# Run P0: ./atlas-party.x MP_SPDZ_Only_Scheme -p 0 -N 3 -IF ../PycharmProjects/MasterThesis/Client/MP_SPDZ_Inputs/MP_SPDZ_Only_Input -OF ../PycharmProjects/MasterThesis/Client/MPSPDZ_Outputs/MP_SPDZ_Only_Output &
-# Run P1: ./atlas-party.x MP_SPDZ_Only_Scheme -p 1 -N 3 -IF ../PycharmProjects/MasterThesis/Server/MP_SPDZ_Inputs/MP_SPDZ_Only_Input &
+# Run P0: ./atlas-party.x MP_SPDZ_Only_Scheme -p 0 -N 3 -IF ../PycharmProjects/MasterThesis/Proof_of_Concept_Scheme/Client/MP_SPDZ_Inputs/MP_SPDZ_Only_Input -OF ../PycharmProjects/MasterThesis/Proof_of_Concept_Scheme/Client/MPSPDZ_Outputs/MP_SPDZ_Only_Output &
+# Run P1: ./atlas-party.x MP_SPDZ_Only_Scheme -p 1 -N 3 -IF ../PycharmProjects/MasterThesis/Proof_of_Concept_Scheme/Server/MP_SPDZ_Inputs/MP_SPDZ_Only_Input &
 # Run P2: ./atlas-party.x MP_SPDZ_Only_Scheme -p 2 -N 3
 
 
@@ -328,7 +328,7 @@ size_of_search_queries = 1
 index_length = 1
 number_of_indices = 1
 size_of_set_of_pointers = 1
-size_of_set_of_attributes = 8
+size_of_set_of_attributes = 10
 
 file_signature_length = 1
 number_of_files = 1

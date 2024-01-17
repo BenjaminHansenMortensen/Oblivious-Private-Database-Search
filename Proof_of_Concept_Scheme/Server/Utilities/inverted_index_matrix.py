@@ -5,10 +5,6 @@ from pathlib import Path
 from json import load, dump
 from random import shuffle
 
-from Oblivious_Database_Query_Scheme.getters import get_PNR_records_directory as PNR_records_directory
-from Oblivious_Database_Query_Scheme.getters import get_excluded_PNR_records as excluded_PNR_records
-from Oblivious_Database_Query_Scheme.getters import get_inverted_index_matrix_path as inverted_index_matrix_path
-
 
 def read_record(record_path: str | Path) -> dict:
     """
@@ -98,7 +94,7 @@ def update_inverse_index_matrix(inverse_index_matrix: dict, record: dict[str, st
 
 def run() -> list[Path]:
     inverse_index_matrix = {}
-    records_path = [path for path in PNR_records_directory().glob('*') if (path.name not in excluded_PNR_records())]
+    records_path = [path for path in Path("Server/PNR_Records").glob('*') if (path.name != 'SampleRecord.json')]
     shuffle(records_path)
 
     for pointer in range(len(records_path)):
@@ -109,7 +105,7 @@ def run() -> list[Path]:
         record = flatten_and_filter_dictionary(record)
         update_inverse_index_matrix(inverse_index_matrix, record, str(pointer))
 
-    with inverted_index_matrix_path().open('w') as file:
+    with Path("Server/Indexing/Inverted_Index_Matrix.json").open('w') as file:
         dump(inverse_index_matrix, file, indent=4)
 
     return records_path
