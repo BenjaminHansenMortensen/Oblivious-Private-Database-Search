@@ -5,6 +5,9 @@ from threading import Thread
 from socket import socket, AF_INET, SOCK_STREAM, SOL_SOCKET, SO_REUSEADDR, timeout, SHUT_WR
 from ssl import SSLContext, PROTOCOL_TLS_CLIENT, PROTOCOL_TLS_SERVER
 
+from Oblivious_Database_Query_Scheme.getters import get_database_size as database_size
+from Oblivious_Database_Query_Scheme.getters import get_number_of_PNR_records as number_of_PNR_records
+from Oblivious_Database_Query_Scheme.getters import get_number_of_dummy_items as number_of_dummy_items
 from Oblivious_Database_Query_Scheme.getters import get_server_networking_key_path as server_networking_key_path
 from Oblivious_Database_Query_Scheme.getters import get_server_networking_certificate_path as server_networking_certificate_path
 from Oblivious_Database_Query_Scheme.getters import get_client_networking_certificate_path as client_networking_certificate_path
@@ -12,6 +15,7 @@ from Oblivious_Database_Query_Scheme.getters import get_compare_and_encrypt_mpc_
 from Oblivious_Database_Query_Scheme.getters import get_compare_and_reencrypt_mpc_script_path as compare_and_reencrypt_mpc_script_path
 from Oblivious_Database_Query_Scheme.getters import get_server_encrypted_inverted_index_matrix_path as encrypted_inverted_index_matrix_path
 from Oblivious_Database_Query_Scheme.getters import get_encrypted_PNR_records_directory as encrypted_PNR_records_directory
+from Oblivious_Database_Query_Scheme.getters import get_PNR_records_directory as PNR_records_directory
 
 from Server.Utilities.server_utilities import Utilities
 
@@ -31,9 +35,13 @@ class Communicator(Utilities):
         self.CLIENT_ADDR = ('localhost', 5500)
         self.FORMAT = 'utf-8'
 
+        self.ONLINE_MESSAGE = '<ONLINE>'
+        self.RESUME_FROM_PREVIOUS = '<RESUME FROM PREVIOUS>'
+        self.REQUEST_DUMMY_ITEMS_MESSAGE = '<REQUESTING DUMMY ITEMS>'
         self.DATABASE_PREPROCESSING_MESSAGE = '<DATABASE PRE-PROCESSING>'
         self.ENCRYPT_FILES_MESSAGE = '<ENCRYPT FILES>'
         self.REENCRYPT_FILES_MESSAGE = '<REENCRYPT FILES>'
+        self.DATABASE_PREPROCESSING_FINISHED_MESSAGE = '<DATABASE PRE-PROCESSING FINISHED>'
         self.SENDING_INDICES_MESSAGE = '<SENDING INDICES>'
         self.SENDING_ENCRYPTED_INDEXING_MESSAGE = '<SENDING ENCRYPTED INDEXING>'
         self.FILE_NAME_MESSAGE = '<FILE NAME>'
@@ -42,6 +50,7 @@ class Communicator(Utilities):
         self.REQUEST_ENCRYPTED_PNR_RECORD_MESSAGE = '<REQUESTING ENCRYPTED PNR RECORD>'
         self.DISCONNECT_MESSAGE = '<DISCONNECT>'
         self.END_FILE_MESSAGE = '<END FILE>'
+        self.SHUTDOWN_MESSAGE = '<SHUTTING DOWN>'
 
         self.server_context = SSLContext(PROTOCOL_TLS_SERVER)
         self.server_context.load_cert_chain(certfile=server_networking_certificate_path(),
@@ -55,6 +64,54 @@ class Communicator(Utilities):
         self.close = False
         self.run_thread = Thread(target=self.run)
         self.run_thread.start()
+
+        self.client_online = False
+        self.resume_from_previous = None
+        self.preprocessing_finished = False
+
+    def wait_for_client(self):
+        """
+
+        """
+
+        connection = self.client_context.wrap_socket(socket(AF_INET, SOCK_STREAM), server_hostname='localhost')
+
+        try:
+            connection.connect(self.CLIENT_ADDR)
+            connection.sendall(self.add_padding(self.ONLINE_MESSAGE))
+            connection.shutdown(SHUT_WR)
+            connection.close()
+            self.client_online = True
+        except ConnectionRefusedError:
+            print(f'[CONNECTING] Waiting for the client.')
+
+        while not self.client_online:
+            sleep(0.1)
+
+        while self.resume_from_previous is None:
+            sleep(0.1)
+
+        if self.resume_from_previous:
+            self.resume()
+
+        print(f'[CONNECTED] Connected to the client.')
+
+    def wait_for_preprocessing(self):
+        """
+
+        """
+
+        while not self.preprocessing_finished:
+            sleep(0.1)
+
+    def wait_for_client_shutdown(self):
+        """
+
+        """
+
+        while self.client_online:
+            sleep(1)
+
 
     def add_padding(self, message):
         """
@@ -79,6 +136,38 @@ class Communicator(Utilities):
         while (message := connection.recv(self.HEADER).decode(self.FORMAT).strip(chr(0))) != self.DISCONNECT_MESSAGE:
             sleep(0.01)
 
+    def create_database(self):
+        """
+
+        """
+
+        self.generate_PNR_records()
+        self.request_dummy_items()
+
+    def request_dummy_items(self):
+        """
+
+        """
+
+        connection = self.client_context.wrap_socket(socket(AF_INET, SOCK_STREAM), server_hostname='localhost')
+        connection.connect(self.CLIENT_ADDR)
+        connection.sendall(self.add_padding(self.REQUEST_DUMMY_ITEMS_MESSAGE))
+        connection.sendall(self.add_padding(str(number_of_dummy_items())))
+
+        for i in range(number_of_PNR_records(), database_size()):
+            dummy_item = ''
+            while (message := connection.recv(self.HEADER).decode(self.FORMAT).strip(chr(0))) != self.END_FILE_MESSAGE:
+                dummy_item += message
+
+            file_path = PNR_records_directory() / f"{i}.txt"
+            with file_path.open("w") as file:
+                file.write(dummy_item)
+                file.close()
+
+        connection.shutdown(SHUT_WR)
+        connection.close()
+
+
     def send_encrypted_indexing(self):
         """
             Sends a json file to an address.
@@ -99,6 +188,7 @@ class Communicator(Utilities):
         connection = self.client_context.wrap_socket(socket(AF_INET, SOCK_STREAM), server_hostname='localhost')
         connection.connect(self.CLIENT_ADDR)
         connection.sendall(self.add_padding(self.SENDING_ENCRYPTED_INDEXING_MESSAGE))
+        print(f'[SENT] {self.SENDING_ENCRYPTED_INDEXING_MESSAGE} to client.')
         connection.sendall(self.add_padding(self.FILE_NAME_MESSAGE))
         connection.sendall(self.add_padding(file_name))
         connection.sendall(self.add_padding(self.FILE_CONTENTS_MESSAGE))
@@ -163,20 +253,30 @@ class Communicator(Utilities):
         """
 
         message = connection.recv(self.HEADER).decode(self.FORMAT).strip(chr(0))
-        if message == self.DATABASE_PREPROCESSING_MESSAGE:
-            print(f'[RECEIVED] {message} from {address}')
+        if message == self.ONLINE_MESSAGE:
+            self.client_online = True
+            self.resume_from_previous = eval(connection.recv(self.HEADER).decode(self.FORMAT).strip(chr(0)))
+        elif message == self.RESUME_FROM_PREVIOUS:
+            self.resume_from_previous = True
+        elif message == self.DATABASE_PREPROCESSING_MESSAGE:
+            print(f'[RECEIVED] {message} from client.')
             self.received_database_preprocessing_message(connection, address)
             connection.sendall(self.add_padding(self.DISCONNECT_MESSAGE))
+        elif message == self.DATABASE_PREPROCESSING_FINISHED_MESSAGE:
+            print(f'[RECEIVED] {message} from client.')
+            self.preprocessing_finished = True
         elif message == self.ENCRYPT_FILES_MESSAGE:
             self.MP_SPDZ_record_encryption(connection, address, compare_and_encrypt_mpc_script_path().stem)
         elif message == self.REENCRYPT_FILES_MESSAGE:
             self.MP_SPDZ_record_encryption(connection, address, compare_and_reencrypt_mpc_script_path().stem)
         elif message == self.ENCRYPT_QUERY_MESSAGE:
-            print(f'[RECEIVED] {message} from {address}')
+            print(f'[RECEIVED] {message} from client.')
             self.received_encrypt_query_message(connection, address)
         elif message == self.REQUEST_ENCRYPTED_PNR_RECORD_MESSAGE:
-            print(f'[RECEIVED] {message} from {address}')
+            print(f'[RECEIVED] {message} from client.')
             self.send_encrypted_PNR_record(connection, address)
+        elif message == self.SHUTDOWN_MESSAGE:
+            self.client_online = False
 
     def run(self):
         """

@@ -2,7 +2,7 @@
 
 from pathlib import Path
 from os import chdir
-
+from math import log, ceil
 
 def working_directory_validation():
     """
@@ -69,9 +69,18 @@ def get_number_of_blocks() -> int:
 
 def get_database_size() -> int:
     """ Getter for the database_size variable """
-    database_size = 2**3
+    database_size = 2**4
     return database_size
 
+def get_number_of_PNR_records() -> int:
+    """ Getter for the number_of_PNR_records variable """
+    number_of_PNR_records = 10
+    return number_of_PNR_records
+
+def get_number_of_dummy_items() -> int:
+    """ getter for the number_of_dummy_items variable """
+    number_of_dummy_items = get_database_size() - get_number_of_PNR_records()
+    return number_of_dummy_items
 
 def get_MP_SPDZ_directory() -> Path:
     """ Getter for the MP_SPDZ_directory variable """
@@ -260,6 +269,18 @@ def get_indexing_encryption_key_path():
     """ Getter for the indexing_encryption_key_path variable """
     indexing_encryption_key_path = working_directory / "Server" / "Indexing" / "Keys" / "Encryption_Key.txt"
     return indexing_encryption_key_path
+
+def get_requested_pointers_path():
+    """ Getter for the requested_pointers_path variable """
+    global working_directory
+    requested_pointers_path = working_directory / "Client" / "Indexing" / "Requested_Pointers.txt"
+    return requested_pointers_path
+
+def get_server_indexing_files_directory():
+    """ Getter for the server_indexing_files_directory """
+    global working_directory
+    server_indexing_files_directory = working_directory / "Server" / "Indexing" / "Index_Files"
+    return server_indexing_files_directory
 
 
 working_directory = Path.cwd().parent

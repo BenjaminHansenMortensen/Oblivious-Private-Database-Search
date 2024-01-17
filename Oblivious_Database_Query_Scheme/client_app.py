@@ -2,6 +2,7 @@
 
 from subprocess import run
 from os import chdir
+
 from Oblivious_Database_Query_Scheme.getters import working_directory_validation, MP_SPDZ_directory_validation
 from Oblivious_Database_Query_Scheme.getters import get_MP_SPDZ_directory as MP_SPDZ_directory
 from Oblivious_Database_Query_Scheme.getters import get_working_directory as working_directory
@@ -15,7 +16,41 @@ from Oblivious_Database_Query_Scheme.getters import get_MP_SPDZ_circuits_directo
 
 from Client.client import Communicator as Client
 
-from Server.server import Communicator as Server
+
+def clean_up_files():
+    """
+
+    """
+    from Oblivious_Database_Query_Scheme.getters import get_excluded_PNR_records as excluded_PNR_records
+    from Oblivious_Database_Query_Scheme.getters import get_client_indexing_directory as client_indexing_directory
+    file_paths = [path for path in client_indexing_directory().glob('*')]
+    for file_path in file_paths:
+        file_path.unlink()
+
+    from Oblivious_Database_Query_Scheme.getters import get_encrypted_PNR_records_directory as encrypted_PNR_records_directory
+    file_paths = [path for path in encrypted_PNR_records_directory().glob('*')]
+    for file_path in file_paths:
+        file_path.unlink()
+
+    from Oblivious_Database_Query_Scheme.getters import get_records_encryption_key_streams_directory as records_encryption_key_streams_directory
+    file_paths = [path for path in records_encryption_key_streams_directory().glob('*')]
+    for file_path in file_paths:
+        file_path.unlink()
+
+    from Oblivious_Database_Query_Scheme.getters import get_retrieved_records_directory as retrieved_records_directory
+    file_paths = [path for path in retrieved_records_directory().glob('*')]
+    for file_path in file_paths:
+        file_path.unlink()
+
+    from Oblivious_Database_Query_Scheme.getters import get_PNR_records_directory as PNR_records_directory
+    file_paths = [path for path in PNR_records_directory().glob('*') if (path.name not in excluded_PNR_records())]
+    for file_path in file_paths:
+        file_path.unlink()
+
+    from Oblivious_Database_Query_Scheme.getters import get_server_indexing_files_directory as server_indexing_files_directory
+    file_paths = [path for path in server_indexing_files_directory().glob('*')]
+    for file_path in file_paths:
+        file_path.unlink()
 
 
 def setup_MPC_scripts():
@@ -45,25 +80,26 @@ if __name__ == '__main__':
     # Moves and compiles the MP-SDPZ scripts
     #setup_MPC_scripts()
 
-    server = Server()
+    resume = input("Resume from previous pre-processing? (y/n): ")
+
     client = Client()
+    if resume == 'y':
+        client.resume_from_previous = True
+    else:
+        client.resume_from_previous = False
 
-    # Initializes the database with PNR records
-    server.create_database()
+    client.wait_for_server()
 
-    # Creates an inverted index matrix of the database
-    server.create_indexing()
+    if not client.resume_from_previous:
+        clean_up_files()
 
-    # Ephemeral encryption of the indexing
-    server.encrypt_indexing()
-    server.send_encrypted_indexing()
+        client.wait_for_encrypted_indexing()
 
-    # Creates a new secret database
-    client.send_database_preprocessing_message()
+        # Creates a new secret database
+        client.send_database_preprocessing_message()
 
-    # Searching with file retrieval
+    # Searching and file retrieval
     while True:
-
         # Take search query from the client
         search_query = input("Search Query: ")
         if search_query == "exit":
@@ -75,5 +111,4 @@ if __name__ == '__main__':
         # Searches and retrieves the records
         client.request_PNR_records()
 
-    server.kill()
     client.kill()

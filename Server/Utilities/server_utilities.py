@@ -8,7 +8,7 @@ from subprocess import Popen, PIPE
 from Oblivious_Database_Query_Scheme.getters import get_MP_SPDZ_directory as MP_SPDZ_directory
 from Oblivious_Database_Query_Scheme.getters import get_working_directory as working_directory
 from Oblivious_Database_Query_Scheme.getters import get_number_of_blocks as number_of_blocks
-from Oblivious_Database_Query_Scheme.getters import get_database_size as database_size
+from Oblivious_Database_Query_Scheme.getters import get_number_of_PNR_records as number_of_PNR_records
 from Oblivious_Database_Query_Scheme.getters import get_encrypted_PNR_records_directory as encrypted_PNR_records_directory
 from Oblivious_Database_Query_Scheme.getters import get_server_MP_SPDZ_input_path as MP_SPDZ_input_path
 from Oblivious_Database_Query_Scheme.getters import get_server_MP_SPDZ_output_path as MP_SPDZ_output_path
@@ -30,12 +30,24 @@ class Utilities:
         self.records_indexing = None
         self.indexing_encryption_key = None
 
-    def create_database(self):
+    def resume(self):
+        """
+
+        """
+        try:
+            if not self.indexing_encryption_key:
+                with indexing_encryption_key_path().open("r") as file:
+                    self.indexing_encryption_key = file.read()
+                    file.close()
+        except FileNotFoundError:
+            pass
+
+    def generate_PNR_records(self):
         """
 
         """
 
-        generate_PNR_records(database_size())
+        generate_PNR_records(number_of_PNR_records())
 
     def create_indexing(self):
         """
@@ -51,7 +63,12 @@ class Utilities:
 
         for i in range(len(self.records_indexing)):
             record_path = self.records_indexing[i]
-            encoded_file = ' '.join(encode_file(record_path))
+            if record_path.suffix == ".json":
+                encoded_file = ' '.join(encode_file(record_path))
+            else:
+                with record_path.open("r") as file:
+                    encoded_file = file.read()
+                    file.close()
 
             record_copy_path = encrypted_PNR_records_directory() / f"{i}.txt"
             self.records_indexing[i] = record_copy_path
@@ -155,18 +172,6 @@ class Utilities:
         """
 
         player_id = 1
-        self.write_as_MP_SPDZ_inputs(player_id, [[self.get_indexing_encryption_key()]])
+        self.write_as_MP_SPDZ_inputs(player_id, [[self.indexing_encryption_key]])
         MP_SPDZ_script_name = aes_128_mpc_script_path().stem
         self.run_MP_SPDZ(player_id, MP_SPDZ_script_name)
-
-    def get_indexing_encryption_key(self) -> str:
-        """
-
-        """
-
-        if not self.indexing_encryption_key:
-            with indexing_encryption_key_path().open("r") as file:
-                self.indexing_encryption_key = file.read()
-                file.close()
-
-        return self.indexing_encryption_key

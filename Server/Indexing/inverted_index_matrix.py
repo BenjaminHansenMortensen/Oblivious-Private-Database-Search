@@ -98,11 +98,14 @@ def update_inverse_index_matrix(inverse_index_matrix: dict, record: dict[str, st
 
 def run() -> list[Path]:
     inverse_index_matrix = {}
-    records_path = [path for path in PNR_records_directory().glob('*') if path.name not in excluded_PNR_records()]
+    records_path = [path for path in PNR_records_directory().glob('*') if (path.name not in excluded_PNR_records())]
     shuffle(records_path)
 
     for pointer in range(len(records_path)):
-        record = read_record(records_path[pointer])
+        record_path = records_path[pointer]
+        if record_path.suffix != ".json":
+            continue
+        record = read_record(record_path)
         record = flatten_and_filter_dictionary(record)
         update_inverse_index_matrix(inverse_index_matrix, record, str(pointer))
 

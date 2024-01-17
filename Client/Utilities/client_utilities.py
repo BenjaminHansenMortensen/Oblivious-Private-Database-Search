@@ -7,7 +7,9 @@ from re import search
 from json import dump
 from pathlib import Path
 from json import load
+from random import randint
 
+from Oblivious_Database_Query_Scheme.getters import get_database_size as database_size
 from Oblivious_Database_Query_Scheme.getters import get_number_of_bytes as number_of_bytes
 from Oblivious_Database_Query_Scheme.getters import get_aes_128_mpc_script_path as aes_128_mpc_script_path
 from Oblivious_Database_Query_Scheme.getters import get_client_MP_SPDZ_input_path as MP_SPDZ_input_path
@@ -19,6 +21,7 @@ from Oblivious_Database_Query_Scheme.getters import get_permutation_indexing_pat
 from Oblivious_Database_Query_Scheme.getters import get_compare_and_encrypt_mpc_script_path as compare_and_encrypt_mpc_script_path
 from Oblivious_Database_Query_Scheme.getters import get_compare_and_reencrypt_mpc_script_path as compare_and_reencrypt_mpc_script_path
 from Oblivious_Database_Query_Scheme.getters import get_client_encrypted_indexing_path as encrypted_indexing_path
+from Oblivious_Database_Query_Scheme.getters import get_requested_pointers_path as requested_pointers_path
 
 from Client.Preprocessing.bitonic_sort import bitonic_sort
 from Client.Preprocessing.key_stream_generator import get_key_streams
@@ -33,6 +36,35 @@ class Utilities:
         self.encrypted_query = None
         self.permuted_index = None
         self.encrypted_indexing = None
+        self.dummy_items_indices = None
+        self.requests_to_make = None
+        self.requested_pointers = set()
+
+    def resume(self):
+        """
+
+        """
+
+        try:
+            if not self.permuted_index:
+                with permutation_indexing_path().open("r") as file:
+                    self.permuted_index = load(file)
+                    file.close()
+
+            if not self.encrypted_indexing:
+                with encrypted_indexing_path().open("r") as file:
+                    self.encrypted_indexing = load(file)
+                    file.close()
+
+            if not self.requested_pointers:
+                with requested_pointers_path().open("r") as file:
+                    self.requested_pointers = eval(file.read())
+                    file.close()
+
+            if not self.dummy_items_indices:
+                self.dummy_items_indices = list({str(i) for i in range(database_size())} - set(sum(self.encrypted_indexing.values(), [])) - self.requested_pointers)
+        except FileNotFoundError:
+            pass
 
     def database_preprocessing(self, client_communicator):
         """
@@ -41,6 +73,7 @@ class Utilities:
 
         self.permuted_index = bitonic_sort(client_communicator)
         self.write_indexing(self.permuted_index)
+        self.dummy_items_indices = list({str(i) for i in range(database_size())} - set(sum(self.encrypted_indexing.values(), [])))
 
     def encrypt_files(self, swap: bool, index_a: int, index_b: int):
         """
@@ -107,7 +140,7 @@ class Utilities:
                 file.write(" ".join(encryption_key_streams[i]))
                 file.close()
 
-    def encrypt_query(self, search_query: str):
+    def encrypt_search_query(self, search_query: str):
         """
 
         """
@@ -171,26 +204,40 @@ class Utilities:
 
         return encrypted_query
 
-    def get_permuted_index(self, index: str):
+    def get_pointers(self) -> set:
         """
 
         """
 
-        if not self.permuted_index:
-            with permutation_indexing_path().open("r") as file:
-                self.permuted_index = load(file)
-                file.close()
+        if self.encrypted_query not in self.encrypted_indexing:
+            print("[NO RESULT] Search query yielded no results.")
+            return set()
 
-        return self.permuted_index[index]
+        return set(self.encrypted_indexing[self.encrypted_query]) - self.requested_pointers
 
-    def get_pointers(self):
+    def get_random_dummy_item_index(self):
         """
 
         """
 
-        if not self.encrypted_indexing:
-            with encrypted_indexing_path().open("r") as file:
-                self.encrypted_indexing = load(file)
-                file.close()
+        return self.dummy_items_indices.pop(randint(0, len(self.dummy_items_indices) - 1))
 
-        return self.encrypted_indexing[self.encrypted_query]
+    def get_number_of_requests_to_make(self):
+        """
+
+        """
+
+        if not self.requests_to_make:
+            largest_set_of_pointers = max([len(pointers) for pointers in self.encrypted_indexing.values()])
+            self.requests_to_make = largest_set_of_pointers
+
+        return self.requests_to_make
+
+    def write_requested_pointers(self):
+        """
+
+        """
+
+        with requested_pointers_path().open("w") as file:
+            file.write(self.requested_pointers.__str__())
+            file.close()
