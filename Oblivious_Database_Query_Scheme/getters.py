@@ -2,7 +2,6 @@
 
 from pathlib import Path
 from os import chdir
-from math import log, ceil
 
 def working_directory_validation():
     """
@@ -82,11 +81,6 @@ def get_number_of_dummy_items() -> int:
     number_of_dummy_items = get_database_size() - get_number_of_PNR_records()
     return number_of_dummy_items
 
-def get_MP_SPDZ_directory() -> Path:
-    """ Getter for the MP_SPDZ_directory variable """
-    MP_SPDZ_directory = MP_SPDZ_directory_validation()
-    return MP_SPDZ_directory
-
 
 def get_working_directory() -> Path:
     """ Getter for the working_directory variable """
@@ -98,6 +92,13 @@ def get_MP_SPDZ_directory() -> Path:
     """ Getter for the MP_SPDZ_directory variable """
     global MP_SPDZ_directory
     return MP_SPDZ_directory
+
+
+def get_supplementary_data_directory() -> Path:
+    """ Getter for the supplementary_data_directory variable """
+    global working_directory
+    supplementary_data_directory = working_directory / "Server" / "Utilities" / "Data_Generation" / "Supplementary_Data"
+    return supplementary_data_directory
 
 def get_block_size() -> int:
     """ Getter for the block_size variable """
@@ -123,11 +124,25 @@ def get_encrypted_PNR_records_directory() -> Path:
     return encrypted_PNR_records_directory
 
 
+def get_client_MP_SPDZ_input_directory() -> Path:
+    """ Getter for the client_MP_SPDZ_input_directory variable """
+    global working_directory
+    client_MP_SPDZ_input_directory = working_directory / "Client" / "MP_SPDZ_Inputs"
+    return client_MP_SPDZ_input_directory
+
+
 def get_client_MP_SPDZ_input_path() -> Path:
     """ Getter for the client_MP_SPDZ_input_file path """
     global working_directory
     client_MP_SPDZ_input_path = working_directory / "Client" / "MP_SPDZ_Inputs" / "Client_Input"
     return client_MP_SPDZ_input_path
+
+def get_client_MP_SPDZ_output_directory() -> Path:
+    """ Getter for the client_MP_SPDZ_output_directory variable """
+    global working_directory
+    client_MP_SPDZ_output_directory = working_directory / "Client" / "MP_SPDZ_Outputs"
+    return client_MP_SPDZ_output_directory
+
 
 def get_client_MP_SPDZ_output_path() -> Path:
     """ Getter for the client_MP_SPDZ_output_file path """
@@ -136,11 +151,25 @@ def get_client_MP_SPDZ_output_path() -> Path:
     return client_MP_SPDZ_output_path
 
 
+def get_server_MP_SPDZ_input_directory() -> Path:
+    """ Getter for the server_MP_SPDZ_input_directory variable """
+    global working_directory
+    server_MP_SPDZ_input_directory = working_directory / "Server" / "MP_SPDZ_Inputs"
+    return server_MP_SPDZ_input_directory
+
+
 def get_server_MP_SPDZ_input_path() -> Path:
     """ Getter for the server_MP_SPDZ_input_file path """
     global working_directory
     server_MP_SPDZ_input_path = working_directory / "Server" / "MP_SPDZ_Inputs" / "Server_Input"
     return server_MP_SPDZ_input_path
+
+
+def get_server_MP_SPDZ_output_directory() -> Path:
+    """ Getter for the server_MP_SPDZ_output_directory variable """
+    global working_directory
+    server_MP_SPDZ_output_directory = working_directory / "Server" / "MP_SPDZ_Outputs"
+    return server_MP_SPDZ_output_directory
 
 
 def get_server_MP_SPDZ_output_path() -> Path:
@@ -153,28 +182,28 @@ def get_server_MP_SPDZ_output_path() -> Path:
 def get_compare_and_encrypt_mpc_script_path():
     """ Getter for the compare_and_encrypt_script_path variable """
     global working_directory
-    compare_and_encrypt_script_path = working_directory / "MP_SPDZ_Scripts" / "compare_and_encrypt.mpc"
+    compare_and_encrypt_script_path = working_directory.parent / "MP_SPDZ_Scripts" / "compare_and_encrypt.mpc"
     return compare_and_encrypt_script_path
 
 
 def get_compare_and_reencrypt_mpc_script_path():
     """ Getter for the compare_and_encrypt_script_path variable """
     global working_directory
-    compare_and_encrypt_script_path = working_directory / "MP_SPDZ_Scripts" / "compare_and_reencrypt.mpc"
+    compare_and_encrypt_script_path = working_directory.parent / "MP_SPDZ_Scripts" / "compare_and_reencrypt.mpc"
     return compare_and_encrypt_script_path
 
 
 def get_aes_128_mpc_script_path():
     """ Getter for the aes_128_mpc_script_path variable """
     global working_directory
-    aes_128_mpc_script_path = working_directory / "MP_SPDZ_Scripts" / "aes_128.mpc"
+    aes_128_mpc_script_path = working_directory.parent / "MP_SPDZ_Scripts" / "aes_128.mpc"
     return aes_128_mpc_script_path
 
 
 def get_if_else_circuit_path():
     """ Getter for the if_else_circuit_path variable """
     global working_directory
-    if_else_circuit_path = working_directory / "MP_SPDZ_Circuits" / "if_else128.txt"
+    if_else_circuit_path = working_directory.parent / "MP_SPDZ_Circuits" / "if_else128.txt"
     return if_else_circuit_path
 
 
@@ -201,13 +230,13 @@ def get_MP_SDPZ_compile_path():
 def get_inverted_index_matrix_path():
     """ Getter for the inverted_index_matrix_path variable """
     global working_directory
-    inverted_index_matrix_path = working_directory / "Server" / "Indexing" / "Index_Files" / "Inverted_Index_Matrix.json"
+    inverted_index_matrix_path = working_directory / "Server" / "Indexing" / "Inverted_Index_Matrix.json"
     return inverted_index_matrix_path
 
 def get_server_encrypted_inverted_index_matrix_path():
     """ Getter for the encrypted_inverted_index_matrix_path variable """
     global working_directory
-    encrypted_inverted_index_matrix_path = working_directory / "Server" / "Indexing" / "Index_Files" / "Encrypted_Inverted_Index_Matrix.json"
+    encrypted_inverted_index_matrix_path = working_directory / "Server" / "Indexing" / "Encrypted_Inverted_Index_Matrix.json"
     return encrypted_inverted_index_matrix_path
 
 def get_client_indexing_directory():
@@ -240,6 +269,11 @@ def get_records_encryption_key_streams_directory():
     records_encryption_keys_directory = working_directory / "Client" / "Records_Encryption_Key_Streams"
     return records_encryption_keys_directory
 
+def get_client_networking_directory():
+    """ Getter for the client_networking_directory """
+    client_networking_directory = working_directory / "Client" / "Networking"
+    return client_networking_directory
+
 def get_client_networking_key_path():
     """ Getter for the client_networking_key_path """
     client_networking_key_path = working_directory / "Client" / "Networking" / "key.pem"
@@ -249,6 +283,11 @@ def get_client_networking_certificate_path():
     """ Getter for the client_networking_key_path """
     client_networking_certificate_path = working_directory / "Client" / "Networking" / "cert.pem"
     return client_networking_certificate_path
+
+def get_server_networking_directory():
+    """ Getter for the server_networking_directory """
+    server_networking_directory = working_directory / "Server" / "Networking"
+    return server_networking_directory
 
 def get_server_networking_key_path():
     """ Getter for the server_networking_key_path """
@@ -260,14 +299,14 @@ def get_server_networking_certificate_path():
     server_networking_certificate_path = working_directory / "Server" / "Networking" / "cert.pem"
     return server_networking_certificate_path
 
-def get_indexing_encryption_keys_directory():
-    """ Getter for the indexing_encryption_keys_directory variable """
-    indexing_encryption_keys_directory = working_directory / "Server" / "Indexing" / "Keys"
-    return indexing_encryption_keys_directory
+def get_server_encryption_keys_directory():
+    """ Getter for the server_encryption_keys_directory variable """
+    server_encryption_keys_directory = working_directory / "Server" / "Encryption_Keys"
+    return server_encryption_keys_directory
 
 def get_indexing_encryption_key_path():
     """ Getter for the indexing_encryption_key_path variable """
-    indexing_encryption_key_path = working_directory / "Server" / "Indexing" / "Keys" / "Encryption_Key.txt"
+    indexing_encryption_key_path = working_directory / "Server" / "Encryption_Keys" / "Encryption_Key.txt"
     return indexing_encryption_key_path
 
 def get_requested_pointers_path():
@@ -279,9 +318,9 @@ def get_requested_pointers_path():
 def get_server_indexing_files_directory():
     """ Getter for the server_indexing_files_directory """
     global working_directory
-    server_indexing_files_directory = working_directory / "Server" / "Indexing" / "Index_Files"
+    server_indexing_files_directory = working_directory / "Server" / "Indexing"
     return server_indexing_files_directory
 
 
-working_directory = Path.cwd().parent
+working_directory = Path.cwd()
 MP_SPDZ_directory = Path.cwd().parent.parent.parent / "mp-spdz-0.3.8"
