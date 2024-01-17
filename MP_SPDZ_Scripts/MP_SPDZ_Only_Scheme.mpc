@@ -326,12 +326,12 @@ def test_inverse_searching_oram_retrival_oram():
 size_of_search_queries = 1
 
 index_length = 1
-number_of_indices = 1
-size_of_set_of_pointers = 1
+number_of_indices = 4
+size_of_set_of_pointers = 2
 size_of_set_of_attributes = 10
 
 file_signature_length = 1
-number_of_files = 1
+number_of_files = 4
 file_size_length_upper_bound = 6000
 
 # Inputs from parties    #run(['./MP-SPDZ Only Scheme/run.sh'])

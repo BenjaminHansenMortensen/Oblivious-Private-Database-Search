@@ -1,4 +1,4 @@
-from subprocess import run
+from subprocess import run, Popen, PIPE
 from json import load
 from pathlib import Path
 from re import sub
@@ -63,17 +63,41 @@ def update_mpc_script():
     with open('../MP_SPDZ_Scripts/MP_SPDZ_Only_Scheme.mpc', 'w') as f:
         f.write(script)
 
+def compile_and_run_MP_SPDZ():
+    """
+
+    """
+
+    run(['cp', '../MP_SPDZ_Scripts/MP_SPDZ_Only_Scheme.mpc', '../../../MP-SPDZ/Programs/Source/MP_SPDZ_Only_Scheme.mpc'])
+    chdir('../../../MP-SPDZ/')
+    run(['./compile.py', 'MP_SPDZ_Only_Scheme'])
+    client = Popen(['./atlas-party.x', 'MP_SPDZ_Only_Scheme', '-p', '0', '-N', '3', '-IF',
+         '../PycharmProjects/MasterThesis/Proof_of_Concept_Scheme/Client/MP_SPDZ_Inputs/MP_SPDZ_Only_Input', '-OF',
+         '../PycharmProjects/MasterThesis/Proof_of_Concept_Scheme/Client/MP_SPDZ_Outputs/MP_SPDZ_Only_Output'
+         ], stdout=PIPE, stderr=PIPE)
+    server = Popen(['./atlas-party.x', 'MP_SPDZ_Only_Scheme', '-p', '1', '-N', '3', '-IF',
+         '../PycharmProjects/MasterThesis/Proof_of_Concept_Scheme/Server/MP_SPDZ_Inputs/MP_SPDZ_Only_Input'
+         ], stdout=PIPE, stderr=PIPE)
+    empty = Popen(['./atlas-party.x', 'MP_SPDZ_Only_Scheme', '-p', '2', '-N', '3'], stdout=PIPE, stderr=PIPE)
+
+    client.wait()
+    server.wait()
+    empty.wait()
+
+    chdir('../PycharmProjects/MasterThesis/Proof_of_Concept_Scheme/')
+
+
 if __name__ == "__main__":
     chdir(Path.cwd())
 
     setup_directories()
 
-    generate_data(1)
+    generate_data(4)
     generate_indexing()
     generate_inverse_index_matrix()
     encode_database_and_indexing()
     #encode_database_and_inverse_index_matrix()
-    encode_query()
+    encode_query('0')
     update_mpc_script()
-    run(['./compile_and_run.sh'])
+    compile_and_run_MP_SPDZ()
     decode_retrieval()
