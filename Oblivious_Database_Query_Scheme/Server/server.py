@@ -11,8 +11,8 @@ from Oblivious_Database_Query_Scheme.getters import get_number_of_dummy_items as
 from Oblivious_Database_Query_Scheme.getters import get_server_networking_key_path as server_networking_key_path
 from Oblivious_Database_Query_Scheme.getters import get_server_networking_certificate_path as server_networking_certificate_path
 from Oblivious_Database_Query_Scheme.getters import get_client_networking_certificate_path as client_networking_certificate_path
-from Oblivious_Database_Query_Scheme.getters import get_compare_and_encrypt_mpc_script_path as compare_and_encrypt_mpc_script_path
-from Oblivious_Database_Query_Scheme.getters import get_compare_and_reencrypt_mpc_script_path as compare_and_reencrypt_mpc_script_path
+from Oblivious_Database_Query_Scheme.getters import get_sort_and_encrypt_with_circuit_mpc_script_path as sort_and_encrypt_with_circuit_mpc_script_path
+from Oblivious_Database_Query_Scheme.getters import get_sort_and_reencrypt_with_circuit_mpc_script_path as sort_and_reencrypt_with_circuit_mpc_script_path
 from Oblivious_Database_Query_Scheme.getters import get_server_encrypted_inverted_index_matrix_path as encrypted_inverted_index_matrix_path
 from Oblivious_Database_Query_Scheme.getters import get_encrypted_PNR_records_directory as encrypted_PNR_records_directory
 from Oblivious_Database_Query_Scheme.getters import get_PNR_records_directory as PNR_records_directory
@@ -273,9 +273,9 @@ class Communicator(Utilities):
             print(f'[RECEIVED] {message} from client.')
             self.preprocessing_finished = True
         elif message == self.ENCRYPT_FILES_MESSAGE:
-            self.MP_SPDZ_record_encryption(connection, address, compare_and_encrypt_mpc_script_path().stem)
+            self.MP_SPDZ_record_encryption(connection, address, sort_and_encrypt_with_circuit_mpc_script_path().stem)
         elif message == self.REENCRYPT_FILES_MESSAGE:
-            self.MP_SPDZ_record_encryption(connection, address, compare_and_reencrypt_mpc_script_path().stem)
+            self.MP_SPDZ_record_encryption(connection, address, sort_and_reencrypt_with_circuit_mpc_script_path().stem)
         elif message == self.ENCRYPT_QUERY_MESSAGE:
             print(f'[RECEIVED] {message} from client.')
             self.received_encrypt_query_message(connection, address)

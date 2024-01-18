@@ -11,15 +11,15 @@ from random import randint
 
 from Oblivious_Database_Query_Scheme.getters import get_database_size as database_size
 from Oblivious_Database_Query_Scheme.getters import get_number_of_bytes as number_of_bytes
-from Oblivious_Database_Query_Scheme.getters import get_aes_128_mpc_script_path as aes_128_mpc_script_path
+from Oblivious_Database_Query_Scheme.getters import get_aes_128_with_circuit_mpc_script_path as aes_128_mpc_script_path
 from Oblivious_Database_Query_Scheme.getters import get_client_MP_SPDZ_input_path as MP_SPDZ_input_path
 from Oblivious_Database_Query_Scheme.getters import get_client_MP_SPDZ_output_path as MP_SPDZ_output_path
 from Oblivious_Database_Query_Scheme.getters import get_MP_SPDZ_directory as MP_SPDZ_directory
 from Oblivious_Database_Query_Scheme.getters import get_working_directory as working_directory
 from Oblivious_Database_Query_Scheme.getters import get_records_encryption_key_streams_directory as encryption_keys_directory
 from Oblivious_Database_Query_Scheme.getters import get_permutation_indexing_path as permutation_indexing_path
-from Oblivious_Database_Query_Scheme.getters import get_compare_and_encrypt_mpc_script_path as compare_and_encrypt_mpc_script_path
-from Oblivious_Database_Query_Scheme.getters import get_compare_and_reencrypt_mpc_script_path as compare_and_reencrypt_mpc_script_path
+from Oblivious_Database_Query_Scheme.getters import get_sort_and_encrypt_with_circuit_mpc_script_path as sort_and_encrypt_with_circuit_mpc_script_path
+from Oblivious_Database_Query_Scheme.getters import get_sort_and_reencrypt_with_circuit_mpc_script_path as sort_and_reencrypt_with_circuit_mpc_script_path
 from Oblivious_Database_Query_Scheme.getters import get_client_encrypted_indexing_path as encrypted_indexing_path
 from Oblivious_Database_Query_Scheme.getters import get_requested_pointers_path as requested_pointers_path
 
@@ -83,7 +83,7 @@ class Utilities:
         player_id = 1
         encryption_key_streams = self.generate_key_streams()
         self.write_as_MP_SPDZ_inputs(player_id, encryption_key_streams, int(swap))
-        self.run_MP_SPDZ(player_id, compare_and_encrypt_mpc_script_path().stem)
+        self.run_MP_SPDZ(player_id, sort_and_encrypt_with_circuit_mpc_script_path().stem)
         self.write_encryption_keys(encryption_key_streams, [index_a, index_b])
 
     def reencrypt_files(self, swap: bool, index_a: int, index_b: int):
@@ -98,7 +98,7 @@ class Utilities:
                                   self.get_key_streams(decryption_key_streams_b_path)]
         encryption_key_streams = self.generate_key_streams()
         self.write_as_MP_SPDZ_inputs(player_id, encryption_key_streams, int(swap), decryption_key_streams)
-        self.run_MP_SPDZ(player_id, compare_and_reencrypt_mpc_script_path().stem)
+        self.run_MP_SPDZ(player_id, sort_and_reencrypt_with_circuit_mpc_script_path().stem)
         self.write_encryption_keys(encryption_key_streams, [index_a, index_b])
 
     def get_key_streams(self, key_streams_path: Path):

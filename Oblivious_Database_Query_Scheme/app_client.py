@@ -30,8 +30,6 @@ if __name__ == '__main__':
     working_directory_validation()
     MP_SPDZ_directory_validation()
 
-
-
     resume = input("Resume from previous pre-processing? (y/n): ")
 
     client = Client()
