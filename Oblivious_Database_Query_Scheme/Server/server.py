@@ -189,7 +189,7 @@ class Communicator(Utilities):
 
         file_name = encrypted_inverted_index_matrix_path().name
         with encrypted_inverted_index_matrix_path().open("r") as file:
-            inverted_index_matrix = file.read()
+            encrypted_inverted_index_matrix = file.read()
             file.close()
 
         connection = self.client_context.wrap_socket(socket(AF_INET, SOCK_STREAM), server_hostname='localhost')
@@ -199,7 +199,7 @@ class Communicator(Utilities):
         connection.sendall(self.add_padding(self.FILE_NAME_MESSAGE))
         connection.sendall(self.add_padding(file_name))
         connection.sendall(self.add_padding(self.FILE_CONTENTS_MESSAGE))
-        connection.sendall(self.add_padding(inverted_index_matrix))
+        connection.sendall(self.add_padding(encrypted_inverted_index_matrix))
         connection.sendall(self.add_padding(self.END_FILE_MESSAGE))
         connection.sendall(self.add_padding(self.DISCONNECT_MESSAGE))
         connection.shutdown(SHUT_WR)

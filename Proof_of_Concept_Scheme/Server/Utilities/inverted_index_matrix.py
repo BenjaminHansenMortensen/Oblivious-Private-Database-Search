@@ -5,6 +5,10 @@ from pathlib import Path
 from json import load, dump
 from random import shuffle
 
+from Oblivious_Database_Query_Scheme.getters import get_PNR_records_directory as PNR_records_directory
+from Oblivious_Database_Query_Scheme.getters import get_excluded_PNR_records as excluded_PNR_records
+from Oblivious_Database_Query_Scheme.getters import get_inverted_index_matrix_path as inverted_index_matrix_path
+
 
 def read_record(record_path: str | Path) -> dict:
     """
@@ -36,16 +40,23 @@ def flatten_and_filter_dictionary(dictionary: dict) -> dict:
     """
 
     key_filter = ['Date', 'City', 'Zip Code', 'Vendor', 'Type', 'Bonus Program', 'Airline', 'Travel Agency',
-                  'IATA Code', 'Airport Name', 'City', 'Status', 'Seat', 'Cabin', 'Checked', 'Special']
+                  'Airport Name', 'City', 'Status', 'Seat', 'Cabin', 'Checked', 'Special']
+
+    attribute_filter = {'IATA Code': ['AES', 'ALF', 'ANX', 'BDU', 'BJF', 'BJF', 'BGO', 'BVG', 'BOO', 'BNN', 'VDB',
+                                      'FAN', 'FRO', 'FDE', 'DLD', 'GLL', 'HMR', 'HFT', 'EVE', 'HAA', 'HAU', 'HVG',
+                                      'QKX', 'KKN', 'KRS', 'KSU', 'LKL', 'LKN', 'MEH', 'MQN', 'MOL', 'MJF', 'RYG',
+                                      'OSY', 'NVK', 'NTB', 'OLA', 'HOV', 'FBU', 'OSL', 'RRS', 'RVK', 'RET', 'SDN',
+                                      'TRF', 'SSJ', 'SKE', 'SOG', 'SOJ', 'SVG', 'SKN', 'SRP', 'LYR', 'SVJ', 'TOS',
+                                      'TRD', 'VDS', 'VRY', 'VAW']}
 
     flat_dictionary = {}
 
-    add_keys_and_values(flat_dictionary, dictionary, key_filter)
+    add_keys_and_values(flat_dictionary, dictionary, key_filter, attribute_filter)
 
     return flat_dictionary
 
 
-def add_keys_and_values(flat_dictionary: dict, dictionary: dict, key_filter: list, parent_key: str = '') -> dict:
+def add_keys_and_values(flat_dictionary: dict, dictionary: dict, key_filter: list, attribute_filter: dict, parent_key: str = '') -> dict:
     """
     Add keys and values to the flattened dictionary. Iterates through child dictionaries.
 
@@ -60,13 +71,19 @@ def add_keys_and_values(flat_dictionary: dict, dictionary: dict, key_filter: lis
     """
 
     for key, value in dictionary.items():
+        print("key: ", key, "value: ", value)
         if key in key_filter:
             continue
-        elif type(value) is dict:
+        elif key in attribute_filter:
+            if value in attribute_filter[key]:
+                print('filtered', value)
+                continue
+
+        if type(value) is dict:
             if parent_key != '':
                 key = f'{parent_key} {key}'
 
-            add_keys_and_values(flat_dictionary, value, key_filter, key)
+            add_keys_and_values(flat_dictionary, value, key_filter, attribute_filter, key)
         else:
             flat_dictionary[f'{parent_key} {key}'] = value
 
@@ -94,7 +111,7 @@ def update_inverse_index_matrix(inverse_index_matrix: dict, record: dict[str, st
 
 def run() -> list[Path]:
     inverse_index_matrix = {}
-    records_path = [path for path in Path("Server/PNR_Records").glob('*') if (path.name != 'SampleRecord.json')]
+    records_path = [path for path in PNR_records_directory().glob('*') if (path.name not in excluded_PNR_records())]
     shuffle(records_path)
 
     for pointer in range(len(records_path)):
@@ -105,7 +122,7 @@ def run() -> list[Path]:
         record = flatten_and_filter_dictionary(record)
         update_inverse_index_matrix(inverse_index_matrix, record, str(pointer))
 
-    with Path("Server/Indexing/Inverted_Index_Matrix.json").open('w') as file:
+    with inverted_index_matrix_path().open('w') as file:
         dump(inverse_index_matrix, file, indent=4)
 
     return records_path
