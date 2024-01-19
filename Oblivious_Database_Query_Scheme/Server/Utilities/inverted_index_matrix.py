@@ -71,12 +71,10 @@ def add_keys_and_values(flat_dictionary: dict, dictionary: dict, key_filter: lis
     """
 
     for key, value in dictionary.items():
-        print("key: ", key, "value: ", value)
         if key in key_filter:
             continue
         elif key in attribute_filter:
             if value in attribute_filter[key]:
-                print('filtered', value)
                 continue
 
         if type(value) is dict:

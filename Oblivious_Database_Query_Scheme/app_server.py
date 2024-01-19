@@ -43,11 +43,14 @@ if __name__ == '__main__':
         # Creates an inverted index matrix of the database
         server.create_indexing()
 
+        server.request_dummy_items()
+
         # Ephemeral encryption of the indexing
         server.encrypt_indexing()
-        server.send_encrypted_indexing()
 
         server.wait_for_preprocessing()
+
+        server.send_encrypted_indexing()
 
     # Searching and file retrieval
     while server.client_online:

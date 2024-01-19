@@ -149,7 +149,6 @@ class Communicator(Utilities):
         """
 
         self.generate_PNR_records()
-        self.request_dummy_items()
 
     def request_dummy_items(self):
         """
@@ -170,6 +169,8 @@ class Communicator(Utilities):
             with file_path.open("w") as file:
                 file.write(dummy_item)
                 file.close()
+
+            self.records_indexing.append(file_path)
 
         connection.shutdown(SHUT_WR)
         connection.close()

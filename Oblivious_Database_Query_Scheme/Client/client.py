@@ -62,6 +62,7 @@ class Communicator(Utilities):
 
         self.server_online = False
         self.resume_from_previous = False
+        self.dummy_items_sent = False
         self.encrypted_indexing_received = False
 
     def wait_for_server(self):
@@ -107,14 +108,6 @@ class Communicator(Utilities):
         connection.shutdown(SHUT_WR)
         connection.close()
 
-    def wait_for_encrypted_indexing(self):
-        """
-
-        """
-
-        while not self.encrypted_indexing_received:
-            sleep(0.1)
-
     def add_padding(self, message):
         """
             Encodes and adds the appropriate padding to a message to match the header size.
@@ -138,6 +131,14 @@ class Communicator(Utilities):
         while (message := connection.recv(self.HEADER).decode(self.FORMAT).strip(chr(0))) != self.DISCONNECT_MESSAGE:
             sleep(0.01)
 
+    def waiting_to_send_dummy_items(self):
+        """
+
+        """
+
+        while not self.dummy_items_sent:
+            sleep(0.1)
+
     def send_dummy_items(self, connection, address):
         """
 
@@ -149,6 +150,17 @@ class Communicator(Utilities):
             connection.sendall(self.add_padding(self.END_FILE_MESSAGE))
 
         connection.sendall(self.add_padding(self.DISCONNECT_MESSAGE))
+
+        self.number_of_dummy_items = number_of_dummy_items
+        self.dummy_items_sent = True
+
+    def wait_for_encrypted_indexing(self):
+        """
+
+        """
+
+        while not self.encrypted_indexing_received:
+            sleep(0.1)
 
     def receive_encrypted_indexing(self, connection, address):
         """

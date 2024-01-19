@@ -43,10 +43,12 @@ if __name__ == '__main__':
     if not client.resume_from_previous:
         clean_up_files()
 
-        client.wait_for_encrypted_indexing()
+        client.waiting_to_send_dummy_items()
 
         # Creates a new secret database
         client.send_database_preprocessing_message()
+
+        client.wait_for_encrypted_indexing()
 
     # Searching and file retrieval
     while True:

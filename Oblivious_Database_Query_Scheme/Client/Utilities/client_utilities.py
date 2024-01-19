@@ -36,6 +36,7 @@ class Utilities:
         self.encrypted_query = None
         self.permuted_index = None
         self.encrypted_indexing = None
+        self.number_of_dummy_items = None
         self.dummy_items_indices = None
         self.requests_to_make = None
         self.requested_pointers = set()
@@ -73,7 +74,7 @@ class Utilities:
 
         self.permuted_index = bitonic_sort(client_communicator)
         self.write_indexing(self.permuted_index)
-        self.dummy_items_indices = list({str(i) for i in range(database_size())} - set(sum(self.encrypted_indexing.values(), [])))
+        self.dummy_items_indices = list({str(i) for i in range(database_size() - self.number_of_dummy_items, database_size())})
 
     def encrypt_files(self, swap: bool, index_a: int, index_b: int):
         """
