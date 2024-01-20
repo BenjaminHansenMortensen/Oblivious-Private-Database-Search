@@ -134,7 +134,7 @@ class Utilities:
             Parameters:
                 - swap (bool) : Indicator for whether the records should be swapped or not to be sorted.
                 - index_a (int) : Index to the pointer of a record.
-                - index_b (int) : Index of the pointer of a record.
+                - index_b (int) : Index to the pointer of a record.
 
             Returns:
                 :raises
@@ -157,7 +157,7 @@ class Utilities:
             Parameters:
                 - swap (bool) : Indicator for whether the records should be swapped or not to be sorted.
                 - index_a (int) : Index to the pointer of a record.
-                - index_b (int) : Index of the pointer of a record.
+                - index_b (int) : Index to the pointer of a record.
                 
             Returns:
                 :raises
@@ -429,8 +429,8 @@ class Utilities:
         # Inspects the encrypted inverted index matrix to find number of requests to be made so that all search query 
         # results look the same to the server.
         if not self.requests_to_make:
-            largest_set_of_pointers = max([len(pointers) for pointers in self.encrypted_inverted_index_matrix.values()])
-            self.requests_to_make = largest_set_of_pointers
+            largest_set_of_indices = max([len(indices) for indices in self.encrypted_inverted_index_matrix.values()])
+            self.requests_to_make = largest_set_of_indices
 
         requests_to_make = self.requests_to_make
 

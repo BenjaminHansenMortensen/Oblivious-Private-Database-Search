@@ -13,7 +13,7 @@ from Oblivious_Database_Query_Scheme.getters import (get_client_networking_certi
                                                      client_networking_certificate_path)
 from Oblivious_Database_Query_Scheme.getters import (get_server_networking_certificate_path as
                                                      server_networking_certificate_path)
-from Oblivious_Database_Query_Scheme.getters import (get_server_encrypted_inverted_index_matrix_path as
+from Oblivious_Database_Query_Scheme.getters import (get_client_encrypted_inverted_index_matrix_path as
                                                      encrypted_inverted_index_matrix_path)
 from Oblivious_Database_Query_Scheme.getters import (get_records_encryption_key_streams_directory as
                                                      encryption_key_streams_directory)
@@ -165,7 +165,7 @@ class Communicator(Utilities):
         
         return message
 
-    def wait(self, connection: SSLSocket):
+    def wait(self, connection: SSLSocket) -> None:
         """
             Waits until the disconnect message is received from the server.
 

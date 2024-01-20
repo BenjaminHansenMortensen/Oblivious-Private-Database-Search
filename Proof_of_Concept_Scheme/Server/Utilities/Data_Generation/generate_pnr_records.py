@@ -238,9 +238,11 @@ class GenerateEmail:
         Generates an Email based on their name.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.email_providers = [('gmail', 0.4), ('outlook', 0.15), ('yahoo', 0.05), ('icloud', 0.4)]
         self.email_suffixes = [('com', 0.7), ('no', 0.25), ('org', 0.04), ('gov', 0.01)]
+
+        return
 
     def get_email(self, full_name: str) -> str:
         """
@@ -293,7 +295,7 @@ class GeneratePhoneNumber:
             - phone_number (int) : The phone number.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.phone_number_prefixes = [('+47', 0.82), ('+46', 0.0065), ('+45', 0.00032), ('+354', 0.00001),
                                       ('+358', 0.00032), ('+48', 0.0016), ('+387', 0.0016), ('+44', 0.0016),
                                       ('+34', 0.0016), ('+49', 0.0016), ('+380', 0.0016), ('+372', 0.0016),
@@ -303,6 +305,8 @@ class GeneratePhoneNumber:
                                       ('+94', 0.005), ('+92', 0.005), ('+63', 0.005), ('+7', 0.005), ('+56', 0.0027),
                                       ('+55', 0.0027), ('+502', 0.0027), (f'+{randint(10, 389)}', 0.0096)]
         self.phone_number_starts = [('4', 0.5), ('9', 0.5)]
+
+        return
 
     def get_phone_number(self) -> str:
         """
@@ -336,9 +340,10 @@ class GenerateAddress:
         Generates an Address. The address consists of a street name, zip code and city. Pick from a public database
         containing addresses from different states in the United States of America.
     """
-    def __init__(self):
-        self.states = ['CT', 'MA', 'VT', 'AL', 'AR', 'DC', 'FL', 'GA', 'KY', 'MD', 'OK', 'TN', 'AK', 'AZ', 'CA',
-                       'CO']
+    def __init__(self) -> None:
+        self.states = ['CT', 'MA', 'VT', 'AL', 'AR', 'DC', 'FL', 'GA', 'KY', 'MD', 'OK', 'TN', 'AK', 'AZ', 'CA', 'CO']
+
+        return
 
     def get_address(self) -> tuple:
         """
@@ -365,9 +370,11 @@ class GeneratePaymentInformation:
         Jf. § 60-5. 6.
         Generates the Payment Information. This information is the vendor and the type of payment.
     """
-    def __init__(self):
+    def __init__(self) -> None:
         self.vendors = ['Mastercard', 'Visa']
         self.payment_types = ['Credit', 'Debit']
+
+        return
 
     def get_payment_information(self) -> tuple:
         """
@@ -394,9 +401,11 @@ class GenerateTravelPlan:
         departure.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.airport_data = read_json(supplementary_data_directory() / "airport_data.json")
         self.flight_path_lengths = [(2, 0.75), (3, 0.2), (4, 0.045), (5, 0.004), (6, 0.001)]
+
+        return
 
     def get_path_length(self) -> int:
         """
@@ -415,7 +424,7 @@ class GenerateTravelPlan:
 
         return path_length
 
-    def get_random_airport(self):
+    def get_random_airport(self) -> DataFrame:
         """
             Pulls a random airport from the airport_data.json.
 
@@ -548,8 +557,10 @@ class GenerateBonusProgramInformation:
         Generates a Bonus Program information from arbitrary tiers of programs.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.programs = [('None', 0.6), ('Gold', 0.25), ('Platinum', 0.10), ('Diamond', 0.05)]
+
+        return
 
     def get_bonus_program(self) -> str:
         """
@@ -575,10 +586,12 @@ class GenerateTravelInformation:
     Generates the Travel information, that is the travel agency and airline.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.airlines = [('SAS', 0.4), ('Norwegian', 0.4), ('Wideroe', 0.2)]
         self.travel_agencies = [('Balslev', 0.125), ('TUI', 0.125), ('Norsktur', 0.125), ('Solfaktor', 0.125),
                                 ('Ving', 0.125), ('Charter', 0.125), ('Apollo', 0.125), ('Expedia', 0.125)]
+
+        return
 
     def get_travel_agency(self) -> str:
         """
@@ -621,8 +634,10 @@ class GenerateStatusInformation:
         Generates the Passenger Status for travels.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.passenger_statuses = [('no show', 0.02), ('cancelled', 0.08), ('showed', 0.9)]
+
+        return
 
     def get_passenger_status(self) -> str:
         """
@@ -729,10 +744,12 @@ class GenerateSeatInformation:
         Generates Seats based on the Boeing 737-800s.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.seat_letters = ['A', 'B', 'C', 'D', 'E', 'F']
 
-    def get_seat(self):
+        return
+
+    def get_seat(self) -> str:
         """
             Picks a random Seat.
 
@@ -923,8 +940,10 @@ class GenerateLuggageInformation:
 
 class GeneratePassengerInformation:
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.amounts = [(1, 0.4), (2, 0.2), (3, 0.2), (4, 0.1), (randint(5, 10), 0.1)]
+
+        return
 
     def get_amount_of_passengers(self) -> int:
         """

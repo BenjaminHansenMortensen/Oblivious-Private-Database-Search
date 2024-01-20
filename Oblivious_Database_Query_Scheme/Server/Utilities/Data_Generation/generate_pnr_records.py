@@ -9,10 +9,15 @@ from pandas import read_json, DataFrame
 from math import acos, cos, sin, radians
 from datetime import timedelta, datetime
 from json import dump
-from Oblivious_Database_Query_Scheme.getters import get_records_directory as PNR_records_directory
+
+# Local getters imports.
+from Oblivious_Database_Query_Scheme.getters import (get_records_directory as
+                                                     records_directory)
+from Oblivious_Database_Query_Scheme.getters import (get_supplementary_data_directory as
+                                                     supplementary_data_directory)
 
 
-class GeneratePNR_number:
+class GenerateNumber:
     """
         Jf. § 60-5. 1.
         Generates a PNR-number for a record in the PNR-registry of an order.
@@ -25,7 +30,7 @@ class GeneratePNR_number:
                 -
 
             Returns:
-                pnr_number (iterator) : The PNR-number iterator.
+                - pnr_number (iterator) : The PNR-number iterator.
         """
 
         self.pnr_number = init_number
@@ -40,7 +45,7 @@ class GeneratePNR_number:
                 -
 
             Returns:
-                pnr_number (int) : The next PNR-number.
+                - pnr_number (int) : The next PNR-number.
         """
 
         self.pnr_number += 1
@@ -54,7 +59,8 @@ class GenerateDateAndTime:
         Generates a Date and Time.
     """
 
-    def get_random_datetime(self) -> datetime:
+    @staticmethod
+    def get_random_datetime() -> datetime:
         """
             Picks a random date and time between 1970 and 2030.
 
@@ -62,7 +68,7 @@ class GenerateDateAndTime:
                 -
 
             Returns:
-                random_datetime (datetime) : A random date and time.
+                - random_datetime (datetime) : A random date and time.
         """
 
         start_date = datetime(1970, 1, 1)
@@ -77,7 +83,8 @@ class GenerateDateAndTime:
 
         return random_datetime
 
-    def get_departure_datetime(self, order_datetime: datetime) -> datetime:
+    @staticmethod
+    def get_departure_datetime(order_datetime: datetime) -> datetime:
         """
             Picks the date and time of the departure depending on the order time.
 
@@ -85,7 +92,7 @@ class GenerateDateAndTime:
                 -
 
             Returns:
-                departure_datetime (datetime) : The time of departure.
+                - departure_datetime (datetime) : The time of departure.
         """
 
         random_day = randint(1, 60)
@@ -107,10 +114,11 @@ class GenerateName:
             -
 
         Returns:
-            name (str): The name.
+            - name (str): The name.
     """
 
-    def get_gender(self) -> str:
+    @staticmethod
+    def get_gender() -> str:
         """
             Picks a random gender.
 
@@ -118,7 +126,7 @@ class GenerateName:
                 -
 
             Returns:
-                name (str): The name.
+                - name (str): The name.
         """
 
         gender = 'female'
@@ -137,8 +145,8 @@ class GenerateName:
                 -
 
             Returns:
-                :raises ValueError, TypeError
-                first_name (str) : A first name.
+                :raises
+                - first_name (str) : A first name.
         """
 
         gender = self.get_gender()
@@ -146,14 +154,15 @@ class GenerateName:
         first_name = get_first_name(gender)
         return first_name
 
-    def get_last_name(self) -> str:
+    @staticmethod
+    def get_last_name() -> str:
         """
             Picks a random last name.
             Parameters:
                 -
 
             Returns:
-                last_name (str) : A last name.
+                - last_name (str) : A last name.
         """
 
         last_name = get_last_name()
@@ -168,7 +177,7 @@ class GenerateName:
                 -
 
             Returns:
-                middle_name (str) : A middle name.
+                - middle_name (str) : A middle name.
         """
 
         middle_name_amount_distribution = [(0, 0.5), (1, 0.34), (2, 0.14), (3, 0.01), (randint(4, 12), 0.01)]
@@ -196,7 +205,7 @@ class GenerateName:
                 -
 
             Returns:
-                full_name (str) : A full name.
+                - full_name (str) : A full name.
         """
 
         first_name = self.get_first_name()
@@ -215,7 +224,7 @@ class GenerateName:
                 -
 
             Returns:
-                full_names (list[str]) : A list of full names based.
+                - full_names (list[str]) : A list of full names based.
         """
 
         names = [self.get_full_name() for _ in range(amount)]
@@ -226,12 +235,14 @@ class GenerateName:
 class GenerateEmail:
     """
         Jf. § 60-5. 5.
-        Generates a Email based on their name.
+        Generates an Email based on their name.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.email_providers = [('gmail', 0.4), ('outlook', 0.15), ('yahoo', 0.05), ('icloud', 0.4)]
         self.email_suffixes = [('com', 0.7), ('no', 0.25), ('org', 0.04), ('gov', 0.01)]
+        
+        return 
 
     def get_email(self, full_name: str) -> str:
         """
@@ -242,10 +253,10 @@ class GenerateEmail:
 
             Returns:
                 :raises TypeError, ValueError
-                email_address (str) : The email address.
+                - email_address (str) : The email address.
         """
 
-        if type(full_name) != str:
+        if type(full_name) is not str:
             raise TypeError('Passenger name is not string')
         elif len(full_name.split(' ')) < 2:
             raise ValueError('Provided incomplete full name')
@@ -281,10 +292,10 @@ class GeneratePhoneNumber:
             -
 
         Returns:
-            phone_number (int) : The phone number.
+            - phone_number (int) : The phone number.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.phone_number_prefixes = [('+47', 0.82), ('+46', 0.0065), ('+45', 0.00032), ('+354', 0.00001),
                                       ('+358', 0.00032), ('+48', 0.0016), ('+387', 0.0016), ('+44', 0.0016),
                                       ('+34', 0.0016), ('+49', 0.0016), ('+380', 0.0016), ('+372', 0.0016),
@@ -294,7 +305,9 @@ class GeneratePhoneNumber:
                                       ('+94', 0.005), ('+92', 0.005), ('+63', 0.005), ('+7', 0.005), ('+56', 0.0027),
                                       ('+55', 0.0027), ('+502', 0.0027), (f'+{randint(10, 389)}', 0.0096)]
         self.phone_number_starts = [('4', 0.5), ('9', 0.5)]
-
+        
+        return 
+    
     def get_phone_number(self) -> str:
         """
             Generates a Phone Number.
@@ -303,7 +316,7 @@ class GeneratePhoneNumber:
                 -
 
             Returns:
-                phone_number (int) : The phone number.
+                - phone_number (int) : The phone number.
         """
 
         phone_number_length = 8
@@ -327,9 +340,10 @@ class GenerateAddress:
         Generates an Address. The address consists of a street name, zip code and city. Pick from a public database
         containing addresses from different states in the United States of America.
     """
-    def __init__(self):
-        self.states = ['CT', 'MA', 'VT', 'AL', 'AR', 'DC', 'FL', 'GA', 'KY', 'MD', 'OK', 'TN', 'AK', 'AZ', 'CA',
-                       'CO']
+    def __init__(self) -> None:
+        self.states = ['CT', 'MA', 'VT', 'AL', 'AR', 'DC', 'FL', 'GA', 'KY', 'MD', 'OK', 'TN', 'AK', 'AZ', 'CA', 'CO']
+        
+        return 
 
     def get_address(self) -> tuple:
         """
@@ -339,7 +353,7 @@ class GenerateAddress:
                 -
 
             Returns:
-                address (tuple(str, int, str)) : The complete address (street name, zip code, city).
+                - address (tuple(str, int, str)) : The complete address (street name, zip code, city).
         """
 
         state = self.states[randint(0, len(self.states) - 1)]
@@ -356,9 +370,11 @@ class GeneratePaymentInformation:
         Jf. § 60-5. 6.
         Generates the Payment Information. This information is the vendor and the type of payment.
     """
-    def __init__(self):
+    def __init__(self) -> None:
         self.vendors = ['Mastercard', 'Visa']
         self.payment_types = ['Credit', 'Debit']
+        
+        return 
 
     def get_payment_information(self) -> tuple:
         """
@@ -368,7 +384,7 @@ class GeneratePaymentInformation:
                 -
 
             Returns:
-                payment_information (tuple(str,str)) : The payment information with the vendor and type of payment.
+                - payment_information (tuple(str,str)) : The payment information with the vendor and type of payment.
         """
 
         vendor = self.vendors[randint(0, len(self.vendors) - 1)]
@@ -385,9 +401,11 @@ class GenerateTravelPlan:
         departure.
     """
 
-    def __init__(self):
-        self.airport_data = read_json('Server/Utilities/Data_Generation/Supplementary_Data/airport_data.json')
+    def __init__(self) -> None:
+        self.airport_data = read_json(supplementary_data_directory() / "airport_data.json")
         self.flight_path_lengths = [(2, 0.75), (3, 0.2), (4, 0.045), (5, 0.004), (6, 0.001)]
+        
+        return 
 
     def get_path_length(self) -> int:
         """
@@ -397,7 +415,7 @@ class GenerateTravelPlan:
                 -
 
             Returns:
-                path_length (int) : The length of the travel path.
+                - path_length (int) : The length of the travel path.
         """
 
         path_lengths = [path_length[0] for path_length in self.flight_path_lengths]
@@ -406,7 +424,7 @@ class GenerateTravelPlan:
 
         return path_length
 
-    def get_random_airport(self):
+    def get_random_airport(self) -> DataFrame:
         """
             Pulls a random airport from the airport_data.json.
 
@@ -414,7 +432,7 @@ class GenerateTravelPlan:
                 -
 
             Returns:
-                airport (DataFrame) {iata_code, airport_name, city_name, latitude, longitude} :
+                - airport (DataFrame) {iata_code, airport_name, city_name, latitude, longitude} :
                     Information about the airport. IATA code, name, city, latitude, longitude.
         """
 
@@ -422,7 +440,7 @@ class GenerateTravelPlan:
 
         return airport
 
-    def get_travel_plan(self, departure_time, path_length: int) -> list[tuple[str, str, datetime]]:
+    def get_travel_plan(self, departure_time, path_length: int) -> list[tuple]:
         """
             Generates a Travel Plan.
 
@@ -431,13 +449,12 @@ class GenerateTravelPlan:
 
             Returns:
                 :raises TypeError
-                travel_plan (list[tuple(str, str, str, datetime)]) :
+                - travel_plan (list[tuple(str, str, str, datetime)]) :
                     The travel plan consisting of airport code, airport name, city name and time.
         """
 
-        if type(departure_time) != datetime:
+        if type(departure_time) is not datetime:
             raise TypeError('Departure time is not datetime')
-
 
         travel_path = [self.get_random_airport() for _ in range(path_length)]
 
@@ -461,7 +478,8 @@ class GenerateTravelPlan:
 
         return travel_plan
 
-    def add_waiting_time_between_fights(self, arrival_datetime):
+    @staticmethod
+    def add_waiting_time_between_fights(arrival_datetime) -> datetime:
         """
             Adds in one hour waiting time between flights
 
@@ -470,17 +488,18 @@ class GenerateTravelPlan:
 
             Returns:
                 :raises TypeError
-                departure_time (datetime) : The new departure time of the next flight.
+                - departure_time (datetime) : The new departure time of the next flight.
         """
 
-        if type(arrival_datetime) != datetime:
+        if type(arrival_datetime) is not datetime:
             raise TypeError('Arrival time is not a datetime')
 
         departure_time = arrival_datetime + timedelta(hours=1)
 
         return departure_time
 
-    def calculate_arrival_time(self, departure_airport, arrival_airport, departure_datetime) -> int:
+    @staticmethod
+    def calculate_arrival_time(departure_airport, arrival_airport, departure_datetime) -> int:
         """
             Finds the distance between to airports and calculates the arrival time based on the departure time and how
             long the flight would take.
@@ -494,16 +513,16 @@ class GenerateTravelPlan:
 
             Returns:
                 :raises TypeError, KeyError
-                arrival_time (datetime) : The time of arrival.
+                - arrival_time (datetime) : The time of arrival.
         """
 
         dataframe_keys = ['iata_code', 'airport_name', 'city_name', 'latitude', 'longitude']
 
-        if type(departure_datetime) != datetime:
+        if type(departure_datetime) is not datetime:
             raise TypeError('Departure time is not datetime')
-        elif type(departure_airport) != DataFrame:
+        elif type(departure_airport) is not DataFrame:
             raise TypeError('Departure airport is not DataFrame')
-        elif type(arrival_airport) != DataFrame:
+        elif type(arrival_airport) is not DataFrame:
             raise TypeError('Departure airport is not DataFrame')
         elif not all(key in dataframe_keys for key in departure_airport.keys().values):
             raise KeyError('Departure airport have incorrect keys')
@@ -538,8 +557,10 @@ class GenerateBonusProgramInformation:
         Generates a Bonus Program information from arbitrary tiers of programs.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.programs = [('None', 0.6), ('Gold', 0.25), ('Platinum', 0.10), ('Diamond', 0.05)]
+        
+        return 
 
     def get_bonus_program(self) -> str:
         """
@@ -549,7 +570,7 @@ class GenerateBonusProgramInformation:
                 -
 
             Returns:
-                program (str) : The name of the bonus program.
+                - program (str) : The name of the bonus program.
         """
 
         programs = [program[0] for program in self.programs]
@@ -565,10 +586,12 @@ class GenerateTravelInformation:
     Generates the Travel information, that is the travel agency and airline.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.airlines = [('SAS', 0.4), ('Norwegian', 0.4), ('Wideroe', 0.2)]
-        self.travel_agencies = [('Balslev', 0.125), ('TUI', 0.125), ('norsktur', 0.125), ('Solfaktor', 0.125),
-                                ('Ving', 0.125), ('Chater', 0.125), ('Apollo', 0.125), ('Expedia', 0.125)]
+        self.travel_agencies = [('Balslev', 0.125), ('TUI', 0.125), ('Norsktur', 0.125), ('Solfaktor', 0.125),
+                                ('Ving', 0.125), ('Charter', 0.125), ('Apollo', 0.125), ('Expedia', 0.125)]
+        
+        return
 
     def get_travel_agency(self) -> str:
         """
@@ -578,7 +601,7 @@ class GenerateTravelInformation:
                 -
 
             Returns:
-                agency (str) : The name of the travel agency.
+                - agency (str) : The name of the travel agency.
         """
 
         agencies = [agency[0] for agency in self.travel_agencies]
@@ -595,7 +618,7 @@ class GenerateTravelInformation:
                 -
 
             Returns:
-                airline (str) : The name of the airline.
+                - airline (str) : The name of the airline.
         """
 
         airlines = [airline[0] for airline in self.airlines]
@@ -611,8 +634,10 @@ class GenerateStatusInformation:
         Generates the Passenger Status for travels.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.passenger_statuses = [('no show', 0.02), ('cancelled', 0.08), ('showed', 0.9)]
+        
+        return 
 
     def get_passenger_status(self) -> str:
         """
@@ -622,7 +647,7 @@ class GenerateStatusInformation:
                 -
 
             Returns:
-                status (str) : The status of a passenger for a departure.
+                - status (str) : The status of a passenger for a departure.
         """
 
         statuses = [status[0] for status in self.passenger_statuses]
@@ -640,14 +665,13 @@ class GenerateStatusInformation:
 
             Returns:
                 :raises TypeError, ValueError
-                departure_statuses (list[str]) : The list of statuses for all destinations.
+                - departure_statuses (list[str]) : The list of statuses for all destinations.
         """
 
-        if type(travel_length) != int:
+        if type(travel_length) is not int:
             raise TypeError('Travel length is not a list')
         elif travel_length < 1:
             raise ValueError('Travel length is too short')
-
 
         departure_statuses = []
 
@@ -674,14 +698,14 @@ class GenerateStatusInformation:
 
             Returns:
                 :raises TypeError, ValueError
-                departure_statuses (list[list[str]]) : The list of statuses for all passengers for all destination.
+                - departure_statuses (list[list[str]]) : The list of statuses for all passengers for all destination.
         """
 
-        if type(travel_length) != int:
+        if type(travel_length) is not int:
             raise TypeError('Travel length is not a list')
         elif travel_length < 1:
             raise ValueError('Travel length is too short')
-        elif type(passenger_amount) != int:
+        elif type(passenger_amount) is not int:
             raise TypeError('Passenger amount is not a list')
         elif passenger_amount < 1:
             raise ValueError('Passenger amount is too small')
@@ -697,7 +721,8 @@ class GenerateTicketNumber:
         Generates Ticket Numbers.
     """
 
-    def get_ticket_number(self) -> int:
+    @staticmethod
+    def get_ticket_number() -> int:
         """
             Picks a random Ticket NUmber.
 
@@ -705,7 +730,7 @@ class GenerateTicketNumber:
                 -
 
             Returns:
-                ticket_number (int) : The Ticket Number.
+                - ticket_number (int) : The Ticket Number.
         """
 
         ticket_number = randint(100000000, 999999999)
@@ -719,10 +744,12 @@ class GenerateSeatInformation:
         Generates Seats based on the Boeing 737-800s.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.seat_letters = ['A', 'B', 'C', 'D', 'E', 'F']
+        
+        return 
 
-    def get_seat(self):
+    def get_seat(self) -> str:
         """
             Picks a random Seat.
 
@@ -730,7 +757,7 @@ class GenerateSeatInformation:
                 -
 
             Returns:
-                seat (str) : The Seat.
+                - seat (str) : The Seat.
         """
 
         row = str(randint(1, 32))
@@ -749,10 +776,10 @@ class GenerateSeatInformation:
 
             Returns:
                 :raises TypeError, ValueError
-                booked_seats (list[str]) : The list of seats for the passengers.
+                - booked_seats (list[str]) : The list of seats for the passengers.
         """
 
-        if type(passengers_amount) != int:
+        if type(passengers_amount) is not int:
             raise TypeError('Passengers is not an integer')
         elif passengers_amount < 1:
             raise ValueError('No passengers')
@@ -782,12 +809,12 @@ class GenerateSeatInformation:
 
             Returns:
                 :raises TypeError, ValueError
-                booked_seats (list[list[str]]) : The list of seats for the passengers for each flight.
+                - booked_seats (list[list[str]]) : The list of seats for the passengers for each flight.
         """
 
-        if type(passengers_amount) != int:
+        if type(passengers_amount) is not int:
             raise TypeError('Passengers is not an integer')
-        elif type(travel_length) != int:
+        elif type(travel_length) is not int:
             raise TypeError('Travel length is not an integer')
         elif passengers_amount < 1:
             raise ValueError('No passengers')
@@ -812,10 +839,10 @@ class GenerateSeatInformation:
 
             Returns:
                 :raises TypeError, ValueError
-                seat (str) : The incremented seat.
+                - seat (str) : The incremented seat.
         """
 
-        if type(seat) != str:
+        if type(seat) is not str:
             raise TypeError('Seat is not a string.')
         try:
             row = int(seat[:-1])
@@ -865,9 +892,9 @@ class GenerateLuggageInformation:
                 -
 
             Returns:
-                cabin_luggage (list) : The weights, in kilograms, of all cabin luggage for the passenger.
-                checked_luggage (list) : The weights, in kilograms, of all checked luggage for the passenger.
-                special_baggage (list) : The weights, in kilograms, of all special baggage for the passenger.
+                - cabin_luggage (list) : The weights, in kilograms, of all cabin luggage for the passenger.
+                - checked_luggage (list) : The weights, in kilograms, of all checked luggage for the passenger.
+                - special_baggage (list) : The weights, in kilograms, of all special baggage for the passenger.
         """
 
         cabin_luggage_amounts = [luggage[0] for luggage in self.cabin_luggage_amounts]
@@ -899,7 +926,7 @@ class GenerateLuggageInformation:
             -
 
         Returns:
-            passengers_luggage (list[tuple[list, list, list]]) :
+            - passengers_luggage (list[tuple[list, list, list]]) :
                 The weights, in kilograms, of all luggage for the passengers.
         """
 
@@ -913,8 +940,10 @@ class GenerateLuggageInformation:
 
 class GeneratePassengerInformation:
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.amounts = [(1, 0.4), (2, 0.2), (3, 0.2), (4, 0.1), (randint(5, 10), 0.1)]
+        
+        return 
 
     def get_amount_of_passengers(self) -> int:
         """
@@ -924,7 +953,7 @@ class GeneratePassengerInformation:
                 -
 
             Returns:
-                amount (int) : An amount.
+                - amount (int) : An amount.
         """
 
         amounts = [amount[0] for amount in self.amounts]
@@ -1003,8 +1032,8 @@ def create_random_record(pnr_number: int) -> dict:
     airline = gen_travel_information.get_airline()
     travel_agency = gen_travel_information.get_travel_agency()
     travel_length = gen_travel_plan.get_path_length()
-    depature_time = gen_datetime.get_departure_datetime(order_datetime)
-    travel_plan = gen_travel_plan.get_travel_plan(depature_time, travel_length)
+    departure_time = gen_datetime.get_departure_datetime(order_datetime)
+    travel_plan = gen_travel_plan.get_travel_plan(departure_time, travel_length)
 
     passenger_amount = gen_passenger_information.get_amount_of_passengers()
     passenger_names = gen_name.get_full_names(passenger_amount - 1)
@@ -1020,7 +1049,7 @@ def create_random_record(pnr_number: int) -> dict:
                                           'Address': {'City': orderer_address[0],
                                                       'Zip Code': orderer_address[1],
                                                       'Street': orderer_address[2]
-                                                     },
+                                                      },
                                           'Phone Number': orderer_phone_number,
                                           'Email': orderer_email,
                                           'Vendor': payment_vendor,
@@ -1038,7 +1067,7 @@ def create_random_record(pnr_number: int) -> dict:
                                   },
                   'Passengers': {f'Passenger {passenger + 1}': {'Name': passenger_names[passenger],
                                                                 'Status': {f'Destination {i + 1}':
-                                                                               passenger_statuses[passenger][i]
+                                                                           passenger_statuses[passenger][i]
                                                                            for i in range(travel_length)
                                                                            },
                                                                 'Seat': passenger_seats[passenger],
@@ -1053,16 +1082,18 @@ def create_random_record(pnr_number: int) -> dict:
     return pnr_record
 
 
-def run(size: int):
+def run(size: int) -> None:
     number_of_records = size
 
-    gen_pnr_number = iter(GeneratePNR_number())
+    gen_pnr_number = iter(GenerateNumber())
 
     for _ in range(number_of_records):
         pnr_number = next(gen_pnr_number)
         pnr_record = create_random_record(pnr_number)
-        pnr_record_path = PNR_records_directory() / f'record{pnr_number}.json'
+        pnr_record_path = records_directory() / f'record{pnr_number}.json'
 
-        with pnr_record_path.open('w') as file:
-            dump(pnr_record, file, indent=4)
-            file.close()
+        with pnr_record_path.open('w') as f:
+            dump(pnr_record, f, indent=4)
+            f.close()
+
+    return

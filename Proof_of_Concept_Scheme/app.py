@@ -4,7 +4,7 @@ from pathlib import Path
 from re import sub
 from os import chdir
 
-from Proof_of_Concept_Scheme.Server.Utilities.Data_Generation.generatePNR_Data import run as generate_data
+from Proof_of_Concept_Scheme.Server.Utilities.Data_Generation.generate_pnr_records import run as generate_data
 from Proof_of_Concept_Scheme.Server.Utilities.indexing import run as generate_indexing
 from Proof_of_Concept_Scheme.Server.Utilities.index_integer_encoder import run as encode_database_and_indexing
 from Proof_of_Concept_Scheme.Server.Utilities.inverted_index_matrix import run as generate_inverse_index_matrix

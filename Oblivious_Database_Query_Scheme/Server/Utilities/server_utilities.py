@@ -29,7 +29,7 @@ from Oblivious_Database_Query_Scheme.getters import (get_inverted_index_matrix_e
                                                      inverted_index_matrix_encryption_key_path)
 
 # Server imports.
-from Oblivious_Database_Query_Scheme.Server.Utilities.Data_Generation.generatePNR_Data import run as generate_pnr_records
+from Oblivious_Database_Query_Scheme.Server.Utilities.Data_Generation.generate_pnr_records import run as generate_pnr_records
 from Oblivious_Database_Query_Scheme.Server.Utilities.inverted_index_matrix import run as inverted_index_matrix
 from Oblivious_Database_Query_Scheme.Server.Utilities.record_encoder import encode_record
 from Oblivious_Database_Query_Scheme.Server.Utilities.inverted_index_matrix_encryptor import run as encrypt_inverted_index_matrix
@@ -46,7 +46,7 @@ class Utilities:
 
         return
 
-    def resume(self):
+    def resume(self) -> None:
         """
             Loads the stored data from previous pre-processing.
 
@@ -66,6 +66,8 @@ class Utilities:
                     f.close()
         except FileNotFoundError:
             pass
+
+        return
 
     @staticmethod
     def generate_pnr_records() -> None:

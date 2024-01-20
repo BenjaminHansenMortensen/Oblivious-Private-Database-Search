@@ -352,7 +352,7 @@ def get_inverted_index_matrix_encryption_key_path() -> Path:
 def get_requested_indices_path() -> Path:
     """ Getter for the requested_indices_path variable. """
     global working_directory
-    requested_indices_path = working_directory / 'Client' / 'Indexing' / 'Requested_Pointers.txt'
+    requested_indices_path = working_directory / 'Client' / 'Indexing' / 'Requested_Indices.txt'
     return requested_indices_path
 
 

@@ -71,12 +71,12 @@ def group(record: list[str]) -> list[str]:
     """
 
     # Groups the record into blocks.
-    encode_record = []
+    encoded_record = []
     for i in range(0, len(record), encoding_base()):
         block = ''.join(record[i:i + encoding_base()])
-        encode_record.append(block)
+        encoded_record.append(block)
 
-    return encode_record
+    return encoded_record
 
 
 def encode_record_as_hexadecimals(record_content: str) -> list[str]:

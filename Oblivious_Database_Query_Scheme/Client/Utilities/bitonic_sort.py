@@ -40,7 +40,7 @@ def compare_init(client, index: int, permutation: list, descending: bool, midpoi
     return 
 
 
-def compare(client, index: int, permutation: list, descending: bool, midpoint: int):
+def compare(client, index: int, permutation: list, descending: bool, midpoint: int) -> None:
     """
         Sorts and re-encrypts two records.
 
@@ -70,6 +70,8 @@ def compare(client, index: int, permutation: list, descending: bool, midpoint: i
 
     # Executes the mpc encryption and sorting.
     client.send_indices_and_reencrypt(swap, index_record_a, index_record_b)
+
+    return
 
 
 def init(client, permutation: list) -> None:
