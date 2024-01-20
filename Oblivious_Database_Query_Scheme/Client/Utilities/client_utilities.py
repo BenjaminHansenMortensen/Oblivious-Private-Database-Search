@@ -1,5 +1,6 @@
-"""  """
+""" Functionality of the client. """
 
+# Imports.
 from os import chdir
 from subprocess import Popen, PIPE
 from hashlib import shake_128
@@ -9,236 +10,447 @@ from pathlib import Path
 from json import load
 from random import randint
 
-from Oblivious_Database_Query_Scheme.getters import get_database_size as database_size
-from Oblivious_Database_Query_Scheme.getters import get_number_of_bytes as number_of_bytes
-from Oblivious_Database_Query_Scheme.getters import get_aes_128_with_circuit_mpc_script_path as aes_128_mpc_script_path
-from Oblivious_Database_Query_Scheme.getters import get_client_MP_SPDZ_input_path as MP_SPDZ_input_path
-from Oblivious_Database_Query_Scheme.getters import get_client_MP_SPDZ_output_path as MP_SPDZ_output_path
-from Oblivious_Database_Query_Scheme.getters import get_MP_SPDZ_directory as MP_SPDZ_directory
-from Oblivious_Database_Query_Scheme.getters import get_working_directory as working_directory
-from Oblivious_Database_Query_Scheme.getters import get_records_encryption_key_streams_directory as encryption_keys_directory
-from Oblivious_Database_Query_Scheme.getters import get_permutation_indexing_path as permutation_indexing_path
-from Oblivious_Database_Query_Scheme.getters import get_sort_and_encrypt_with_circuit_mpc_script_path as sort_and_encrypt_with_circuit_mpc_script_path
-from Oblivious_Database_Query_Scheme.getters import get_sort_and_reencrypt_with_circuit_mpc_script_path as sort_and_reencrypt_with_circuit_mpc_script_path
-from Oblivious_Database_Query_Scheme.getters import get_client_encrypted_indexing_path as encrypted_indexing_path
-from Oblivious_Database_Query_Scheme.getters import get_requested_pointers_path as requested_pointers_path
+# Local getters imports.
+from Oblivious_Database_Query_Scheme.getters import (get_database_size as
+                                                     database_size)
+from Oblivious_Database_Query_Scheme.getters import (get_number_of_bytes as
+                                                     number_of_bytes)
+from Oblivious_Database_Query_Scheme.getters import (get_aes_128_with_circuit_mpc_script_path as
+                                                     aes_128_mpc_script_path)
+from Oblivious_Database_Query_Scheme.getters import (get_client_mp_spdz_input_path as
+                                                     mp_spdz_input_path)
+from Oblivious_Database_Query_Scheme.getters import (get_client_mp_spdz_output_path as
+                                                     mp_spdz_output_path)
+from Oblivious_Database_Query_Scheme.getters import (get_mp_spdz_directory as
+                                                     mp_spdz_directory)
+from Oblivious_Database_Query_Scheme.getters import (get_working_directory as
+                                                     working_directory)
+from Oblivious_Database_Query_Scheme.getters import (get_records_encryption_key_streams_directory as
+                                                     encryption_keys_directory)
+from Oblivious_Database_Query_Scheme.getters import (get_permutation_indexing_path as
+                                                     permutation_indexing_path)
+from Oblivious_Database_Query_Scheme.getters import (get_sort_and_encrypt_with_circuit_mpc_script_path as
+                                                     sort_and_encrypt_with_circuit_mpc_script_path)
+from Oblivious_Database_Query_Scheme.getters import (get_sort_and_reencrypt_with_circuit_mpc_script_path as
+                                                     sort_and_reencrypt_with_circuit_mpc_script_path)
+from Oblivious_Database_Query_Scheme.getters import (get_client_encrypted_inverted_index_matrix_path as
+                                                     encrypted_indexing_path)
+from Oblivious_Database_Query_Scheme.getters import (get_requested_indices_path as
+                                                     requested_indices_path)
 
+# Client imports.
 from Oblivious_Database_Query_Scheme.Client.Utilities.bitonic_sort import bitonic_sort
 from Oblivious_Database_Query_Scheme.Client.Utilities.key_stream_generator import get_key_streams
 
 
 class Utilities:
     """
-
+        Implements the functionality of the client.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.encrypted_query = None
-        self.permuted_index = None
-        self.encrypted_indexing = None
+        self.permuted_indices = None
+        self.encrypted_inverted_index_matrix = None
         self.number_of_dummy_items = None
-        self.dummy_items_indices = None
+        self.dummy_item_indices = None
         self.requests_to_make = None
-        self.requested_pointers = set()
+        self.requested_indices = set()
 
-    def resume(self):
+        return
+
+    def resume(self) -> None:
+        """
+            Loads the stored data from previous pre-processing.
+
+            Parameters:
+                -
+
+            Returns:
+                :raises FileNotFoundError
+                -
         """
 
-        """
-
+        # Tries to load the permuted indices, encrypted inverted index matrix, requested indices and dummy item indices.
         try:
-            if not self.permuted_index:
-                with permutation_indexing_path().open("r") as file:
-                    self.permuted_index = load(file)
-                    file.close()
+            if not self.permuted_indices:
+                with permutation_indexing_path().open('r') as f:
+                    self.permuted_indices = load(f)
+                    f.close()
 
-            if not self.encrypted_indexing:
-                with encrypted_indexing_path().open("r") as file:
-                    self.encrypted_indexing = load(file)
-                    file.close()
+            if not self.encrypted_inverted_index_matrix:
+                with encrypted_indexing_path().open('r') as f:
+                    self.encrypted_inverted_index_matrix = load(f)
+                    f.close()
 
-            if not self.requested_pointers:
-                with requested_pointers_path().open("r") as file:
-                    self.requested_pointers = eval(file.read())
-                    file.close()
+            if not self.requested_indices:
+                with requested_indices_path().open('r') as f:
+                    self.requested_indices = eval(f.read())
+                    f.close()
 
-            if not self.dummy_items_indices:
-                self.dummy_items_indices = list({str(i) for i in range(database_size())} - set(sum(self.encrypted_indexing.values(), [])) - self.requested_pointers)
+            if not self.dummy_item_indices:
+                self.dummy_item_indices = list(
+                    {str(i) for i in range(database_size())} -
+                    set(sum(self.encrypted_inverted_index_matrix.values(), [])) -
+                    self.requested_indices
+                )
         except FileNotFoundError:
             pass
 
-    def database_preprocessing(self, client_communicator):
+        return
+
+    def database_preprocessing(self, client_communicator) -> None:
+        """
+            Obliviously encrypts and shuffles all records and dummy items according to the client's permutation and 
+            encryption keys.
+                        
+            Parameters:
+                - client_communicator (Communicator) : The client.
+
+            Returns:
+                :raises FileNotFoundError
+                -
         """
 
+        # Shuffles and encrypts the records and dummy items.
+        self.permuted_indices = bitonic_sort(client_communicator)
+
+        # Writes the permutation.
+        self.write_permutation(self.permuted_indices)
+
+        # Derives the indices of the dummy items.
+        self.dummy_item_indices = list(
+            {str(i) for i in range(database_size() -
+                                   self.number_of_dummy_items, database_size())
+             }
+        )
+
+        return
+
+    def encrypt_records(self, swap: bool, index_a: int, index_b: int) -> None:
+        """
+            Obliviously encrypts the records with the client's keys.
+
+            Parameters:
+                - swap (bool) : Indicator for whether the records should be swapped or not to be sorted.
+                - index_a (int) : Index to the pointer of a record.
+                - index_b (int) : Index of the pointer of a record.
+
+            Returns:
+                :raises
+                -
         """
 
-        self.permuted_index = bitonic_sort(client_communicator)
-        self.write_indexing(self.permuted_index)
-        self.dummy_items_indices = list({str(i) for i in range(database_size() - self.number_of_dummy_items, database_size())})
-
-    def encrypt_files(self, swap: bool, index_a: int, index_b: int):
-        """
-
-        """
-
+        # Runs MP-SPDZ to obliviously encrypt the records with the client's keys.
         player_id = 1
         encryption_key_streams = self.generate_key_streams()
-        self.write_as_MP_SPDZ_inputs(player_id, encryption_key_streams, int(swap))
-        self.run_MP_SPDZ(player_id, sort_and_encrypt_with_circuit_mpc_script_path().stem)
-        self.write_encryption_keys(encryption_key_streams, [index_a, index_b])
+        self.write_mp_spdz_inputs(player_id, encryption_key_streams, int(swap))
+        self.run_mp_spdz(player_id, sort_and_encrypt_with_circuit_mpc_script_path().stem)
+        self.write_encryption_key_streams(encryption_key_streams, [index_a, index_b])
 
-    def reencrypt_files(self, swap: bool, index_a: int, index_b: int):
+        return
+
+    def reencrypt_records(self, swap: bool, index_a: int, index_b: int) -> None:
+        """
+            Obliviously re-encrypts the records with the client's keys.
+
+            Parameters:
+                - swap (bool) : Indicator for whether the records should be swapped or not to be sorted.
+                - index_a (int) : Index to the pointer of a record.
+                - index_b (int) : Index of the pointer of a record.
+                
+            Returns:
+                :raises
+                -
         """
 
-        """
-        decryption_key_streams_a_path = encryption_keys_directory() / f"{index_a}.txt"
-        decryption_key_streams_b_path = encryption_keys_directory() / f"{index_b}.txt"
+        # Paths to the decryption keys.
+        decryption_key_streams_a_path = encryption_keys_directory() / f'{index_a}.txt'
+        decryption_key_streams_b_path = encryption_keys_directory() / f'{index_b}.txt'
 
+        # Runs MP-SPDZ to obliviously re-encrypt the records with the client's keys.
         player_id = 1
         decryption_key_streams = [self.get_key_streams(decryption_key_streams_a_path),
                                   self.get_key_streams(decryption_key_streams_b_path)]
         encryption_key_streams = self.generate_key_streams()
-        self.write_as_MP_SPDZ_inputs(player_id, encryption_key_streams, int(swap), decryption_key_streams)
-        self.run_MP_SPDZ(player_id, sort_and_reencrypt_with_circuit_mpc_script_path().stem)
-        self.write_encryption_keys(encryption_key_streams, [index_a, index_b])
+        self.write_mp_spdz_inputs(player_id, encryption_key_streams, int(swap), decryption_key_streams)
+        self.run_mp_spdz(player_id, sort_and_reencrypt_with_circuit_mpc_script_path().stem)
+        self.write_encryption_key_streams(encryption_key_streams, [index_a, index_b])
 
-    def get_key_streams(self, key_streams_path: Path):
+        return
+
+    @staticmethod
+    def get_key_streams(key_streams_path: Path) -> list[str]:
+        """
+            Gets the key streams used ot encrypt a record.
+            
+            Parameters:
+                - key_streams_path (Path) : 
+
+            Returns:
+                :raises
+                - key_streams (list[str]) : Key streams corresponding to a record.
         """
 
-        """
-
-        with key_streams_path.open("r") as file:
-            key_streams = file.read().split(" ")
+        # Reads the key streams.
+        with key_streams_path.open('r') as f:
+            key_streams = f.read().split(' ')
 
         return key_streams
 
-    def generate_key_streams(self) -> list[list[str]]:
+    @staticmethod
+    def generate_key_streams() -> list[list[str]]:
+        """
+            Generates new key streams to encrypt two records.
+            
+            Parameters:
+                -
+
+            Returns:
+                :raises
+                - key_streams (list[list[str]])
         """
 
-        """
-
+        # Gets new key streams.
         key_streams = [get_key_streams(), get_key_streams()]
+
         return key_streams
 
-    def write_indexing(self, indexing: dict):
+    @staticmethod
+    def write_permutation(permutation: dict) -> None:
+        """
+            Writes the permutation to a file in the client's indexing directory.
+            
+            Parameters:
+                - permutation (dict) : Permutation used to shuffle the server's records.
+
+            Returns:
+                :raises
+                -
         """
 
+        # Reads the permutation.
+        with permutation_indexing_path().open('w') as f:
+            dump(permutation, f, indent=4)
+            f.close()
+
+        return
+
+    @staticmethod
+    def write_encryption_key_streams(encryption_key_streams: list[list[str]], indices: list[int]) -> None:
+        """
+            Obliviously encrypts and shuffles all records and dummy items according to the client's permutation and 
+            encryption keys.
+            
+            Parameters:
+                - encryption_key_streams (list[list[str]]) : The key streams to be written.
+                - indices (list[int]) : The indices corresponding to the key streams.
+
+            Returns:
+                :raises
+                -
         """
 
-        with permutation_indexing_path().open('w') as file:
-            dump(indexing, file, indent=4)
-            file.close()
-
-    def write_encryption_keys(self, encryption_key_streams: list[list[str]], indices: list[int]):
-        """
-
-        """
-
+        # Writes the encryption key streams.
         for i in range(len(encryption_key_streams)):
             index = indices[i]
-            encryption_key_streams_path = encryption_keys_directory() / f"{index}.txt"
-            with encryption_key_streams_path.open("w") as file:
-                file.write(" ".join(encryption_key_streams[i]))
-                file.close()
+            encryption_key_streams_path = encryption_keys_directory() / f'{index}.txt'
+            with encryption_key_streams_path.open('w') as f:
+                f.write(' '.join(encryption_key_streams[i]))
+                f.close()
+        return
 
-    def encrypt_search_query(self, search_query: str):
+    def encrypt_search_query(self, search_query: str) -> None:
+        """
+            Obliviously encrypts the client's search query with the server's inverted index matrix encryption key.
+            
+            Parameters:
+                - search_query (str) : Client's search query.
+
+            Returns:
+                :raises
+                -
         """
 
-        """
-
+        # Runs MP-SPDZ to obliviously encrypt the client's search query.
         player_id = 0
         query_digest = shake_128(search_query.encode('ASCII')).digest(number_of_bytes()).hex()
-        self.write_as_MP_SPDZ_inputs(player_id, [[query_digest]])
-        self.run_MP_SPDZ(player_id, aes_128_mpc_script_path().stem)
-        self.encrypted_query = self.get_MP_SPDZ_output(player_id)
+        self.write_mp_spdz_inputs(player_id, [[query_digest]])
+        self.run_mp_spdz(player_id, aes_128_mpc_script_path().stem)
+        self.encrypted_query = self.get_mp_spdz_output()
 
-    def write_as_MP_SPDZ_inputs(self, player_id: int, encryption_key_streams: list[list[str]], swap: int = None,
-                                decryption_key_streams: list[list[str]] = None):
+        return
+
+    @staticmethod
+    def write_mp_spdz_inputs(player_id: int, encryption_key_streams: list[list[str]], swap: int = None,
+                             decryption_key_streams: list[list[str]] = None) -> None:
+        """
+            Obliviously encrypts the client's search query with the server's inverted index matrix encryption key.
+
+            Parameters:
+                - player_id (int) : The player ID the key streams will be written to.
+                - encryption_key_streams (list[list[str]]) : The encryption key streams.
+                - swap (bool) : Indicator for whether the records should be swapped or not to be sorted.
+                - decryption_key_streams (list[list[str]]) : The decryption key streams.
+
+            Returns:
+                :raises
+                -
         """
 
-        """
-
-        with open(MP_SPDZ_input_path().parent / f"{MP_SPDZ_input_path()}-P{player_id}-0", 'w') as file:
+        # Writes the swap indicator, decryption key streams,and encryption key streams as the client's MP-SPDZ input.
+        with open(mp_spdz_input_path().parent / f'{mp_spdz_input_path()}-P{player_id}-0', 'w') as f:
             if swap is not None:
-                file.write(f"{swap} \n")
+                f.write(f'{swap} \n')
             if decryption_key_streams:
                 for i in range(len(decryption_key_streams)):
                     for block in range(len(decryption_key_streams[i])):
-                        file.write(f"{int(decryption_key_streams[i][block], 16)} ")
-                    file.write("\n")
+                        f.write(f'{int(decryption_key_streams[i][block], 16)} ')
+                    f.write('\n')
             for i in range(len(encryption_key_streams)):
                 for block in range(len(encryption_key_streams[i])):
-                    file.write(f"{int(encryption_key_streams[i][block], 16)} ")
-                file.write("\n")
-            file.close()
+                    f.write(f'{int(encryption_key_streams[i][block], 16)} ')
+                f.write('\n')
+            f.close()
 
-    def run_MP_SPDZ(self, player_id: int, MP_SPDZ_script_name: str):
+        return
+
+    @staticmethod
+    def run_mp_spdz(player_id: int, mpc_script_name: str) -> None:
+        """
+            Runs the client party of the MP-SPDZ execution.
+
+            Parameters:
+                - player_id (int) : The player ID the records will be written to.
+                - mpc_script_name (str) : Name of the .mpo script to be used.
+
+            Returns:
+                :raises
+                -
         """
 
-        """
+        # Temporarily sets a new working directory
+        chdir(mp_spdz_directory())
 
-        chdir(MP_SPDZ_directory())
-
-        client_MP_SPDZ_process = Popen([f"{MP_SPDZ_directory() / 'replicated-field-party.x'}",
-                                        f"{MP_SPDZ_script_name}",
-                                        "-p", f"{player_id}",
-                                        "-IF", f"{MP_SPDZ_input_path()}",
-                                        "-OF", f"{MP_SPDZ_output_path()}"]
-                                       , stdout=PIPE, stderr=PIPE
+        # Runs the client party.
+        client_mp_spdz_process = Popen([f'{mp_spdz_directory() / "replicated-field-party.x"}',
+                                        f'{mpc_script_name}',
+                                        '-p', f'{player_id}',
+                                        '-IF', f'{mp_spdz_input_path()}',
+                                        '-OF', f'{mp_spdz_output_path()}'],
+                                       stdout=PIPE, stderr=PIPE
                                        )
 
-        client_output, client_error = client_MP_SPDZ_process.communicate()
+        # Blocks until the process is finished and captures the standard out and standard error of the processes.
+        client_output, client_error = client_mp_spdz_process.communicate()
 
-        client_MP_SPDZ_process.kill()
+        # Terminates the processes.
+        client_mp_spdz_process.kill()
 
+        # Changes back to the original working directory.
         chdir(working_directory())
 
-    def get_MP_SPDZ_output(self, player_id: int) -> str:
+        return
+
+    @staticmethod
+    def get_mp_spdz_output() -> str:
+        """
+            Takes the output of the MP-SPDZ execution.
+
+            Parameters:
+                -
+
+            Returns:
+                :raises
+                - encrypted_query (str) : Encrypted search query under the server's encryption key.
         """
 
-        """
-
-        with open(MP_SPDZ_output_path().parent / f"{MP_SPDZ_output_path()}-P{player_id}-0", 'r') as file:
-            hexadecimals_pattern = r"0x([a-fA-F0-9]+)"
-            encrypted_query = search(hexadecimals_pattern, file.read()).group()
-            encrypted_query = f"{int(encrypted_query, 16):0{32}x}"
+        # Finds the hexadecimal encrypted search query in the client's output.
+        with open(mp_spdz_output_path().parent / f'{mp_spdz_output_path()}-P0-0', 'r') as f:
+            hexadecimals_pattern = r'0x([a-fA-F0-9]+)'
+            encrypted_query = search(hexadecimals_pattern, f.read()).group()
+            encrypted_query = f'{int(encrypted_query, 16):0{32}x}'
 
         return encrypted_query
 
-    def get_pointers(self) -> set:
+    def get_indices(self) -> set:
+        """
+            Compares the encrypted search query with the keys of the encrypted inverted index matrix and returns the
+            resulting indices which points to the corresponding records on the server.
+
+            Parameters:
+                -
+
+            Returns:
+                :raises
+                - search_query_result (str) : Indices of the pointers of records.
         """
 
+        # Compares the encrypted search query with the encrypted inverted index matrx keys.
+        if self.encrypted_query not in self.encrypted_inverted_index_matrix:
+            print('[NO RESULT] Search query yielded no results.')
+            search_query_result = set()
+        else:
+            search_query_result = set(
+                self.encrypted_inverted_index_matrix[self.encrypted_query]) - self.requested_indices
+
+        return search_query_result
+
+    def get_random_dummy_item_index(self) -> int:
+        """
+            Gets a random index of a dummy item on the server.
+
+            Parameters:
+                -
+
+            Returns:
+                :raises
+                - random_dummy_item_index (int) : Index of a dummy item on the server.
         """
 
-        if self.encrypted_query not in self.encrypted_indexing:
-            print("[NO RESULT] Search query yielded no results.")
-            return set()
+        # Gets a random index of a dummy item.
+        random_dummy_item_index = self.dummy_item_indices.pop(randint(0, len(self.dummy_item_indices) - 1))
 
-        return set(self.encrypted_indexing[self.encrypted_query]) - self.requested_pointers
+        return random_dummy_item_index
 
-    def get_random_dummy_item_index(self):
+    def get_number_of_requests_to_make(self) -> int:
+        """
+            Takes the output of the MP-SPDZ execution and writes it as an encrypted record to the encrypted records'
+            directory.
+
+            Parameters:
+                -
+
+            Returns:
+                :raises
+                - requests_to_make (int) : The number of requests to be made with a single query.
         """
 
-        """
-
-        return self.dummy_items_indices.pop(randint(0, len(self.dummy_items_indices) - 1))
-
-    def get_number_of_requests_to_make(self):
-        """
-
-        """
-
+        # Inspects the encrypted inverted index matrix to find number of requests to be made so that all search query 
+        # results look the same to the server.
         if not self.requests_to_make:
-            largest_set_of_pointers = max([len(pointers) for pointers in self.encrypted_indexing.values()])
+            largest_set_of_pointers = max([len(pointers) for pointers in self.encrypted_inverted_index_matrix.values()])
             self.requests_to_make = largest_set_of_pointers
 
-        return self.requests_to_make
+        requests_to_make = self.requests_to_make
 
-    def write_requested_pointers(self):
+        return requests_to_make
+
+    def write_requested_indices(self) -> None:
+        """
+            Writes the already requested server indices to a file.
+
+            Parameters:
+                - record_paths (list[Path]) : The paths of the records.
+
+            Returns:
+                :raises
+                -
         """
 
-        """
+        # Writes the requested indices.
+        with requested_indices_path().open('w') as f:
+            f.write(self.requested_indices.__str__())
+            f.close()
 
-        with requested_pointers_path().open("w") as file:
-            file.write(self.requested_pointers.__str__())
-            file.close()
+        return

@@ -1,31 +1,45 @@
-""" Handling the communication with the client """
+""" Handling the communication with the client. """
 
+# Imports.
 from time import sleep
 from threading import Thread
 from socket import socket, AF_INET, SOCK_STREAM, SOL_SOCKET, SO_REUSEADDR, timeout, SHUT_WR
-from ssl import SSLContext, PROTOCOL_TLS_CLIENT, PROTOCOL_TLS_SERVER
+from ssl import SSLContext, PROTOCOL_TLS_CLIENT, PROTOCOL_TLS_SERVER, SSLSocket
 
-from Oblivious_Database_Query_Scheme.getters import get_database_size as database_size
-from Oblivious_Database_Query_Scheme.getters import get_number_of_PNR_records as number_of_PNR_records
-from Oblivious_Database_Query_Scheme.getters import get_number_of_dummy_items as number_of_dummy_items
-from Oblivious_Database_Query_Scheme.getters import get_server_networking_key_path as server_networking_key_path
-from Oblivious_Database_Query_Scheme.getters import get_server_networking_certificate_path as server_networking_certificate_path
-from Oblivious_Database_Query_Scheme.getters import get_client_networking_certificate_path as client_networking_certificate_path
-from Oblivious_Database_Query_Scheme.getters import get_sort_and_encrypt_with_circuit_mpc_script_path as sort_and_encrypt_with_circuit_mpc_script_path
-from Oblivious_Database_Query_Scheme.getters import get_sort_and_reencrypt_with_circuit_mpc_script_path as sort_and_reencrypt_with_circuit_mpc_script_path
-from Oblivious_Database_Query_Scheme.getters import get_server_encrypted_inverted_index_matrix_path as encrypted_inverted_index_matrix_path
-from Oblivious_Database_Query_Scheme.getters import get_encrypted_PNR_records_directory as encrypted_PNR_records_directory
-from Oblivious_Database_Query_Scheme.getters import get_PNR_records_directory as PNR_records_directory
+# Local getters imports.
+from Oblivious_Database_Query_Scheme.getters import (get_database_size as
+                                                     database_size)
+from Oblivious_Database_Query_Scheme.getters import (get_number_of_records as
+                                                     number_of_records)
+from Oblivious_Database_Query_Scheme.getters import (get_number_of_dummy_items as
+                                                     number_of_dummy_items)
+from Oblivious_Database_Query_Scheme.getters import (get_server_networking_key_path as
+                                                     server_networking_key_path)
+from Oblivious_Database_Query_Scheme.getters import (get_server_networking_certificate_path as
+                                                     server_networking_certificate_path)
+from Oblivious_Database_Query_Scheme.getters import (get_client_networking_certificate_path as
+                                                     client_networking_certificate_path)
+from Oblivious_Database_Query_Scheme.getters import (get_sort_and_encrypt_with_circuit_mpc_script_path as
+                                                     sort_and_encrypt_with_circuit_mpc_script_path)
+from Oblivious_Database_Query_Scheme.getters import (get_sort_and_reencrypt_with_circuit_mpc_script_path as
+                                                     sort_and_reencrypt_with_circuit_mpc_script_path)
+from Oblivious_Database_Query_Scheme.getters import (get_server_encrypted_inverted_index_matrix_path as
+                                                     encrypted_inverted_index_matrix_path)
+from Oblivious_Database_Query_Scheme.getters import (get_encrypted_records_directory as
+                                                     encrypted_records_directory)
+from Oblivious_Database_Query_Scheme.getters import (get_records_directory as
+                                                     records_directory)
 
+# Server utility imports.
 from Oblivious_Database_Query_Scheme.Server.Utilities.server_utilities import Utilities
 
 
 class Communicator(Utilities):
     """
         Establishes a secure communication channel between the server and client.
-        Allowing them to send and receive json files.
     """
-    def __init__(self):
+
+    def __init__(self) -> None:
         super().__init__()
 
         self.HEADER = 1024
@@ -38,16 +52,13 @@ class Communicator(Utilities):
         self.ONLINE_MESSAGE = '<ONLINE>'
         self.RESUME_FROM_PREVIOUS = '<RESUME FROM PREVIOUS>'
         self.REQUEST_DUMMY_ITEMS_MESSAGE = '<REQUESTING DUMMY ITEMS>'
-        self.DATABASE_PREPROCESSING_MESSAGE = '<DATABASE PRE-PROCESSING>'
-        self.ENCRYPT_FILES_MESSAGE = '<ENCRYPT FILES>'
-        self.REENCRYPT_FILES_MESSAGE = '<REENCRYPT FILES>'
-        self.DATABASE_PREPROCESSING_FINISHED_MESSAGE = '<DATABASE PRE-PROCESSING FINISHED>'
-        self.SENDING_INDICES_MESSAGE = '<SENDING INDICES>'
-        self.SENDING_ENCRYPTED_INDEXING_MESSAGE = '<SENDING ENCRYPTED INDEXING>'
-        self.FILE_NAME_MESSAGE = '<FILE NAME>'
-        self.FILE_CONTENTS_MESSAGE = '<FILE CONTENTS>'
+        self.RECORDS_PREPROCESSING_MESSAGE = '<RECORDS PRE-PROCESSING>'
+        self.ENCRYPT_RECORDS_MESSAGE = '<ENCRYPT RECORDS>'
+        self.REENCRYPT_RECORDS_MESSAGE = '<REENCRYPT RECORDS>'
+        self.RECORDS_PREPROCESSING_FINISHED_MESSAGE = '<RECORDS PRE-PROCESSING FINISHED>'
+        self.SENDING_ENCRYPTED_INVERTED_INDEX_MATRIX_MESSAGE = '<SENDING ENCRYPTED INVERTED INDEX MATRIX>'
         self.ENCRYPT_QUERY_MESSAGE = '<ENCRYPT QUERY>'
-        self.REQUEST_ENCRYPTED_PNR_RECORD_MESSAGE = '<REQUESTING ENCRYPTED PNR RECORD>'
+        self.REQUEST_ENCRYPTED_RECORD_MESSAGE = '<REQUESTING ENCRYPTED RECORD>'
         self.DISCONNECT_MESSAGE = '<DISCONNECT>'
         self.END_FILE_MESSAGE = '<END FILE>'
         self.SHUTDOWN_MESSAGE = '<SHUTTING DOWN>'
@@ -66,61 +77,104 @@ class Communicator(Utilities):
         self.run_thread.start()
 
         self.client_online = False
-        self.resume_from_previous = None
-        self.preprocessing_finished = False
+        self.resume_from_previous_preprocessing = None
+        self.records_preprocessing_finished = False
 
-    def wait_for_client(self):
+        return
+
+    def wait_for_client(self) -> None:
         """
+            Waiting for the client to connect, then receives if it should resume from previous pre-processing.
 
+            Parameters:
+                -
+
+            Returns:
+                :raises
+                -
         """
-
+    
+        # Tries to send online message to the client.
         try:
             self.send_online_message()
         except ConnectionRefusedError:
             print(f'[CONNECTING] Waiting for the client.')
-
+        
+        # Waits until the client is online.
         while not self.client_online:
             sleep(0.1)
-
+        
+        # Sends online message and receives response on whether to resume form previous pre-processing or not.
         self.send_online_message()
-
-        while self.resume_from_previous is None:
+        while self.resume_from_previous_preprocessing is None:
             sleep(0.1)
 
-        if self.resume_from_previous:
+        # If true resumes from previous pre-processing.
+        if self.resume_from_previous_preprocessing:
             self.resume()
 
         print(f'[CONNECTED] Connected to the client.')
 
-    def send_online_message(self):
+        return
+
+    def send_online_message(self) -> None:
+        """
+            Sends online message to the client.
+
+            Parameters:
+                -
+
+            Returns:
+                :raises
+                -
         """
 
-        """
-
+        # Sends online message to the client.
         connection = self.client_context.wrap_socket(socket(AF_INET, SOCK_STREAM), server_hostname='localhost')
         connection.connect(self.CLIENT_ADDR)
         connection.sendall(self.add_padding(self.ONLINE_MESSAGE))
         connection.shutdown(SHUT_WR)
         connection.close()
 
-    def wait_for_preprocessing(self):
+        return
+
+    def wait_for_records_preprocessing(self) -> None:
+        """
+            Waits until the client is ready to start the records pre-processing.
+
+            Parameters:
+                -
+
+            Returns:
+                :raises
+                -
         """
 
-        """
-
-        while not self.preprocessing_finished:
+        # Waits until the pre-processing finished message is received from the client.
+        while not self.records_preprocessing_finished:
             sleep(0.1)
 
-    def wait_for_client_shutdown(self):
+        return
+
+    def wait_for_client_shutdown(self) -> None:
+        """
+            Waits until the client shuts down.
+
+            Parameters:
+                -
+
+            Returns:
+                :raises
+                -
         """
 
-        """
-
+        # Waits until the shutdown message is received from the client.
         while self.client_online:
             sleep(1)
 
+        return
 
-    def add_padding(self, message):
+    def add_padding(self, message: str) -> bytes:
         """
             Encodes and adds the appropriate padding to a message to match the header size.
 
@@ -128,165 +182,241 @@ class Communicator(Utilities):
                 - message (str) : The message to be padded.
 
             Returns:
-                message (bytes) : The padded message.
+                :raises
+                - message (bytes) : The padded message.
         """
 
+        # Encodes the message and pads it with null bytes.
         message = message.encode(self.FORMAT)
         message += b'\x00' * (self.HEADER - len(message))
+
         return message
 
-    def wait(self, connection):
+    def wait(self, connection: SSLSocket) -> None:
+        """
+            Waits until the disconnect message is received from the client.
+
+            Parameters:
+                - connection (SSLSocket) : Connection with the client.
+
+            Returns:
+                :raises
+                -
         """
 
-        """
-
-        while (message := connection.recv(self.HEADER).decode(self.FORMAT).strip(chr(0))) != self.DISCONNECT_MESSAGE:
+        # Waits until the disconect message is received from the client.
+        while (connection.recv(self.HEADER).decode(self.FORMAT).strip(chr(0))) != self.DISCONNECT_MESSAGE:
             sleep(0.01)
 
-    def create_database(self):
+        return
+
+    def request_dummy_items(self) -> None:
+        """
+            Requests dummy items from the client.
+
+            Parameters:
+                -
+
+            Returns:
+                :raises
+                -
         """
 
-        """
-
-        self.generate_PNR_records()
-
-    def request_dummy_items(self):
-        """
-
-        """
-
+        # Sends the amount of dummy items needed.
         connection = self.client_context.wrap_socket(socket(AF_INET, SOCK_STREAM), server_hostname='localhost')
         connection.connect(self.CLIENT_ADDR)
         connection.sendall(self.add_padding(self.REQUEST_DUMMY_ITEMS_MESSAGE))
         connection.sendall(self.add_padding(str(number_of_dummy_items())))
+        print(f'[SENT] {self.REQUEST_DUMMY_ITEMS_MESSAGE} to client.')
 
-        for i in range(number_of_PNR_records(), database_size()):
+        # Receives the dummy items.
+        for i in range(number_of_records(), database_size()):
             dummy_item = ''
             while (message := connection.recv(self.HEADER).decode(self.FORMAT).strip(chr(0))) != self.END_FILE_MESSAGE:
                 dummy_item += message
 
-            file_path = PNR_records_directory() / f"{i}.txt"
-            with file_path.open("w") as file:
-                file.write(dummy_item)
-                file.close()
+            # Writes the dummy item.
+            file_path = records_directory() / f'{i}.txt'
+            with file_path.open('w') as f:
+                f.write(dummy_item)
+                f.close()
 
+            # Updates database pointers with the dummy item.
             self.records_indexing.append(file_path)
 
         connection.shutdown(SHUT_WR)
         connection.close()
 
+        return
 
-    def send_encrypted_indexing(self):
+    def send_encrypted_inverted_index_matrix(self) -> None:
         """
-            Sends a json file to an address.
+            Sends the encrypted inverted index matrix to the client.
 
             Parameters:
-                - json_file (str) : The dictionary to be sent.
-                - address (tuple(str, int)) : The address to send to.
+                -
 
             Returns:
-
+                :raises
+                -
         """
 
-        file_name = encrypted_inverted_index_matrix_path().name
-        with encrypted_inverted_index_matrix_path().open("r") as file:
-            encrypted_inverted_index_matrix = file.read()
-            file.close()
+        # Reads the encrypted inverted index matrix.
+        with encrypted_inverted_index_matrix_path().open('r') as f:
+            encrypted_inverted_index_matrix = f.read()
+            f.close()
 
+        # Sends the encrypted inverted index matrix to the client.
         connection = self.client_context.wrap_socket(socket(AF_INET, SOCK_STREAM), server_hostname='localhost')
         connection.connect(self.CLIENT_ADDR)
-        connection.sendall(self.add_padding(self.SENDING_ENCRYPTED_INDEXING_MESSAGE))
-        print(f'[SENT] {self.SENDING_ENCRYPTED_INDEXING_MESSAGE} to client.')
-        connection.sendall(self.add_padding(self.FILE_NAME_MESSAGE))
-        connection.sendall(self.add_padding(file_name))
-        connection.sendall(self.add_padding(self.FILE_CONTENTS_MESSAGE))
+        connection.sendall(self.add_padding(self.SENDING_ENCRYPTED_INVERTED_INDEX_MATRIX_MESSAGE))
+        print(f'[SENT] {self.SENDING_ENCRYPTED_INVERTED_INDEX_MATRIX_MESSAGE} to client.')
         connection.sendall(self.add_padding(encrypted_inverted_index_matrix))
         connection.sendall(self.add_padding(self.END_FILE_MESSAGE))
-        connection.sendall(self.add_padding(self.DISCONNECT_MESSAGE))
         connection.shutdown(SHUT_WR)
         connection.close()
 
-    def received_database_preprocessing_message(self, connection, address):
+        return
+
+    def received_records_preprocessing_message(self, connection: SSLSocket) -> None:
+        """
+            Performs the server side of the records pre-processing.
+
+            Parameters:
+                - connection (SSLSocket) : The connection with the client.
+
+            Returns:
+                :raises
+                -
         """
 
-        """
-
+        # Server side of the records pre-processing
         self.database_preprocessing()
 
+        # Disconnects when the records pre-processing is finished.
         connection.sendall(self.add_padding(self.DISCONNECT_MESSAGE))
 
-    def MP_SPDZ_record_encryption(self, connection, address, MP_SPDZ_script_name: str):
+        return
+
+    def mp_spdz_record_encryption(self, connection: SSLSocket, mpc_script_name: str) -> None:
+        """
+            Obliviously encrypts, with client's key, two records of the client's choosing.
+
+            Parameters:
+                - connection (SSLSocket) : Connection with the client.
+                - mp_spdz_script_name (str): Name of the .mpc script to be used.
+
+            Returns:
+                :raises ValueError
+                -
         """
 
-        """
+        # Receives two indices from the client.
+        index_a = int(connection.recv(self.HEADER).decode(self.FORMAT).strip(chr(0)))
+        index_b = int(connection.recv(self.HEADER).decode(self.FORMAT).strip(chr(0)))
+        connection.sendall(self.add_padding(self.DISCONNECT_MESSAGE))
 
-        while True:
-            message = connection.recv(self.HEADER).decode(self.FORMAT).strip(chr(0))
-            if message == self.SENDING_INDICES_MESSAGE:
-                index_a = int(connection.recv(self.HEADER).decode(self.FORMAT).strip(chr(0)))
-                index_b = int(connection.recv(self.HEADER).decode(self.FORMAT).strip(chr(0)))
-                connection.sendall(self.add_padding(self.DISCONNECT_MESSAGE))
-                break
-
+        # Obliviously encrypts the requested records, with the client's key.
         if index_a is not None and index_b is not None:
-            self.retrieve_and_encrypt_files(index_a, index_b, MP_SPDZ_script_name)
+            self.encrypt_records(index_a, index_b, mpc_script_name)
+        else:
+            raise ValueError('The received pointers are not valid.')
 
-    def received_encrypt_query_message(self, connection, address):
+        return
+
+    def received_encrypt_query_message(self, connection: SSLSocket) -> None:
+        """
+            Oblivious encrypts the client's search query under the server's key.
+
+            Parameters:
+                - connection (SSLSocket) : Connection with the client.
+
+            Returns:
+                :raises
+                -
         """
 
-        """
-
+        # Closes the connection with the client.
         connection.sendall(self.add_padding(self.DISCONNECT_MESSAGE))
 
+        # Obliviously encrypts the client's search query with the server's key.
         self.encrypt_query()
 
-    def send_encrypted_PNR_record(self, connection, address):
+        return
+
+    def send_encrypted_record(self, connection: SSLSocket) -> None:
+        """
+            Sends a requested encrypted record to the client.
+
+            Parameters:
+                - connection (SSLSocket) : Connection with the client.
+
+            Returns:
+                :raises
+                -
         """
 
-        """
-
+        # Fetches the requested encrypted record.
         index = connection.recv(self.HEADER).decode(self.FORMAT).strip(chr(0))
-        encrypted_PNR_record_path = encrypted_PNR_records_directory() / f"{index}.txt"
+        encrypted_record_path = encrypted_records_directory() / f'{index}.txt'
+        with encrypted_record_path.open('r') as f:
+            encrypted_record = f.read()
+            f.close()
 
-        with encrypted_PNR_record_path.open("r") as file:
-            encrypted_PNR_record = file.read()
-            file.close()
-
-        connection.sendall(self.add_padding(encrypted_PNR_record))
+        # Sends the encrypted record to the client.
+        connection.sendall(self.add_padding(encrypted_record))
         connection.sendall(self.add_padding(self.END_FILE_MESSAGE))
 
-    def receive(self, connection, address):
+        return
+
+    def receive(self, connection: SSLSocket) -> None:
+        """
+            Handling of received messages from the client.
+
+            Parameters:
+                - connection (SSLSocket) : Connection with the client.
+
+            Returns:
+                :raises
+                -
         """
 
-        """
-
+        # Receives a message from the client and handles it accordingly.
         message = connection.recv(self.HEADER).decode(self.FORMAT).strip(chr(0))
         if message == self.ONLINE_MESSAGE:
+            print(f'[RECEIVED] {message} from client.')
             self.client_online = True
-            self.resume_from_previous = eval(connection.recv(self.HEADER).decode(self.FORMAT).strip(chr(0)))
+            self.resume_from_previous_preprocessing = eval(
+                                                           connection.recv(self.HEADER).decode(self.FORMAT).strip(
+                                                                                                                  chr(0)
+                                                                                                                  )
+                                                           )
         elif message == self.RESUME_FROM_PREVIOUS:
-            self.resume_from_previous = True
-        elif message == self.DATABASE_PREPROCESSING_MESSAGE:
+            self.resume_from_previous_preprocessing = True
+        elif message == self.RECORDS_PREPROCESSING_MESSAGE:
             print(f'[RECEIVED] {message} from client.')
-            self.received_database_preprocessing_message(connection, address)
+            self.received_records_preprocessing_message(connection)
             connection.sendall(self.add_padding(self.DISCONNECT_MESSAGE))
-        elif message == self.DATABASE_PREPROCESSING_FINISHED_MESSAGE:
+        elif message == self.RECORDS_PREPROCESSING_FINISHED_MESSAGE:
             print(f'[RECEIVED] {message} from client.')
-            self.preprocessing_finished = True
-        elif message == self.ENCRYPT_FILES_MESSAGE:
-            self.MP_SPDZ_record_encryption(connection, address, sort_and_encrypt_with_circuit_mpc_script_path().stem)
-        elif message == self.REENCRYPT_FILES_MESSAGE:
-            self.MP_SPDZ_record_encryption(connection, address, sort_and_reencrypt_with_circuit_mpc_script_path().stem)
+            self.records_preprocessing_finished = True
+        elif message == self.ENCRYPT_RECORDS_MESSAGE:
+            self.mp_spdz_record_encryption(connection, sort_and_encrypt_with_circuit_mpc_script_path().stem)
+        elif message == self.REENCRYPT_RECORDS_MESSAGE:
+            self.mp_spdz_record_encryption(connection, sort_and_reencrypt_with_circuit_mpc_script_path().stem)
         elif message == self.ENCRYPT_QUERY_MESSAGE:
             print(f'[RECEIVED] {message} from client.')
-            self.received_encrypt_query_message(connection, address)
-        elif message == self.REQUEST_ENCRYPTED_PNR_RECORD_MESSAGE:
+            self.received_encrypt_query_message(connection)
+        elif message == self.REQUEST_ENCRYPTED_RECORD_MESSAGE:
             print(f'[RECEIVED] {message} from client.')
-            self.send_encrypted_PNR_record(connection, address)
+            self.send_encrypted_record(connection)
         elif message == self.SHUTDOWN_MESSAGE:
+            print(f'[RECEIVED] {message} from client.')
             self.client_online = False
 
-    def run(self):
+        return
+
+    def run(self) -> None:
         """
             Starts the listening and handles incoming connections.
 
@@ -294,9 +424,11 @@ class Communicator(Utilities):
                 -
 
             Returns:
-
+                :raises
+                -
         """
 
+        # Binds the server to a socket and listens for connections.
         self.listen_host.bind(self.ADDR)
         self.listen_host.listen()
         print(f'[LISTENING] on (\'{self.HOST}\', {self.LISTEN_PORT})')
@@ -306,22 +438,26 @@ class Communicator(Utilities):
                 return
 
             try:
-                conn, addr = self.listen_host.accept()
-                self.receive(conn, addr)
+                connection, address = self.listen_host.accept()
+                self.receive(connection)
             except timeout:
                 continue
 
-    def kill(self):
+    def kill(self) -> None:
         """
-            Closes the communication.
+            Closes the server.
 
             Parameters:
                 -
 
             Returns:
-
+                :raises
+                -
         """
 
+        # Closes all threads and processes associated with the server.
         self.close = True
         self.run_thread.join()
         print(f'[CLOSED] {self.ADDR}')
+
+        return

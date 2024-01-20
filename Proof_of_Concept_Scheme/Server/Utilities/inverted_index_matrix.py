@@ -5,8 +5,8 @@ from pathlib import Path
 from json import load, dump
 from random import shuffle
 
-from Oblivious_Database_Query_Scheme.getters import get_PNR_records_directory as PNR_records_directory
-from Oblivious_Database_Query_Scheme.getters import get_excluded_PNR_records as excluded_PNR_records
+from Oblivious_Database_Query_Scheme.getters import get_records_directory as PNR_records_directory
+from Oblivious_Database_Query_Scheme.getters import get_excluded_records as excluded_PNR_records
 from Oblivious_Database_Query_Scheme.getters import get_inverted_index_matrix_path as inverted_index_matrix_path
 
 

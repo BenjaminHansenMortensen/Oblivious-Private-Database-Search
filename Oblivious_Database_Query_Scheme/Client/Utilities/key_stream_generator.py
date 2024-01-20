@@ -1,11 +1,29 @@
-""" Generates a key stream """
+""" Generates a key stream. """
 
+# Imports
 from os import urandom
 from cryptography.hazmat.primitives.ciphers import (Cipher, algorithms, modes)
-from Oblivious_Database_Query_Scheme.getters import get_number_of_blocks as number_of_blocks
-from Oblivious_Database_Query_Scheme.getters import get_block_size as block_size
+
+# Local getters imports.
+from Oblivious_Database_Query_Scheme.getters import (get_number_of_blocks as
+                                                     number_of_blocks)
+from Oblivious_Database_Query_Scheme.getters import (get_block_size as
+                                                     block_size)
+
 
 def aes_128_ctr(key: bytes, plaintext: bytes, number_of_bytes: int) -> str:
+    """
+        Generates a new key stream by encrypting a nonce under some key using AES-128bit in CTR mode, then xor it with
+        an all zero bit plaintext.
+
+        Parameters:
+            - record (dict) : The record to be written.
+
+        Returns:
+            :raises
+            - key_stream (str) : New key stream.
+    """
+
     # Generate a random 128-bit nonce.
     nonce = urandom(number_of_bytes)
 
@@ -22,10 +40,22 @@ def aes_128_ctr(key: bytes, plaintext: bytes, number_of_bytes: int) -> str:
 
 
 def get_key_streams() -> list[str]:
+    """
+        Gets key streams to encrypt a record.
+
+        Parameters:
+            -
+
+        Returns:
+            :raises
+            - key_streams (list[str]) : The encryption key streams.
+    """
+
     number_of_bytes = block_size() // 8
 
     zero_plaintext = bytearray(number_of_bytes)
 
+    # Collects enough key streams to encrypt a record.
     key_streams = []
     for _ in range(number_of_blocks()):
         key = urandom(number_of_bytes)
