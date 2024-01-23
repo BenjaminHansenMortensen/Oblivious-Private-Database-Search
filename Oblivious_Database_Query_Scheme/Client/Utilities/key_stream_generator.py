@@ -7,39 +7,45 @@ from cryptography.hazmat.primitives.ciphers import (Cipher, algorithms, modes)
 # Local getters imports.
 from Oblivious_Database_Query_Scheme.getters import (get_number_of_blocks as
                                                      number_of_blocks)
-from Oblivious_Database_Query_Scheme.getters import (get_block_size as
-                                                     block_size)
+from Oblivious_Database_Query_Scheme.getters import (get_number_of_bytes as
+                                                     number_of_bytes)
+from Oblivious_Database_Query_Scheme.getters import (get_hex_block_size as
+                                                     hex_block_size)
 
 
-def aes_128_ctr(key: bytes, plaintext: bytes, number_of_bytes: int) -> str:
+def aes_128_ctr(key: bytes, plaintext: bytes, nonce: bytes) -> list[str]:
     """
         Generates a new key stream by encrypting a nonce under some key using AES-128bit in CTR mode, then xor it with
         an all zero bit plaintext.
 
         Parameters:
-            - record (dict) : The record to be written.
+            - key (bytes) : Encryption key.
+            - plaintext (bytes) : Plaintext to be encrypted.
+            - nonce (bytes) : Number used once.
 
         Returns:
             :raises
-            - key_stream (str) : New key stream.
+            - key_streams (list[str]) : New key streams as a hexadecimal blocks.
     """
-
-    # Generate a random 128-bit nonce.
-    nonce = urandom(number_of_bytes)
 
     # Construct an AES-CTR Cipher object with the given key and a randomly generated nonce.
     encryptor = Cipher(
         algorithms.AES(key),
         modes.CTR(nonce),
-    ).encryptor()
+    ).encryptor()    # Collects enough key streams to encrypt a record.
 
     # Encrypt the all zero plaintext and get the key stream.
-    key_stream = encryptor.update(plaintext) + encryptor.finalize()
+    key_stream = (encryptor.update(plaintext) + encryptor.finalize()).hex()
 
-    return key_stream.hex()
+    key_streams = []
+    for i in range(0, hex_block_size() * number_of_blocks(), hex_block_size()):
+        block = key_stream[i: i + hex_block_size()]
+        key_streams.append(block)
+
+    return key_streams
 
 
-def get_key_streams() -> list[str]:
+def get_key_streams() -> tuple[list[str], str, str]:
     """
         Gets key streams to encrypt a record.
 
@@ -49,17 +55,13 @@ def get_key_streams() -> list[str]:
         Returns:
             :raises
             - key_streams (list[str]) : The encryption key streams.
+            - key (str) : Key as a hexadecimal.
+            - nonce (str) : Number used once as a hexadecimal.
     """
 
-    number_of_bytes = block_size() // 8
+    zero_plaintext = bytearray(number_of_bytes() * number_of_blocks())
+    key = urandom(number_of_bytes())
+    nonce = urandom(number_of_bytes())
+    key_streams = aes_128_ctr(key, zero_plaintext, nonce)
 
-    zero_plaintext = bytearray(number_of_bytes)
-
-    # Collects enough key streams to encrypt a record.
-    key_streams = []
-    for _ in range(number_of_blocks()):
-        key = urandom(number_of_bytes)
-        key_stream = aes_128_ctr(key, zero_plaintext, number_of_bytes)
-        key_streams.append(key_stream)
-
-    return key_streams
+    return key_streams, key.hex(), nonce.hex()

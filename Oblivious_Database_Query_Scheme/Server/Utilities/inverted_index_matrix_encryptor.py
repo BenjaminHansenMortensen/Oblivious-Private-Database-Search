@@ -4,6 +4,7 @@
 from os import urandom
 from json import load, dump
 from hashlib import shake_128
+from random import shuffle
 from cryptography.hazmat.primitives.ciphers import (Cipher, algorithms, modes)
 
 # Local getters imports.
@@ -13,6 +14,8 @@ from Oblivious_Database_Query_Scheme.getters import (get_server_encrypted_invert
                                                      encrypted_inverted_index_matrix_path)
 from Oblivious_Database_Query_Scheme.getters import (get_number_of_bytes as
                                                      number_of_bytes)
+from Oblivious_Database_Query_Scheme.getters import (get_max_amount_of_attributes_per_record as
+                                                     max_amount_of_attributes_per_record)
 
 
 def aes_128_ecb(key: bytes, plaintext: bytes) -> str:
@@ -59,17 +62,42 @@ def encrypt_attribute(attribute: str, encryption_key: bytes) -> str:
     return encrypted_attribute
 
 
-def encrypt_inverted_index_matrix(inverted_index_matrix: dict[str, list[str]],
-                                  encryption_key: bytes) -> dict[str, list[str]]:
+def get_number_of_attributes_per_record(inverted_index_matrix: dict[str, list[str]]) -> dict[str, int]:
     """
-        Encrypts the attributes (dictionary keys) of the inverted index matrix.
+        Finds the number of attributes per record.
+        
+        Parameters:
+            - inverted_index_matrix (dict[str, list[str]]) : The inverted index matrix.
+            
+        Returns:
+            :raises
+            - frequencies (dict[str, int]) : The number of attributes per record.
+    """
+
+    frequencies = {}
+    
+    for indices in inverted_index_matrix.values():
+        for index in indices:
+            if index in frequencies:
+                frequencies[index] += 1
+            else:
+                frequencies[index] = 0
+    
+    return frequencies
+
+
+def encrypt_and_pad_inverted_index_matrix(inverted_index_matrix: dict[str, list[str]],
+                                          encryption_key: bytes) -> dict[str, list[str]]:
+    """
+        Encrypts the attributes (dictionary keys) of the inverted index matrix, and pads it so that every record index
+        has the same amount of attributes.
 
         Parameters:
             - inverted_index_matrix (dict[str, list[str]]) : The inverted index matrix to be encoded.
 
         Returns:
             :raises
-            - encrypted_inverted_index_matrix (dict[int, list[int]]) : The encoded inverted index matrix.
+            - encrypted_inverted_index_matrix (dict[int, list[int]]) : The encrypted inverted index matrix.
 
     """
 
@@ -80,7 +108,37 @@ def encrypt_inverted_index_matrix(inverted_index_matrix: dict[str, list[str]],
         encrypted_attribute = encrypt_attribute(attribute, encryption_key)
         encrypted_inverted_index_matrix[encrypted_attribute] = inverted_index_matrix[attribute]
 
+    attributes_per_index = get_number_of_attributes_per_record(inverted_index_matrix)
+
+    # Adds padding so that every record index is referenced the same amount of times.
+    for record_index in attributes_per_index.keys():
+        for i in range(max_amount_of_attributes_per_record() - attributes_per_index[record_index]):
+            dummy_attribute = urandom(number_of_bytes())
+            encrypted_dummy_attribute = aes_128_ecb(encryption_key, dummy_attribute)
+            encrypted_inverted_index_matrix[encrypted_dummy_attribute] = [record_index]
+
     return encrypted_inverted_index_matrix
+
+
+def shuffle_dictionary(encrypted_inverted_index_matrix: dict) -> dict:
+    """
+        Shuffles the encrypted inverted index matrix.
+
+        Parameters:
+            - encrypted_inverted_index_matrix (dict) : The dictionary to be shuffled.
+
+        Returns:
+            :raises
+            - shuffles_encrypted_inverted_index_matrix (dict) : The shuffled dictionary.
+    """
+
+    encrypted_inverted_index_matrix_keys = list(encrypted_inverted_index_matrix.keys())
+    shuffle(encrypted_inverted_index_matrix_keys)
+    shuffled_encrypted_inverted_index_matrix = {}
+    for key in encrypted_inverted_index_matrix_keys:
+        shuffled_encrypted_inverted_index_matrix[key] = encrypted_inverted_index_matrix[key]
+
+    return shuffled_encrypted_inverted_index_matrix
 
 
 def run() -> str:
@@ -102,8 +160,11 @@ def run() -> str:
     # Gets a new encryption key.
     encryption_key = urandom(number_of_bytes())
 
-    # Encrypts the inverted index matrix.
-    encrypted_inverted_index_matrix = encrypt_inverted_index_matrix(inverted_index_matrix, encryption_key)
+    # Encrypts and pads the inverted index matrix.
+    encrypted_inverted_index_matrix = encrypt_and_pad_inverted_index_matrix(inverted_index_matrix, encryption_key)
+
+    # Shuffles the encrypted inverted index matrix.
+    encrypted_inverted_index_matrix = shuffle_dictionary(encrypted_inverted_index_matrix)
 
     # writes the encrypted inverted index matrix.
     with encrypted_inverted_index_matrix_path().open('w') as file:

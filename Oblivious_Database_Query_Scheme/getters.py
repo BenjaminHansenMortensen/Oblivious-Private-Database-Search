@@ -62,6 +62,12 @@ def get_max_file_length() -> int:
     return max_file_length
 
 
+def get_max_amount_of_attributes_per_record() -> int:
+    """ Getter for the max_amount_of_attributes_per_record variable. """
+    max_amount_of_attributes_per_record = 368
+    return max_amount_of_attributes_per_record
+
+
 def get_number_of_blocks() -> int:
     """ Getter for the number_of_blocks variable. """
     number_of_blocks = get_max_file_length() // get_encoding_base()
@@ -110,6 +116,11 @@ def get_block_size() -> int:
     block_size = 128
     return block_size
 
+
+def get_hex_block_size() -> int:
+    """ Getter for the hex_block_size variable. """
+    hex_block_size = 32
+    return hex_block_size
 
 def get_records_directory() -> Path:
     """ Getter for the records_directory variable. """

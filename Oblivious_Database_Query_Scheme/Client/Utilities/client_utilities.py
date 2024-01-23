@@ -37,10 +37,14 @@ from Oblivious_Database_Query_Scheme.getters import (get_client_encrypted_invert
                                                      encrypted_indexing_path)
 from Oblivious_Database_Query_Scheme.getters import (get_requested_indices_path as
                                                      requested_indices_path)
+from Oblivious_Database_Query_Scheme.getters import (get_number_of_blocks as
+                                                     number_of_blocks)
+from Oblivious_Database_Query_Scheme.getters import (get_records_encryption_key_streams_directory as
+                                                     encryption_key_streams_directory)
 
 # Client imports.
 from Oblivious_Database_Query_Scheme.Client.Utilities.bitonic_sort import bitonic_sort
-from Oblivious_Database_Query_Scheme.Client.Utilities.key_stream_generator import get_key_streams
+from Oblivious_Database_Query_Scheme.Client.Utilities.key_stream_generator import get_key_streams, aes_128_ctr
 
 
 class Utilities:
@@ -141,12 +145,15 @@ class Utilities:
                 -
         """
 
+        encryption_key_streams_a, encryption_key_a, nonce_a = get_key_streams()
+        encryption_key_streams_b, encryption_key_b, nonce_b = get_key_streams()
+        encryption_key_streams = [encryption_key_streams_a, encryption_key_streams_b]
+
         # Runs MP-SPDZ to obliviously encrypt the records with the client's keys.
         player_id = 1
-        encryption_key_streams = self.generate_key_streams()
         self.write_mp_spdz_inputs(player_id, encryption_key_streams, int(swap))
         self.run_mp_spdz(player_id, sort_and_encrypt_with_circuit_mpc_script_path().stem)
-        self.write_encryption_key_streams(encryption_key_streams, [index_a, index_b])
+        self.write_encryption_key_streams([index_a, index_b], [encryption_key_a, encryption_key_b], [nonce_a, nonce_b])
 
         return
 
@@ -168,19 +175,23 @@ class Utilities:
         decryption_key_streams_a_path = encryption_keys_directory() / f'{index_a}.txt'
         decryption_key_streams_b_path = encryption_keys_directory() / f'{index_b}.txt'
 
+        decryption_key_streams_a = self.get_stored_key_streams(decryption_key_streams_a_path)
+        decryption_key_streams_b = self.get_stored_key_streams(decryption_key_streams_b_path)
+        encryption_key_streams_a, encryption_key_a, nonce_a = get_key_streams()
+        encryption_key_streams_b, encryption_key_b, nonce_b = get_key_streams()
+        encryption_key_streams = [encryption_key_streams_a, encryption_key_streams_b]
+        decryption_key_streams = [decryption_key_streams_a, decryption_key_streams_b]
+
         # Runs MP-SPDZ to obliviously re-encrypt the records with the client's keys.
         player_id = 1
-        decryption_key_streams = [self.get_key_streams(decryption_key_streams_a_path),
-                                  self.get_key_streams(decryption_key_streams_b_path)]
-        encryption_key_streams = self.generate_key_streams()
         self.write_mp_spdz_inputs(player_id, encryption_key_streams, int(swap), decryption_key_streams)
         self.run_mp_spdz(player_id, sort_and_reencrypt_with_circuit_mpc_script_path().stem)
-        self.write_encryption_key_streams(encryption_key_streams, [index_a, index_b])
+        self.write_encryption_key_streams([index_a, index_b], [encryption_key_a, encryption_key_b], [nonce_a, nonce_b])
 
         return
 
     @staticmethod
-    def get_key_streams(key_streams_path: Path) -> list[str]:
+    def get_stored_key_streams(key_streams_path: Path) -> list[str]:
         """
             Gets the key streams used ot encrypt a record.
             
@@ -194,25 +205,11 @@ class Utilities:
 
         # Reads the key streams.
         with key_streams_path.open('r') as f:
-            key_streams = f.read().split(' ')
+            key, nonce = f.read().split(' ')
 
-        return key_streams
-
-    @staticmethod
-    def generate_key_streams() -> list[list[str]]:
-        """
-            Generates new key streams to encrypt two records.
-            
-            Parameters:
-                -
-
-            Returns:
-                :raises
-                - key_streams (list[list[str]])
-        """
-
-        # Gets new key streams.
-        key_streams = [get_key_streams(), get_key_streams()]
+        # Reproduce the key stream from the key and nonce.
+        zero_plaintext = bytearray(number_of_bytes() * number_of_blocks())
+        key_streams = aes_128_ctr(bytes.fromhex(key), zero_plaintext, bytes.fromhex(nonce))
 
         return key_streams
 
@@ -237,14 +234,15 @@ class Utilities:
         return
 
     @staticmethod
-    def write_encryption_key_streams(encryption_key_streams: list[list[str]], indices: list[int]) -> None:
+    def write_encryption_key_streams(indices: list[int], keys: list[str], nonces: list[str]) -> None:
         """
             Obliviously encrypts and shuffles all records and dummy items according to the client's permutation and 
             encryption keys.
             
             Parameters:
-                - encryption_key_streams (list[list[str]]) : The key streams to be written.
                 - indices (list[int]) : The indices corresponding to the key streams.
+                - keys (list[str]) : Encryption keys to produce the key streams.
+                - nonces (list[str]) : Nonces used to produce the key streams.
 
             Returns:
                 :raises
@@ -252,11 +250,13 @@ class Utilities:
         """
 
         # Writes the encryption key streams.
-        for i in range(len(encryption_key_streams)):
+        for i in range(len(indices)):
             index = indices[i]
+            key = keys[i]
+            nonce = nonces[i]
             encryption_key_streams_path = encryption_keys_directory() / f'{index}.txt'
             with encryption_key_streams_path.open('w') as f:
-                f.write(' '.join(encryption_key_streams[i]))
+                f.write(f'{key} {nonce}')
                 f.close()
         return
 
@@ -454,3 +454,27 @@ class Utilities:
             f.close()
 
         return
+
+    @staticmethod
+    def get_record_key_streams(index: str) -> list[str]:
+        """
+            Gets the corresponding key streams to a index.
+
+            Parameters:
+                - index (str) : Index to the pointer of the encryption key stream of the record.
+
+            Returns:
+                :raises
+                - encryption_key_streams (list[str]) : Key streams to the encrypted record.
+        """
+
+        # Reads the encryption key streams.
+        key_streams_path = encryption_key_streams_directory() / f'{index}.txt'
+        with key_streams_path.open('r') as f:
+            key, nonce = f.read().split(' ')
+            f.close()
+
+        zero_plaintext = bytearray(number_of_bytes() * number_of_blocks())
+        encryption_key_streams = aes_128_ctr(bytes.fromhex(key), zero_plaintext, bytes.fromhex(nonce))
+
+        return encryption_key_streams

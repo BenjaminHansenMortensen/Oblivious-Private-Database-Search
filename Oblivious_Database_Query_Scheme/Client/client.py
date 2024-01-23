@@ -5,6 +5,7 @@ from time import sleep
 from threading import Thread
 from socket import socket, AF_INET, SOCK_STREAM, SOL_SOCKET, SO_REUSEADDR, timeout, SHUT_WR
 from ssl import SSLContext, PROTOCOL_TLS_CLIENT, PROTOCOL_TLS_SERVER, SSLSocket
+from pickle import loads, load
 
 # Local getters imports.
 from Oblivious_Database_Query_Scheme.getters import (get_client_networking_key_path as
@@ -15,8 +16,6 @@ from Oblivious_Database_Query_Scheme.getters import (get_server_networking_certi
                                                      server_networking_certificate_path)
 from Oblivious_Database_Query_Scheme.getters import (get_client_encrypted_inverted_index_matrix_path as
                                                      encrypted_inverted_index_matrix_path)
-from Oblivious_Database_Query_Scheme.getters import (get_records_encryption_key_streams_directory as
-                                                     encryption_key_streams_directory)
 
 # Client utility imports.
 from Oblivious_Database_Query_Scheme.Client.Utilities.client_utilities import Utilities
@@ -216,7 +215,7 @@ class Communicator(Utilities):
         # Receives and creates the requested amount of dummy items and sends them to the server.
         number_of_dummy_items = int(connection.recv(self.HEADER).decode(self.FORMAT).strip(chr(0)))
         for i in range(number_of_dummy_items):
-            dummy_item = ' '.join(get_key_streams())
+            dummy_item = ' '.join(get_key_streams()[0])
             connection.sendall(self.add_padding(dummy_item))
             connection.sendall(self.add_padding(self.END_FILE_MESSAGE))
         
@@ -262,7 +261,7 @@ class Communicator(Utilities):
         file_contents = ''
         while (message := connection.recv(self.HEADER).decode(self.FORMAT).strip(chr(0))) != self.END_FILE_MESSAGE:
             file_contents += message
-                
+
         # Writes the inverted index matrix.
         with encrypted_inverted_index_matrix_path().open('w') as f:
             f.write(file_contents)
@@ -496,27 +495,6 @@ class Communicator(Utilities):
         connection.close()
 
         return encrypted_record.split(' ')
-
-    @staticmethod
-    def get_record_key_streams(index: str) -> list[str]:
-        """
-            Gets the corresponding key streams to a index.
-
-            Parameters:
-                - index (str) : Index to the pointer of the encryption key stream of the record.
-
-            Returns:
-                :raises
-                - encryption_key_streams (list[str]) : Key streams to the encrypted record.
-        """
-        
-        # Reads the encryption key streams.
-        key_streams_path = encryption_key_streams_directory() / f'{index}.txt'
-        with key_streams_path.open('r') as f:
-            encryption_key_streams = f.read().split(' ')
-            f.close()
-
-        return encryption_key_streams
 
     def send_shutdown_message(self) -> None:
         """

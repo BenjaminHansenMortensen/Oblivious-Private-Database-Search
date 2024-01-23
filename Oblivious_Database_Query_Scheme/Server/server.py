@@ -266,13 +266,17 @@ class Communicator(Utilities):
             encrypted_inverted_index_matrix = f.read()
             f.close()
 
+        message_bytes = str.encode(encrypted_inverted_index_matrix)
+
         # Sends the encrypted inverted index matrix to the client.
         connection = self.client_context.wrap_socket(socket(AF_INET, SOCK_STREAM), server_hostname='localhost')
         connection.connect(self.CLIENT_ADDR)
         connection.sendall(self.add_padding(self.SENDING_ENCRYPTED_INVERTED_INDEX_MATRIX_MESSAGE))
-        print(f'[SENT] {self.SENDING_ENCRYPTED_INVERTED_INDEX_MATRIX_MESSAGE} to client.')
-        connection.sendall(self.add_padding(encrypted_inverted_index_matrix))
+        for i in range(0, len(message_bytes), self.HEADER):
+            connection.sendall(self.add_padding((message_bytes[i: i + self.HEADER]).decode(self.FORMAT)))
         connection.sendall(self.add_padding(self.END_FILE_MESSAGE))
+
+        print(f'[SENT] {self.SENDING_ENCRYPTED_INVERTED_INDEX_MATRIX_MESSAGE} to client.')
         connection.shutdown(SHUT_WR)
         connection.close()
 
