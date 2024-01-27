@@ -38,7 +38,7 @@ def clean_up_files() -> None:
         file_path.unlink()
 
     # removes the stored indexing files.
-    file_paths = [path for path in server_indexing_files_directory().glob('*')]
+    file_paths = [path for path in server_indexing_files_directory().rglob('*') if path.is_file()]
     for file_path in file_paths:
         file_path.unlink()
 
@@ -63,22 +63,26 @@ if __name__ == '__main__':
         # Initializes the database with PNR records.
         server.generate_pnr_records()
 
-        # Creates an inverted index matrix of the database.
-        server.create_inverted_index_matrix()
-
         # Requests dummy items from the client to fill the database to the required size.
         server.request_dummy_items()
-
-        # Encryption of the inverted index matrix.
-        server.encrypt_inverted_index_matrix()
 
         # Waits for the client to start the records pre-processing.
         server.wait_for_records_preprocessing()
 
-        # Sends the encrypted inverted index matrix to the client.
-        server.send_encrypted_inverted_index_matrix()
+        if not server.is_semantic_search:
+            # Creates an inverted index matrix of the records.
+            server.create_inverted_index_matrix()
 
-    # Standby for encrypting search queries and sending encrypted records until the client goes offline.
+            # Encryption of the inverted index matrix.
+            server.encrypt_inverted_index_matrix()
+
+            # Sends the encrypted inverted index matrix to the client.
+            server.send_encrypted_inverted_index_matrix()
+        else:
+            # Creates a semantic indexing of the records.
+            server.create_semantic_indexing()
+
+    # Standby for searching and sending encrypted records until the client goes offline.
     while server.client_online:
         server.wait_for_client_shutdown()
 

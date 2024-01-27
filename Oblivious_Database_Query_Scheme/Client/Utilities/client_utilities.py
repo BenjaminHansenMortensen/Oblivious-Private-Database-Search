@@ -6,9 +6,15 @@ from subprocess import Popen, PIPE
 from hashlib import shake_128
 from re import search
 from json import dump
-from pathlib import Path
+from pathlib import Path, PosixPath
 from json import load
 from random import randint
+from numpy import multiply
+from sentence_transformers import SentenceTransformer
+from warnings import simplefilter
+
+# Warning filtering.
+simplefilter('ignore', UserWarning)
 
 # Local getters imports.
 from Oblivious_Database_Query_Scheme.getters import (get_database_size as
@@ -33,7 +39,7 @@ from Oblivious_Database_Query_Scheme.getters import (get_sort_and_encrypt_with_c
                                                      sort_and_encrypt_with_circuit_mpc_script_path)
 from Oblivious_Database_Query_Scheme.getters import (get_sort_and_reencrypt_with_circuit_mpc_script_path as
                                                      sort_and_reencrypt_with_circuit_mpc_script_path)
-from Oblivious_Database_Query_Scheme.getters import (get_client_encrypted_inverted_index_matrix_path as
+from Oblivious_Database_Query_Scheme.getters import (get_client_encrypted_inverted_index_matrix_directory as
                                                      encrypted_indexing_path)
 from Oblivious_Database_Query_Scheme.getters import (get_requested_indices_path as
                                                      requested_indices_path)
@@ -41,6 +47,18 @@ from Oblivious_Database_Query_Scheme.getters import (get_number_of_blocks as
                                                      number_of_blocks)
 from Oblivious_Database_Query_Scheme.getters import (get_records_encryption_key_streams_directory as
                                                      encryption_key_streams_directory)
+from Oblivious_Database_Query_Scheme.getters import (get_semantic_search_mpc_script_path as
+                                                     semantic_search_mpc_script_path)
+from Oblivious_Database_Query_Scheme.getters import (get_request_threshold as
+                                                     request_threshold)
+from Oblivious_Database_Query_Scheme.getters import (get_client_number_of_dummy_items_path as
+                                                     number_of_dummy_items_path)
+from Oblivious_Database_Query_Scheme.getters import (get_embedding_model as
+                                                     embedding_model)
+from Oblivious_Database_Query_Scheme.getters import (get_float_to_integer_scalar as
+                                                     float_to_integer_scalar)
+from Oblivious_Database_Query_Scheme.getters import (get_number_of_records as
+                                                     number_of_records)
 
 # Client imports.
 from Oblivious_Database_Query_Scheme.Client.Utilities.bitonic_sort import bitonic_sort
@@ -53,13 +71,16 @@ class Utilities:
     """
 
     def __init__(self) -> None:
+        self.is_semantic_search = False
+        self.resume_from_previous_preprocessing = False
+        self.query_embedding = None
         self.encrypted_query = None
         self.permuted_indices = None
-        self.encrypted_inverted_index_matrix = None
         self.number_of_dummy_items = None
         self.dummy_item_indices = None
         self.requests_to_make = None
         self.requested_indices = set()
+        self.indices_to_request = set()
 
         return
 
@@ -77,14 +98,14 @@ class Utilities:
 
         # Tries to load the permuted indices, encrypted inverted index matrix, requested indices and dummy item indices.
         try:
+            if not self.number_of_dummy_items:
+                with number_of_dummy_items_path().open('r') as f:
+                    self.number_of_dummy_items = int(f.read())
+                    f.close()
+
             if not self.permuted_indices:
                 with permutation_indexing_path().open('r') as f:
                     self.permuted_indices = load(f)
-                    f.close()
-
-            if not self.encrypted_inverted_index_matrix:
-                with encrypted_indexing_path().open('r') as f:
-                    self.encrypted_inverted_index_matrix = load(f)
                     f.close()
 
             if not self.requested_indices:
@@ -94,10 +115,11 @@ class Utilities:
 
             if not self.dummy_item_indices:
                 self.dummy_item_indices = list(
-                    {str(i) for i in range(database_size())} -
-                    set(sum(self.encrypted_inverted_index_matrix.values(), [])) -
-                    self.requested_indices
-                )
+                                               {str(i) for i in range(database_size() -
+                                                self.number_of_dummy_items, database_size())
+                                                } -
+                                               self.requested_indices
+                                               )
         except FileNotFoundError:
             pass
 
@@ -124,10 +146,10 @@ class Utilities:
 
         # Derives the indices of the dummy items.
         self.dummy_item_indices = list(
-            {str(i) for i in range(database_size() -
-                                   self.number_of_dummy_items, database_size())
-             }
-        )
+                                        {str(i) for i in range(database_size() -
+                                         self.number_of_dummy_items, database_size())
+                                         }
+                                        )
 
         return
 
@@ -260,6 +282,72 @@ class Utilities:
                 f.close()
         return
 
+    def embedd_search_query(self, search_query: str) -> None:
+        """
+
+        """
+
+        # Text embedding model.
+        model = SentenceTransformer(embedding_model())
+
+        # Gets the embedding of the record. (Requires internet connection)
+        query_embedding = model.encode(f'{search_query}')
+
+        # Scaled embedding from float to integer.
+        scaled_query_embedding = multiply(query_embedding, float_to_integer_scalar()).astype(int).tolist()
+        self.query_embedding = scaled_query_embedding
+
+        return
+
+    def semantic_search(self) -> None:
+        """
+
+        """
+
+        smallest_distance = None
+        pointer = None
+
+        player_id = 0
+        self.write_embedding_mp_spdz_input(player_id)
+        for _ in range(number_of_records()):
+            self.run_mp_spdz(player_id, semantic_search_mpc_script_path().stem)
+            distance, index = self.get_semantic_search_result(player_id)
+
+            if smallest_distance is None:
+                smallest_distance = distance
+                pointer = index
+            elif distance < smallest_distance:
+                smallest_distance = distance
+                pointer = index
+
+        self.indices_to_request.add(pointer)
+
+        return
+
+    def write_embedding_mp_spdz_input(self, player_id: int) -> None:
+        """
+
+        """
+
+        with open(mp_spdz_input_path().parent / f'{mp_spdz_input_path()}-P{player_id}-0', 'w') as f:
+            for value in self.query_embedding:
+                f.write(f'{value} ')
+            f.close()
+
+        return
+
+    @staticmethod
+    def get_semantic_search_result(player_id: int) -> tuple[str, str]:
+        """
+
+        """
+
+        with open(mp_spdz_output_path().parent / f'{mp_spdz_output_path()}-P{player_id}-0', 'r') as f:
+            distance, pointer = f.read().strip().split(' ')
+            f.close()
+
+        return distance, pointer
+
     def encrypt_search_query(self, search_query: str) -> None:
         """
             Obliviously encrypts the client's search query with the server's inverted index matrix encryption key.
@@ -373,7 +461,7 @@ class Utilities:
 
         return encrypted_query
 
-    def get_indices(self) -> set:
+    def get_indices(self) -> set[str]:
         """
             Compares the encrypted search query with the keys of the encrypted inverted index matrix and returns the
             resulting indices which points to the corresponding records on the server.
@@ -386,13 +474,34 @@ class Utilities:
                 - search_query_result (str) : Indices of the pointers of records.
         """
 
-        # Compares the encrypted search query with the encrypted inverted index matrx keys.
-        if self.encrypted_query not in self.encrypted_inverted_index_matrix:
-            print('[NO RESULT] Search query yielded no results.')
-            search_query_result = set()
+        if self.is_semantic_search:
+            search_query_result = self.indices_to_request - self.requested_indices
+            if self.indices_to_request.issubset(self.requested_indices):
+                print('[NO RESULT] Semantic search yielded an already requested record.')
+
         else:
-            search_query_result = set(
-                self.encrypted_inverted_index_matrix[self.encrypted_query]) - self.requested_indices
+            encrypted_inverted_index_matrix_part_paths = [path for path in encrypted_indexing_path().glob('*')
+                                                          if path.suffix == '.json']
+            for encrypted_inverted_index_matrix_part_path in encrypted_inverted_index_matrix_part_paths:
+                with encrypted_inverted_index_matrix_part_path.open('r') as f:
+                    encrypted_inverted_index_matrix_part = load(f)
+                    f.close()
+
+                if self.encrypted_query in encrypted_inverted_index_matrix_part:
+                    self.indices_to_request.update(encrypted_inverted_index_matrix_part[self.encrypted_query])
+
+            # Compares the encrypted search query with the encrypted inverted index matrx keys.
+            if len(self.indices_to_request) == 0:
+                print('[NO RESULT] Search query yielded no results.')
+                search_query_result = set()
+            else:
+                if self.indices_to_request.issubset(self.requested_indices):
+                    print('[NO RESULT] Search query yielded already requested record/records.')
+                    search_query_result = set()
+                else:
+                    search_query_result = self.indices_to_request - self.requested_indices
+
+        self.indices_to_request = set()
 
         return search_query_result
 
@@ -428,13 +537,28 @@ class Utilities:
 
         # Inspects the encrypted inverted index matrix to find number of requests to be made so that all search query 
         # results look the same to the server.
-        if not self.requests_to_make:
-            largest_set_of_indices = max([len(indices) for indices in self.encrypted_inverted_index_matrix.values()])
+        if not self.requests_to_make and not self.is_semantic_search:
+
+            largest_set_of_indices = 0
+            encrypted_inverted_index_matrix_part_paths = [path for path in encrypted_indexing_path().glob('*')
+                                                          if path.suffix == '.json']
+            for encrypted_inverted_index_matrix_part_path in encrypted_inverted_index_matrix_part_paths:
+                with encrypted_inverted_index_matrix_part_path.open('r') as f:
+                    encrypted_inverted_index_matrix_part = load(f)
+                    f.close()
+
+                parts_largest_set_of_indices = max([len(indices)
+                                                    for indices in encrypted_inverted_index_matrix_part.values()]
+                                                   )
+
+                if parts_largest_set_of_indices > largest_set_of_indices:
+                    largest_set_of_indices = parts_largest_set_of_indices
+
             self.requests_to_make = largest_set_of_indices
+        elif not self.requests_to_make and self.is_semantic_search:
+            self.requests_to_make = request_threshold()
 
-        requests_to_make = self.requests_to_make
-
-        return requests_to_make
+        return self.requests_to_make
 
     def write_requested_indices(self) -> None:
         """
@@ -458,7 +582,7 @@ class Utilities:
     @staticmethod
     def get_record_key_streams(index: str) -> list[str]:
         """
-            Gets the corresponding key streams to a index.
+            Gets the corresponding key streams to an index.
 
             Parameters:
                 - index (str) : Index to the pointer of the encryption key stream of the record.

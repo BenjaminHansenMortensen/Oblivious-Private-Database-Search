@@ -12,22 +12,26 @@ from Oblivious_Database_Query_Scheme.getters import (get_excluded_records as
                                                      excluded_records)
 from Oblivious_Database_Query_Scheme.getters import (get_inverted_index_matrix_path as
                                                      inverted_index_matrix_path)
+from Oblivious_Database_Query_Scheme.getters import (get_server_record_pointers_path as
+                                                     record_indexing_path)
 
 
 def read_record(record_path: str | Path) -> dict:
     """
-        Reads a record file.
+        Reads a record.
 
         Parameters:
-            - path (str) : The path to the file including name.
+            - path (str) : The path to the record.
 
         Returns:
+            :raises
             - record (dict) = The record.
     """
 
     # Reads the record.
-    with record_path.open('r') as file:
-        record = dict(load(file))
+    with record_path.open('r') as f:
+        record = dict(load(f))
+        f.close()
 
     return record
 
@@ -40,7 +44,7 @@ def flatten_and_filter_dictionary(dictionary: dict) -> dict:
             - dictionary (dict) : The dictionary to be flattened.
 
         Returns:
-            :raises TypeError
+            :raises
             - flat_dictionary (dict) = The flattened dictionary.
     """
 
@@ -74,6 +78,7 @@ def add_keys_and_values(flat_dictionary: dict, dictionary: dict, key_filter: lis
         - parent_key (str) : The key of the parent dictionary.
 
     Returns:
+        :raises
         -
     """
 
@@ -107,6 +112,7 @@ def update_inverse_index_matrix(inverse_index_matrix: dict, record: dict[str, st
             - dictionary (dict) : The memory location of the record.
 
         Returns:
+            :raises
             -
     """
 
@@ -123,35 +129,31 @@ def update_inverse_index_matrix(inverse_index_matrix: dict, record: dict[str, st
     return
 
 
-def run() -> list[Path]:
+def run(record_pointers: list[Path]) -> None:
     """
         Creates an inverted index matrix of the records.
 
         Parameters:
-            -
+            - record_pointers (list[Path]) : The pointers to the records.
 
         Returns:
-            - record_pointers (list[Path]) : The pointers to the records.
+            :raises
+            -
     """
-
-    # Creates a list of pointers of the records and shuffles them.
-    records_path = [path for path in records_directory().glob('*') if (path.name not in excluded_records())]
-    shuffle(records_path)
 
     # Creates an inverse index matrix of the records.
     inverse_index_matrix = {}
-    for pointer in range(len(records_path)):
-        record_path = records_path[pointer]
-        if record_path.suffix != ".json":
+    for pointer in range(len(record_pointers)):
+        record_path = record_pointers[pointer]
+        if record_path.suffix != '.json':
             continue
         record = read_record(record_path)
         record = flatten_and_filter_dictionary(record)
         update_inverse_index_matrix(inverse_index_matrix, record, str(pointer))
 
     # Writes the inverted index matrix to the indexing directory.
-    with inverted_index_matrix_path().open('w') as file:
-        dump(inverse_index_matrix, file, indent=4)
+    with inverted_index_matrix_path().open('w') as f:
+        dump(inverse_index_matrix, f, indent=4)
+        f.close()
 
-    record_pointers = records_path
-
-    return record_pointers
+    return

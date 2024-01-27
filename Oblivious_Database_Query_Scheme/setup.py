@@ -30,6 +30,8 @@ from Oblivious_Database_Query_Scheme.getters import (get_encrypted_records_direc
                                                      encrypted_pnr_records_directory)
 from Oblivious_Database_Query_Scheme.getters import (get_server_indexing_files_directory as
                                                      server_indexing_files_directory)
+from Oblivious_Database_Query_Scheme.getters import (get_server_encrypted_inverted_index_matrix_directory as
+                                                     server_encrypted_inverted_index_matrix_directory)
 from Oblivious_Database_Query_Scheme.getters import (get_server_encryption_keys_directory as
                                                      server_encryption_keys_directory)
 from Oblivious_Database_Query_Scheme.getters import (get_server_mp_spdz_input_directory as
@@ -42,6 +44,8 @@ from Oblivious_Database_Query_Scheme.getters import (get_records_directory as
                                                      pnr_records_directory)
 from Oblivious_Database_Query_Scheme.getters import (get_client_indexing_directory as
                                                      client_indexing_directory)
+from Oblivious_Database_Query_Scheme.getters import (get_client_encrypted_inverted_index_matrix_directory as
+                                                     client_encrypted_inverted_index_matrix_directory)
 from Oblivious_Database_Query_Scheme.getters import (get_client_mp_spdz_input_directory as
                                                      client_mp_spdz_input_directory)
 from Oblivious_Database_Query_Scheme.getters import (get_client_mp_spdz_output_directory as
@@ -52,6 +56,8 @@ from Oblivious_Database_Query_Scheme.getters import (get_records_encryption_key_
                                                      records_encryption_key_streams_directory)
 from Oblivious_Database_Query_Scheme.getters import (get_retrieved_records_directory as
                                                      retrieved_records_directory)
+from Oblivious_Database_Query_Scheme.getters import (get_semantic_search_mpc_script_path as
+                                                     semantic_search_mpc_script_path)
 
 
 def create_necessary_directories() -> None:
@@ -68,12 +74,14 @@ def create_necessary_directories() -> None:
 
     encrypted_pnr_records_directory().mkdir(exist_ok=True)
     server_indexing_files_directory().mkdir(exist_ok=True)
+    server_encrypted_inverted_index_matrix_directory().mkdir(exist_ok=True)
     server_mp_spdz_input_directory().mkdir(exist_ok=True)
     server_mp_spdz_output_directory().mkdir(exist_ok=True)
     server_networking_directory().mkdir(exist_ok=True)
     server_encryption_keys_directory().mkdir(exist_ok=True)
     pnr_records_directory().mkdir(exist_ok=True)
     client_indexing_directory().mkdir(exist_ok=True)
+    client_encrypted_inverted_index_matrix_directory().mkdir(exist_ok=True)
     client_mp_spdz_input_directory().mkdir(exist_ok=True)
     client_mp_spdz_output_directory().mkdir(exist_ok=True)
     client_networking_directory().mkdir(exist_ok=True)
@@ -105,13 +113,16 @@ def setup_mpc_scripts_and_circuits() -> None:
     # Moves and compiles the .mpc scripts.
     run(['cp', f'{sort_and_encrypt_with_circuit_mpc_script_path()}',
                f'{mp_spdz_scripts_directory() / sort_and_encrypt_with_circuit_mpc_script_path().name}'])
-    run([f'{mp_spdz_compile_path()}', f'{sort_and_encrypt_with_circuit_mpc_script_path().name}', '-F', '128'])
+    run([f'{mp_spdz_compile_path()}', f'{sort_and_encrypt_with_circuit_mpc_script_path().name}', '-B', '128'])
     run(['cp', f'{sort_and_reencrypt_with_circuit_mpc_script_path()}',
                f'{mp_spdz_scripts_directory() / sort_and_reencrypt_with_circuit_mpc_script_path().name}'])
-    run([f'{mp_spdz_compile_path()}', f'{sort_and_reencrypt_with_circuit_mpc_script_path().name}', '-F', '128'])
+    run([f'{mp_spdz_compile_path()}', f'{sort_and_reencrypt_with_circuit_mpc_script_path().name}', '-B', '128'])
     run(['cp', f'{aes_128_ecb_with_circuit_mpc_script_path()}',
                f'{mp_spdz_scripts_directory() / aes_128_ecb_with_circuit_mpc_script_path().name}'])
-    run([f'{mp_spdz_compile_path()}', f'{aes_128_ecb_with_circuit_mpc_script_path().name}', '-F', '128'])
+    run([f'{mp_spdz_compile_path()}', f'{aes_128_ecb_with_circuit_mpc_script_path().name}', '-B', '128'])
+    run(['cp', f'{semantic_search_mpc_script_path()}',
+               f'{mp_spdz_scripts_directory() / semantic_search_mpc_script_path().name}'])
+    run([f'{mp_spdz_compile_path()}', f'{semantic_search_mpc_script_path().name}', '-B', '32'])
 
     chdir(working_directory())
 

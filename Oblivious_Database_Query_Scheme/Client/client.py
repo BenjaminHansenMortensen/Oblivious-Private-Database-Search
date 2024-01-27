@@ -2,10 +2,10 @@
 
 # Imports.
 from time import sleep
+from json import dump, loads
 from threading import Thread
 from socket import socket, AF_INET, SOCK_STREAM, SOL_SOCKET, SO_REUSEADDR, timeout, SHUT_WR
 from ssl import SSLContext, PROTOCOL_TLS_CLIENT, PROTOCOL_TLS_SERVER, SSLSocket
-from pickle import loads, load
 
 # Local getters imports.
 from Oblivious_Database_Query_Scheme.getters import (get_client_networking_key_path as
@@ -14,8 +14,11 @@ from Oblivious_Database_Query_Scheme.getters import (get_client_networking_certi
                                                      client_networking_certificate_path)
 from Oblivious_Database_Query_Scheme.getters import (get_server_networking_certificate_path as
                                                      server_networking_certificate_path)
-from Oblivious_Database_Query_Scheme.getters import (get_client_encrypted_inverted_index_matrix_path as
-                                                     encrypted_inverted_index_matrix_path)
+from Oblivious_Database_Query_Scheme.getters import (get_client_encrypted_inverted_index_matrix_directory as
+                                                     encrypted_inverted_index_matrix_directory)
+from Oblivious_Database_Query_Scheme.getters import (get_client_number_of_dummy_items_path as
+                                                     number_of_dummy_items_path)
+
 
 # Client utility imports.
 from Oblivious_Database_Query_Scheme.Client.Utilities.client_utilities import Utilities
@@ -38,13 +41,14 @@ class Communicator(Utilities):
         self.FORMAT = 'utf-8'
 
         self.ONLINE_MESSAGE = '<ONLINE>'
-        self.RESUME_FROM_PREVIOUS = '<RESUME FROM PREVIOUS>'
         self.REQUEST_DUMMY_ITEMS_MESSAGE = '<REQUESTING DUMMY ITEMS>'
         self.RECORDS_PREPROCESSING_MESSAGE = '<RECORDS PRE-PROCESSING>'
         self.ENCRYPT_RECORDS_MESSAGE = '<ENCRYPT RECORDS>'
         self.REENCRYPT_RECORDS_MESSAGE = '<REENCRYPT RECORDS>'
         self.RECORDS_PREPROCESSING_FINISHED_MESSAGE = '<RECORDS PRE-PROCESSING FINISHED>'
         self.SENDING_ENCRYPTED_INVERTED_INDEX_MATRIX_MESSAGE = '<SENDING ENCRYPTED INVERTED INDEX MATRIX>'
+        self.SENDING_ENCRYPTED_INVERTED_INDEX_MATRIX_FINISHED_MESSAGE = '<SENDING ENCRYPTED INVERTED INDEX MATRIX FINISHED>'
+        self.SEMANTIC_SEARCH_MESSAGE = '<SEMANTIC SEARCH>'
         self.ENCRYPT_QUERY_MESSAGE = '<ENCRYPT QUERY>'
         self.REQUEST_ENCRYPTED_RECORD_MESSAGE = '<REQUESTING ENCRYPTED RECORD>'
         self.DISCONNECT_MESSAGE = '<DISCONNECT>'
@@ -65,9 +69,35 @@ class Communicator(Utilities):
         self.run_thread.start()
 
         self.server_online = False
-        self.resume_from_previous_preprocessing = False
         self.dummy_items_sent = False
+        self.encrypted_inverted_index_matrix_part = 0
         self.encrypted_inverted_index_matrix_received = False
+
+        return
+
+    def user_response(self, semantic_search: str, resume_response: str) -> None:
+        """
+            Updates internal variable with the user's response with whether to continue from previous pre-processing.
+
+            Parameters:
+                - semantic_search (str) : Input from the user.
+                - response (str) : Input from the user.
+
+            Returns:
+                :raises
+                -
+        """
+
+        # Updates local variable of the client depending on answer from the inputs.
+        if semantic_search == 'y':
+            self.is_semantic_search = True
+        else:
+            self.is_semantic_search = False
+
+        if resume_response == 'y':
+            self.resume_from_previous_preprocessing = True
+        else:
+            self.resume_from_previous_preprocessing = False
 
         return
 
@@ -85,7 +115,7 @@ class Communicator(Utilities):
         
         # Tries to send online message to the server.
         try:
-            self.send_online_message_and_resume_boolean()
+            self.send_online_message_and_user_response()
         except ConnectionRefusedError:
             print(f'[CONNECTING] Waiting for the server.')
         
@@ -94,16 +124,15 @@ class Communicator(Utilities):
             sleep(0.1)
 
         # Sends online message and user response on whether to resume from previous pre-processing or not.
-        self.send_online_message_and_resume_boolean()
-        
-        if self.resume_from_previous_preprocessing:
-            self.resume()
+        self.send_online_message_and_user_response()
+
+        self.resume()
 
         print(f'[CONNECTED] Connected to the server.')
 
         return
 
-    def send_online_message_and_resume_boolean(self) -> None:
+    def send_online_message_and_user_response(self) -> None:
         """
             Sends online message to the server together with the resume from previous preprocessing response from
             the user.
@@ -120,32 +149,12 @@ class Communicator(Utilities):
         connection = self.client_context.wrap_socket(socket(AF_INET, SOCK_STREAM), server_hostname='localhost')
         connection.connect(self.SERVER_ADDR)
         connection.sendall(self.add_padding(self.ONLINE_MESSAGE))
+        connection.sendall(self.add_padding(str(self.is_semantic_search)))
         connection.sendall(self.add_padding(str(self.resume_from_previous_preprocessing)))
         connection.shutdown(SHUT_WR)
         connection.close()
 
         return
-
-    def send_resume_message(self) -> None:
-        """
-            Sends the user's response on whether to resume from previous pre-processing or not.
-
-            Parameters:
-                -
-
-            Returns:
-                :raises
-                -
-        """
-
-        # Sends the user's response to if it wants to continue from the previous pre-processing to the server..
-        connection = self.client_context.wrap_socket(socket(AF_INET, SOCK_STREAM), server_hostname='localhost')
-        connection.connect(self.SERVER_ADDR)
-        connection.sendall(self.add_padding(self.RESUME_FROM_PREVIOUS))
-        connection.shutdown(SHUT_WR)
-        connection.close()
-        
-        return 
 
     def add_padding(self, message: str) -> bytes:
         """
@@ -220,6 +229,10 @@ class Communicator(Utilities):
             connection.sendall(self.add_padding(self.END_FILE_MESSAGE))
         
         connection.sendall(self.add_padding(self.DISCONNECT_MESSAGE))
+
+        with number_of_dummy_items_path().open('w') as f:
+            f.write(str(number_of_dummy_items))
+            f.close()
         
         # Updates internal values.
         self.number_of_dummy_items = number_of_dummy_items
@@ -257,19 +270,21 @@ class Communicator(Utilities):
                 -
         """
 
-        # Receives the contents
-        file_contents = ''
+        encrypted_inverted_index_matrix_part = ''
         while (message := connection.recv(self.HEADER).decode(self.FORMAT).strip(chr(0))) != self.END_FILE_MESSAGE:
-            file_contents += message
+            # Receives the contents
+            encrypted_inverted_index_matrix_part += message
 
         # Writes the inverted index matrix.
-        with encrypted_inverted_index_matrix_path().open('w') as f:
-            f.write(file_contents)
+        with open(encrypted_inverted_index_matrix_directory() /
+                  f'Encrypted_Inverted_Index{self.encrypted_inverted_index_matrix_part}.json', 'w') as f:
+            dump(loads(encrypted_inverted_index_matrix_part), f, indent=4)
             f.close()
 
+        connection.sendall(self.add_padding(self.DISCONNECT_MESSAGE))
+
         # Updates object variables.
-        self.encrypted_inverted_index_matrix_received = True
-        self.encrypted_inverted_index_matrix = eval(file_contents)
+        self.encrypted_inverted_index_matrix_part += 1
 
         return
 
@@ -284,7 +299,7 @@ class Communicator(Utilities):
                 :raises
                 -
         """
-        
+
         # Sends pre-processing message to the server.
         connection = self.client_context.wrap_socket(socket(AF_INET, SOCK_STREAM), server_hostname='localhost')
         connection.connect(self.SERVER_ADDR)
@@ -299,7 +314,7 @@ class Communicator(Utilities):
         # Performs the client side of the records pre-processing.
         self.database_preprocessing(self)
         self.send_records_preprocessing_finished_message()
-        
+
         return 
 
     def send_indices_and_encrypt(self, swap: bool, index_a: int, index_b: int) -> None:
@@ -384,7 +399,40 @@ class Communicator(Utilities):
         connection.shutdown(SHUT_WR)
         connection.close()
         
-        return 
+        return
+
+    def send_semantic_search_message(self, search_query: str) -> None:
+        """
+            Obliviously compares the search query embedding to the embedding of each record.
+
+            Parameters:
+                - search_query (str) : Search query from the user.
+
+            Returns:
+                :raises
+                -
+        """
+
+        # Validates the there are enough unrequested dummy items left.
+        if self.get_number_of_requests_to_make() > len(self.dummy_item_indices):
+            self.kill()
+            raise Exception('Insufficient amount of dummy items. Please redo pre-processing of the database.')
+
+        # Sends search query to the server.
+        connection = self.client_context.wrap_socket(socket(AF_INET, SOCK_STREAM), server_hostname='localhost')
+        connection.connect(self.SERVER_ADDR)
+        connection.sendall(self.add_padding(self.SEMANTIC_SEARCH_MESSAGE))
+        print(f'[SENT] {self.SEMANTIC_SEARCH_MESSAGE} to server.')
+
+        # Waits until the server disconnects.
+        self.wait(connection)
+        connection.shutdown(SHUT_WR)
+        connection.close()
+
+        self.embedd_search_query(search_query)
+        self.semantic_search()
+
+        return
 
     def send_encrypt_query_message(self, search_query: str) -> None:
         """
@@ -397,7 +445,7 @@ class Communicator(Utilities):
                 :raises
                 -
         """
-        
+
         # Validates the there are enough unrequested dummy items left.
         if self.get_number_of_requests_to_make() > len(self.dummy_item_indices):
             self.kill()
@@ -538,6 +586,9 @@ class Communicator(Utilities):
             self.server_online = True
         elif message == self.SENDING_ENCRYPTED_INVERTED_INDEX_MATRIX_MESSAGE:
             self.receive_encrypted_inverted_index_matrix(connection)
+        elif message == self.SENDING_ENCRYPTED_INVERTED_INDEX_MATRIX_FINISHED_MESSAGE:
+            print(f'[RECEIVED] {message} from server.')
+            self.encrypted_inverted_index_matrix_received = True
         elif message == self.REQUEST_DUMMY_ITEMS_MESSAGE:
             print(f'[RECEIVED] {message} from server.')
             self.send_dummy_items(connection)

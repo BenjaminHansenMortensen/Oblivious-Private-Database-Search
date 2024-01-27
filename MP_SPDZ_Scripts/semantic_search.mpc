@@ -1,0 +1,40 @@
+from Oblivious_Database_Query_Scheme.getters import (get_embedding_dimension as
+                                                     embedding_dimension)
+from Oblivious_Database_Query_Scheme.getters import (get_number_of_records as
+                                                     number_of_records)
+
+
+sint64 = sint.get_type(64)
+sint128 = sint.get_type(128)
+input_limit = 64
+
+# Input from the client.
+query_embedding = sint64.Tensor([embedding_dimension() // input_limit , input_limit])
+query_embedding.input_from(0)
+
+# Input from the server.
+record_pointer = sint64.get_input_from(1)
+records_embedding = sint64.Tensor([embedding_dimension() // input_limit , input_limit])
+records_embedding.input_from(1)
+
+# Calculates the distance for each point.
+squared_difference = sint64.Tensor([embedding_dimension() // input_limit , input_limit])
+@for_range_parallel(embedding_dimension(), [embedding_dimension() // input_limit, input_limit])
+def _(i, j):
+    squared_difference[i][j] = (query_embedding[i][j] - records_embedding[i][j]).square()
+
+# Sums the distance of each point to find the squared euclidean distance.
+distance = sint128(0)
+@for_range_opt([embedding_dimension() // input_limit, input_limit])
+def _(i, j):
+    distance.iadd(squared_difference[i][j])
+
+# Threshold for the squared euclidean distance between two vectors to be considered close.
+threshold = sint128(15 * 10**15)
+
+# Checks if the search query is semantically close enough to the record to be revealed.
+result = record_pointer * (distance < threshold)
+#print_ln('%s', result.reveal())                <- !!!OBS THIS IS NOT WHAT IS REVEAL TO THE CLIENT!!!
+
+# OBS: For demonstrative purposes the distance and the record pointer is reveal to the client.
+print_ln('%s %s ', distance.reveal(), record_pointer.reveal())

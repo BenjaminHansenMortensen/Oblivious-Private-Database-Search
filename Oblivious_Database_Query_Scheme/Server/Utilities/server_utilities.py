@@ -2,9 +2,11 @@
 
 # Imports.
 from os import chdir
-from pathlib import Path
+from pathlib import Path, PosixPath
 from re import findall
 from subprocess import Popen, PIPE
+from json import loads
+from random import shuffle
 
 # Local getters imports.
 from Oblivious_Database_Query_Scheme.getters import (get_encoding_base as
@@ -27,10 +29,23 @@ from Oblivious_Database_Query_Scheme.getters import (get_aes_128_with_circuit_mp
                                                      aes_128_mpc_script_path)
 from Oblivious_Database_Query_Scheme.getters import (get_inverted_index_matrix_encryption_key_path as
                                                      inverted_index_matrix_encryption_key_path)
+from Oblivious_Database_Query_Scheme.getters import (get_server_semantic_indexing_path as
+                                                     semantic_indexing_path)
+from Oblivious_Database_Query_Scheme.getters import (get_semantic_search_mpc_script_path as
+                                                     semantic_search_mpc_script_path)
+from Oblivious_Database_Query_Scheme.getters import (get_server_record_pointers_path as
+                                                     record_indexing_path)
+from Oblivious_Database_Query_Scheme.getters import (get_records_directory as
+                                                     records_directory)
+from Oblivious_Database_Query_Scheme.getters import (get_excluded_records as
+                                                     excluded_records)
+from Oblivious_Database_Query_Scheme.getters import (get_server_record_pointers_path as
+                                                     record_indexing_path)
 
 # Server imports.
 from Oblivious_Database_Query_Scheme.Server.Utilities.Data_Generation.generate_pnr_records import run as generate_pnr_records
-from Oblivious_Database_Query_Scheme.Server.Utilities.inverted_index_matrix import run as inverted_index_matrix
+from Oblivious_Database_Query_Scheme.Server.Utilities.semantic_indexing import run as create_semantic_indexing
+from Oblivious_Database_Query_Scheme.Server.Utilities.inverted_index_matrix import run as create_inverted_index_matrix
 from Oblivious_Database_Query_Scheme.Server.Utilities.record_encoder import encode_record
 from Oblivious_Database_Query_Scheme.Server.Utilities.inverted_index_matrix_encryptor import run as encrypt_inverted_index_matrix
 
@@ -41,7 +56,10 @@ class Utilities:
     """
 
     def __init__(self) -> None:
-        self.records_indexing = None
+        self.is_semantic_search = None
+        self.resume_from_previous_preprocessing = None
+        self.record_pointers = None
+        self.encrypted_record_pointers = None
         self.inverted_index_matrix_encryption_key = None
 
         return
@@ -60,17 +78,21 @@ class Utilities:
 
         # Tries to load the encryption key used to encrypt the inverted index matrix.
         try:
-            if not self.inverted_index_matrix_encryption_key:
-                with inverted_index_matrix_encryption_key_path().open("r") as f:
+            if not self.inverted_index_matrix_encryption_key and not self.is_semantic_search:
+                with inverted_index_matrix_encryption_key_path().open('r') as f:
                     self.inverted_index_matrix_encryption_key = f.read()
+                    f.close()
+
+            if not self.encrypted_record_pointers:
+                with record_indexing_path().open('r') as f:
+                    self.encrypted_record_pointers = eval(f.read())
                     f.close()
         except FileNotFoundError:
             pass
 
         return
 
-    @staticmethod
-    def generate_pnr_records() -> None:
+    def generate_pnr_records(self) -> None:
         """
             Generates the PNR records.
 
@@ -84,11 +106,35 @@ class Utilities:
 
         generate_pnr_records(number_of_records())
 
+        # Creates a list of pointers of the records and shuffles them.
+        record_paths = [path for path in records_directory().glob('*') if
+                        (path.name not in excluded_records()) and (path.suffix == '.json')]
+        shuffle(record_paths)
+
+        self.record_pointers = record_paths.copy()
+        self.encrypted_record_pointers = record_paths
+
+        return
+
+    def create_semantic_indexing(self) -> None:
+        """
+            Creates a semantic indexing of the records.
+
+            Parameters:
+                -
+
+            Returns:
+                :raises
+                -
+        """
+        print('[INDEXING] Creating the semantic indexing of the records.')
+        create_semantic_indexing(self.record_pointers)
+
         return
 
     def create_inverted_index_matrix(self) -> None:
         """
-            Creates the inverted index matrix of the records.
+            Creates a inverted index matrix of the records.
 
             Parameters:
                 -
@@ -98,14 +144,14 @@ class Utilities:
                 -
         """
 
-        self.records_indexing = inverted_index_matrix()
+        print('[INDEXING] Creating the inverted index matrix of the records.')
+        create_inverted_index_matrix(self.record_pointers)
 
         return
 
-    def database_preprocessing(self) -> None:
+    def setup_and_encode_records(self) -> None:
         """
-            Obliviously encrypts and shuffles all records and dummy items according to the client's permutation and
-            encryption keys.
+            Encodes the records and stores them in the encrypted records directory.
 
             Parameters:
                 -
@@ -116,8 +162,8 @@ class Utilities:
         """
 
         # Copies and encodes all records and dummy items into a new directory.
-        for i in range(len(self.records_indexing)):
-            record_path = self.records_indexing[i]
+        for i in range(len(self.record_pointers)):
+            record_path = self.record_pointers[i]
             # Encodes records.
             if record_path.suffix == ".json":
                 encoded_record = ' '.join(encode_record(record_path))
@@ -134,7 +180,11 @@ class Utilities:
                 f.close()
 
             # Updates the local pointers.
-            self.records_indexing[i] = new_path
+            self.encrypted_record_pointers[i] = new_path
+
+        with record_indexing_path().open('w') as f:
+            f.write(f'{self.encrypted_record_pointers}')
+            f.close()
 
         return
 
@@ -153,7 +203,7 @@ class Utilities:
         """
 
         # Fetches the records.
-        record_path_a, record_path_b = self.records_indexing[index_a], self.records_indexing[index_b]
+        record_path_a, record_path_b = self.encrypted_record_pointers[index_a], self.encrypted_record_pointers[index_b]
         record_a, record_b = self.get_record(record_path_a), self.get_record(record_path_b)
 
         # Runs MP-SPDZ to obliviously encrypt the records with the client's keys then overwrites it.
@@ -162,7 +212,7 @@ class Utilities:
         self.run_mp_spdz(player_id, mpc_script_name)
         record_path_a = encrypted_records_directory() / f"{index_a}.txt"
         record_path_b = encrypted_records_directory() / f"{index_b}.txt"
-        self.records_indexing[index_a], self.records_indexing[index_b] = record_path_a, record_path_b
+        self.encrypted_record_pointers[index_a], self.encrypted_record_pointers[index_b] = record_path_a, record_path_b
         self.write_mp_spdz_output_to_encrypted_database([record_path_a, record_path_b])
 
         return
@@ -319,6 +369,36 @@ class Utilities:
         # Writes the encryption key.
         with inverted_index_matrix_encryption_key_path().open("w") as f:
             f.write(self.inverted_index_matrix_encryption_key)
+            f.close()
+
+        return
+
+    def semantic_search(self) -> None:
+        """
+
+        """
+
+        with semantic_indexing_path().open('r') as f:
+            semantic_indexing = loads(f.read())
+            f.close()
+
+        player_id = 1
+        for index in semantic_indexing.keys():
+            self.write_embeddings_mp_spdz_input(player_id, semantic_indexing, index)
+            self.run_mp_spdz(player_id, semantic_search_mpc_script_path().stem)
+
+        return
+
+    @staticmethod
+    def write_embeddings_mp_spdz_input(player_id: int, semantic_indexing: dict, index: str) -> None:
+        """
+
+        """
+
+        with open(mp_spdz_input_path().parent / f'{mp_spdz_input_path()}-P{player_id}-0', 'w') as f:
+            f.write(f'{index} ')
+            for value in semantic_indexing[index]:
+                f.write(f'{value} ')
             f.close()
 
         return

@@ -68,6 +68,36 @@ def get_max_amount_of_attributes_per_record() -> int:
     return max_amount_of_attributes_per_record
 
 
+def get_embedding_dimension() -> int:
+    """ Getter for the embedding_dimension variable. """
+    embedding_dimension = 768
+    return embedding_dimension
+
+
+def get_embedding_model() -> str:
+    """ Getter for the embedding_model variable. """
+    embedding_model = 'all-mpnet-base-v2'
+    return embedding_model
+
+
+def get_float_to_integer_scalar() -> int:
+    """ Getter for the float_to_integer_scalar variable."""
+    float_to_integer_scalar = 10**9
+    return float_to_integer_scalar
+
+
+def get_request_threshold() -> int:
+    """ Getter for the request_threshold variable. """
+    request_threshold = 1
+    return request_threshold
+
+
+def get_semantic_search_mpc_script_path() -> Path:
+    """ getter for the semantic_search_mpc_script_path variable. """
+    semantic_search_mpc_script_path = working_directory.parent / 'MP_SPDZ_Scripts' / 'semantic_search.mpc'
+    return semantic_search_mpc_script_path
+
+
 def get_number_of_blocks() -> int:
     """ Getter for the number_of_blocks variable. """
     number_of_blocks = get_max_file_length() // get_encoding_base()
@@ -82,7 +112,7 @@ def get_database_size() -> int:
 
 def get_number_of_records() -> int:
     """ Getter for the number_of_records variable. """
-    number_of_records = 10
+    number_of_records = get_database_size() - 6
     return number_of_records
 
 
@@ -269,12 +299,12 @@ def get_inverted_index_matrix_path() -> Path:
     return inverted_index_matrix_path
 
 
-def get_server_encrypted_inverted_index_matrix_path() -> Path:
-    """ Getter for the encrypted_inverted_index_matrix_path variable. """
+def get_server_encrypted_inverted_index_matrix_directory() -> Path:
+    """ Getter for the server_encrypted_inverted_index_matrix_directory variable. """
     global working_directory
-    encrypted_inverted_index_matrix_path = (working_directory / 'Server' / 'Indexing' /
-                                            'Encrypted_Inverted_Index_Matrix.json')
-    return encrypted_inverted_index_matrix_path
+    server_encrypted_inverted_index_matrix_directory = (working_directory / 'Server' / 'Indexing' /
+                                                        'Encrypted_Inverted_Index_Matrix')
+    return server_encrypted_inverted_index_matrix_directory
 
 
 def get_client_indexing_directory() -> Path:
@@ -284,11 +314,17 @@ def get_client_indexing_directory() -> Path:
     return client_indexing_directory
 
 
-def get_client_encrypted_inverted_index_matrix_path() -> Path:
-    """ Getter for the client_encrypted_inverted_index_matrix_path variable. """
-    client_encrypted_inverted_index_matrix_path = (get_client_indexing_directory() /
-                                                   'Encrypted_Inverted_Index_Matrix.json')
-    return client_encrypted_inverted_index_matrix_path
+def get_client_encrypted_inverted_index_matrix_directory() -> Path:
+    """ Getter for the client_encrypted_inverted_index_matrix_directory variable. """
+    client_encrypted_inverted_index_matrix_directory = (get_client_indexing_directory() /
+                                                        'Encrypted_Inverted_Index_Matrix')
+    return client_encrypted_inverted_index_matrix_directory
+
+
+def get_encrypted_inverted_index_matrix_attribute_limit() -> int:
+    """ Getter for the encrypted_inverted_index_matrix_attribute_limit variable. """
+    encrypted_inverted_index_matrix_attribute_limit = 10**5
+    return encrypted_inverted_index_matrix_attribute_limit
 
 
 def get_permutation_indexing_path() -> Path:
@@ -372,6 +408,24 @@ def get_server_indexing_files_directory() -> Path:
     global working_directory
     server_indexing_files_directory = working_directory / 'Server' / 'Indexing'
     return server_indexing_files_directory
+
+
+def get_server_semantic_indexing_path() -> Path:
+    """ Getter for the server_semantic_indexing_path variable. """
+    server_semantic_indexing_path = get_server_indexing_files_directory() / 'Semantic_Indexing.json'
+    return server_semantic_indexing_path
+
+
+def get_client_number_of_dummy_items_path() -> Path:
+    """ Getter for the client_number_of_dummy_items_path variable. """
+    client_number_of_dummy_items_path = working_directory / 'Client' / 'Indexing' / 'number_of_dummy_items.txt'
+    return client_number_of_dummy_items_path
+
+
+def get_server_record_pointers_path() -> Path:
+    """ Getter for the server_record_pointers_path variable. """
+    server_record_pointers_path = working_directory / 'Server' / 'Indexing' / 'Record_Pointers.json'
+    return server_record_pointers_path
 
 
 working_directory = Path.cwd()

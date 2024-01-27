@@ -10,12 +10,14 @@ from cryptography.hazmat.primitives.ciphers import (Cipher, algorithms, modes)
 # Local getters imports.
 from Oblivious_Database_Query_Scheme.getters import (get_inverted_index_matrix_path as
                                                      inverted_index_matrix_path)
-from Oblivious_Database_Query_Scheme.getters import (get_server_encrypted_inverted_index_matrix_path as
-                                                     encrypted_inverted_index_matrix_path)
+from Oblivious_Database_Query_Scheme.getters import (get_server_encrypted_inverted_index_matrix_directory as
+                                                     encrypted_inverted_index_matrix_directory)
 from Oblivious_Database_Query_Scheme.getters import (get_number_of_bytes as
                                                      number_of_bytes)
 from Oblivious_Database_Query_Scheme.getters import (get_max_amount_of_attributes_per_record as
                                                      max_amount_of_attributes_per_record)
+from Oblivious_Database_Query_Scheme.getters import (get_encrypted_inverted_index_matrix_attribute_limit as
+                                                     encrypted_inverted_index_matrix_attribute_limit)
 
 
 def aes_128_ecb(key: bytes, plaintext: bytes) -> str:
@@ -120,7 +122,7 @@ def encrypt_and_pad_inverted_index_matrix(inverted_index_matrix: dict[str, list[
     return encrypted_inverted_index_matrix
 
 
-def shuffle_dictionary(encrypted_inverted_index_matrix: dict) -> dict:
+def shuffle_dictionary(encrypted_inverted_index_matrix: dict[str, list[str]]) -> dict[str, list[str]]:
     """
         Shuffles the encrypted inverted index matrix.
 
@@ -139,6 +141,45 @@ def shuffle_dictionary(encrypted_inverted_index_matrix: dict) -> dict:
         shuffled_encrypted_inverted_index_matrix[key] = encrypted_inverted_index_matrix[key]
 
     return shuffled_encrypted_inverted_index_matrix
+
+
+def write_encrypted_inverted_index_matrix(encrypted_inverted_index_matrix: dict[str, list[str]]) -> None:
+    """
+        Writes the encrypted inverted index matrix to multiple files depending on its length.
+
+        Parameters:
+            - encrypted_inverted_index_matrix (dict) : The dictionary to be written.
+
+        Returns:
+            :raises
+            -
+    """
+
+    temp_dictionary = {}
+    counter = 0
+    file_counter = 0
+    for attribute in encrypted_inverted_index_matrix.keys():
+        temp_dictionary[attribute] = encrypted_inverted_index_matrix[attribute]
+        counter += 1
+
+        if counter == encrypted_inverted_index_matrix_attribute_limit():
+            # Writes part of the encrypted inverted index matrix.
+            with open(encrypted_inverted_index_matrix_directory() /
+                      f'Encrypted_Inverted_Index_Matrix{file_counter}.json', 'w') as f:
+                dump(temp_dictionary, f, indent=4)
+                f.close()
+
+            file_counter += 1
+            temp_dictionary = {}
+            counter = 0
+
+    # Writes the remaining part of the encrypted inverted index matrix.
+    with open(encrypted_inverted_index_matrix_directory() /
+              f'Encrypted_Inverted_Index_Matrix{file_counter}.json', 'w') as f:
+        dump(temp_dictionary, f, indent=4)
+        f.close()
+
+    return
 
 
 def run() -> str:
@@ -166,8 +207,7 @@ def run() -> str:
     # Shuffles the encrypted inverted index matrix.
     encrypted_inverted_index_matrix = shuffle_dictionary(encrypted_inverted_index_matrix)
 
-    # writes the encrypted inverted index matrix.
-    with encrypted_inverted_index_matrix_path().open('w') as file:
-        dump(encrypted_inverted_index_matrix, file, indent=4)
+    # Writes the encrypted inverted index matrix.
+    write_encrypted_inverted_index_matrix(encrypted_inverted_index_matrix)
 
     return encryption_key.hex()

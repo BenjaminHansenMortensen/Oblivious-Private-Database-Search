@@ -23,8 +23,8 @@ from Oblivious_Database_Query_Scheme.getters import (get_sort_and_encrypt_with_c
                                                      sort_and_encrypt_with_circuit_mpc_script_path)
 from Oblivious_Database_Query_Scheme.getters import (get_sort_and_reencrypt_with_circuit_mpc_script_path as
                                                      sort_and_reencrypt_with_circuit_mpc_script_path)
-from Oblivious_Database_Query_Scheme.getters import (get_server_encrypted_inverted_index_matrix_path as
-                                                     encrypted_inverted_index_matrix_path)
+from Oblivious_Database_Query_Scheme.getters import (get_server_encrypted_inverted_index_matrix_directory as
+                                                     encrypted_inverted_index_matrix_directory)
 from Oblivious_Database_Query_Scheme.getters import (get_encrypted_records_directory as
                                                      encrypted_records_directory)
 from Oblivious_Database_Query_Scheme.getters import (get_records_directory as
@@ -50,13 +50,14 @@ class Communicator(Utilities):
         self.FORMAT = 'utf-8'
 
         self.ONLINE_MESSAGE = '<ONLINE>'
-        self.RESUME_FROM_PREVIOUS = '<RESUME FROM PREVIOUS>'
         self.REQUEST_DUMMY_ITEMS_MESSAGE = '<REQUESTING DUMMY ITEMS>'
         self.RECORDS_PREPROCESSING_MESSAGE = '<RECORDS PRE-PROCESSING>'
         self.ENCRYPT_RECORDS_MESSAGE = '<ENCRYPT RECORDS>'
         self.REENCRYPT_RECORDS_MESSAGE = '<REENCRYPT RECORDS>'
         self.RECORDS_PREPROCESSING_FINISHED_MESSAGE = '<RECORDS PRE-PROCESSING FINISHED>'
         self.SENDING_ENCRYPTED_INVERTED_INDEX_MATRIX_MESSAGE = '<SENDING ENCRYPTED INVERTED INDEX MATRIX>'
+        self.SENDING_ENCRYPTED_INVERTED_INDEX_MATRIX_FINISHED_MESSAGE = '<SENDING ENCRYPTED INVERTED INDEX MATRIX FINISHED>'
+        self.SEMANTIC_SEARCH_MESSAGE = '<SEMANTIC SEARCH>'
         self.ENCRYPT_QUERY_MESSAGE = '<ENCRYPT QUERY>'
         self.REQUEST_ENCRYPTED_RECORD_MESSAGE = '<REQUESTING ENCRYPTED RECORD>'
         self.DISCONNECT_MESSAGE = '<DISCONNECT>'
@@ -77,7 +78,6 @@ class Communicator(Utilities):
         self.run_thread.start()
 
         self.client_online = False
-        self.resume_from_previous_preprocessing = None
         self.records_preprocessing_finished = False
 
         return
@@ -106,6 +106,8 @@ class Communicator(Utilities):
         
         # Sends online message and receives response on whether to resume form previous pre-processing or not.
         self.send_online_message()
+        while self.is_semantic_search is None:
+            sleep(0.1)
         while self.resume_from_previous_preprocessing is None:
             sleep(0.1)
 
@@ -204,7 +206,7 @@ class Communicator(Utilities):
                 -
         """
 
-        # Waits until the disconect message is received from the client.
+        # Waits until the disconnect message is received from the client.
         while (connection.recv(self.HEADER).decode(self.FORMAT).strip(chr(0))) != self.DISCONNECT_MESSAGE:
             sleep(0.01)
 
@@ -242,7 +244,7 @@ class Communicator(Utilities):
                 f.close()
 
             # Updates database pointers with the dummy item.
-            self.records_indexing.append(file_path)
+            self.encrypted_record_pointers.append(file_path)
 
         connection.shutdown(SHUT_WR)
         connection.close()
@@ -261,22 +263,34 @@ class Communicator(Utilities):
                 -
         """
 
-        # Reads the encrypted inverted index matrix.
-        with encrypted_inverted_index_matrix_path().open('r') as f:
-            encrypted_inverted_index_matrix = f.read()
-            f.close()
+        encrypted_inverted_index_matrix_part_paths = [path for path in encrypted_inverted_index_matrix_directory().glob('*')]
+        print(f'[SENT] {self.SENDING_ENCRYPTED_INVERTED_INDEX_MATRIX_MESSAGE} to client.')
 
-        message_bytes = str.encode(encrypted_inverted_index_matrix)
+        # Sends each part of the encrypted inverted index matrix to the client.
+        for encrypted_inverted_index_matrix_part_path in encrypted_inverted_index_matrix_part_paths:
+            connection = self.client_context.wrap_socket(socket(AF_INET, SOCK_STREAM), server_hostname='localhost')
+            connection.connect(self.CLIENT_ADDR)
+            connection.sendall(self.add_padding(self.SENDING_ENCRYPTED_INVERTED_INDEX_MATRIX_MESSAGE))
 
-        # Sends the encrypted inverted index matrix to the client.
+            # Reads the encrypted inverted index matrix.
+            with encrypted_inverted_index_matrix_part_path.open('r') as f:
+                encrypted_inverted_index_matrix_part = f.read()
+                f.close()
+
+            # Sends the encrypted inverted index matrix part to the client.
+            message_bytes = str.encode(encrypted_inverted_index_matrix_part)
+            for i in range(0, len(message_bytes), self.HEADER):
+                connection.sendall(self.add_padding((message_bytes[i: i + self.HEADER]).decode(self.FORMAT)))
+            connection.sendall(self.add_padding(self.END_FILE_MESSAGE))
+
+            self.wait(connection)
+            connection.shutdown(SHUT_WR)
+            connection.close()
+
         connection = self.client_context.wrap_socket(socket(AF_INET, SOCK_STREAM), server_hostname='localhost')
         connection.connect(self.CLIENT_ADDR)
-        connection.sendall(self.add_padding(self.SENDING_ENCRYPTED_INVERTED_INDEX_MATRIX_MESSAGE))
-        for i in range(0, len(message_bytes), self.HEADER):
-            connection.sendall(self.add_padding((message_bytes[i: i + self.HEADER]).decode(self.FORMAT)))
-        connection.sendall(self.add_padding(self.END_FILE_MESSAGE))
-
-        print(f'[SENT] {self.SENDING_ENCRYPTED_INVERTED_INDEX_MATRIX_MESSAGE} to client.')
+        connection.sendall(self.add_padding(self.SENDING_ENCRYPTED_INVERTED_INDEX_MATRIX_FINISHED_MESSAGE))
+        print(f'[SENT] {self.SENDING_ENCRYPTED_INVERTED_INDEX_MATRIX_FINISHED_MESSAGE} to client.')
         connection.shutdown(SHUT_WR)
         connection.close()
 
@@ -295,7 +309,7 @@ class Communicator(Utilities):
         """
 
         # Server side of the records pre-processing
-        self.database_preprocessing()
+        self.setup_and_encode_records()
 
         # Disconnects when the records pre-processing is finished.
         connection.sendall(self.add_padding(self.DISCONNECT_MESSAGE))
@@ -325,6 +339,25 @@ class Communicator(Utilities):
             self.encrypt_records(index_a, index_b, mpc_script_name)
         else:
             raise ValueError('The received pointers are not valid.')
+
+        return
+
+    def received_semantic_search_message(self, connection: SSLSocket) -> None:
+        """
+            Obliviously compares the search query embedding to the embedding of each record.
+
+            Parameters:
+                - connection (SSLSocket) : Connection with the client.
+
+            Returns:
+                :raises
+                -
+        """
+
+        # Closes the connection with the client.
+        connection.sendall(self.add_padding(self.DISCONNECT_MESSAGE))
+
+        self.semantic_search()
 
         return
 
@@ -361,8 +394,8 @@ class Communicator(Utilities):
         """
 
         # Fetches the requested encrypted record.
-        index = connection.recv(self.HEADER).decode(self.FORMAT).strip(chr(0))
-        encrypted_record_path = encrypted_records_directory() / f'{index}.txt'
+        index = int(connection.recv(self.HEADER).decode(self.FORMAT).strip(chr(0)))
+        encrypted_record_path = self.encrypted_record_pointers[index]
         with encrypted_record_path.open('r') as f:
             encrypted_record = f.read()
             f.close()
@@ -390,13 +423,16 @@ class Communicator(Utilities):
         if message == self.ONLINE_MESSAGE:
             print(f'[RECEIVED] {message} from client.')
             self.client_online = True
+            self.is_semantic_search = eval(
+                                                           connection.recv(self.HEADER).decode(self.FORMAT).strip(
+                                                                                                                  chr(0)
+                                                                                                                  )
+                                                           )
             self.resume_from_previous_preprocessing = eval(
                                                            connection.recv(self.HEADER).decode(self.FORMAT).strip(
                                                                                                                   chr(0)
                                                                                                                   )
                                                            )
-        elif message == self.RESUME_FROM_PREVIOUS:
-            self.resume_from_previous_preprocessing = True
         elif message == self.RECORDS_PREPROCESSING_MESSAGE:
             print(f'[RECEIVED] {message} from client.')
             self.received_records_preprocessing_message(connection)
@@ -408,6 +444,9 @@ class Communicator(Utilities):
             self.mp_spdz_record_encryption(connection, sort_and_encrypt_with_circuit_mpc_script_path().stem)
         elif message == self.REENCRYPT_RECORDS_MESSAGE:
             self.mp_spdz_record_encryption(connection, sort_and_reencrypt_with_circuit_mpc_script_path().stem)
+        elif message == self.SEMANTIC_SEARCH_MESSAGE:
+            print(f'[RECEIVED] {message} from client.')
+            self.received_semantic_search_message(connection)
         elif message == self.ENCRYPT_QUERY_MESSAGE:
             print(f'[RECEIVED] {message} from client.')
             self.received_encrypt_query_message(connection)

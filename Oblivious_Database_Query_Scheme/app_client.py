@@ -26,7 +26,7 @@ def clean_up_files() -> None:
     """
 
     # Removes the stored indexing files.
-    file_paths = [path for path in client_indexing_directory().glob('*')]
+    file_paths = [path for path in client_indexing_directory().rglob('*') if path.is_file()]
     for file_path in file_paths:
         file_path.unlink()
 
@@ -48,17 +48,21 @@ if __name__ == '__main__':
     working_directory_validation()
     mp_spdz_directory_validation()
 
+    # Perform a semantic search input from the user.
+    semantic_search_response = input("Perform a sematic search? (y/n): ")
+
     # Resume from previous pre-processing input from the user.
-    resume = input("Resume from previous pre-processing? (y/n): ")
+    resume_response = input("Resume from previous pre-processing? (y/n): ")
 
     # Starts the client
     client = Client()
 
-    # Updates local variable of the client depending on answer from the input.
-    if resume == 'y':
-        client.resume_from_previous_preprocessing = True
-    else:
-        client.resume_from_previous_preprocessing = False
+    client.user_response(semantic_search_response, resume_response)
+
+    if not client.resume_from_previous_preprocessing:
+
+        # Removes files from the previous pre-processing.
+        clean_up_files()
 
     # Waits for the server to connect.
     client.wait_for_server()
@@ -66,27 +70,30 @@ if __name__ == '__main__':
     # Executes a new pre-processing of the database.
     if not client.resume_from_previous_preprocessing:
 
-        # Removes files from the previous pre-processing.
-        clean_up_files()
-
         # Waits for the server to request dummy items then sends them.
         client.waiting_to_send_dummy_items()
 
         # Shuffles and encrypts the server's records.
         client.send_records_preprocessing_message()
 
-        # Waits for the server to send the inverted index matrix.
-        client.wait_for_encrypted_inverted_index_matrix()
+        if not client.is_semantic_search:
+            # Waits for the server to send the inverted index matrix.
+            client.wait_for_encrypted_inverted_index_matrix()
 
-    # Executes searches and retrievals of the server's records.
+    # Executes searching and retrievals of the server's records.
     while True:
+
         # Takes a search query from the user.
         search_query = input("Search Query: ")
         if search_query == "exit":
             break
 
-        # Encrypted the search query under the server's encryption key.
-        client.send_encrypt_query_message(search_query)
+        if client.is_semantic_search:
+            # Semantic search
+            client.send_semantic_search_message(search_query)
+        else:
+            # Encrypted the search query under the server's encryption key.
+            client.send_encrypt_query_message(search_query)
 
         # Searches and retrieves the records. Given no results dummy items will be requested instead.
         client.request_pnr_records()
