@@ -9,10 +9,7 @@ license = {text = 'MIT License'}
 name = 'Oblivious-Private-Database-Search'
 description = 'Implementation of oblivious private database search showcasing regular searching and semantic search of PNR records.'
 readme = 'README.md'
-dependencies = ['cryptography', 'names', 'random-address']
-
-[project.optional-dependencies]
-semantic_search = ['sentence-transformers']
+dependencies = ['cryptography', 'names', 'random-address', 'sentence-transformers']
 
 [project.scripts]
 opds_setup = 'Oblivious_Private_Database_Search.setup:main'
