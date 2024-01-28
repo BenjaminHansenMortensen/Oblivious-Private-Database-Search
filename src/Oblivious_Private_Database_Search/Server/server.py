@@ -62,7 +62,8 @@ class Communicator(Utilities):
         self.REENCRYPT_RECORDS_MESSAGE = '<REENCRYPT RECORDS>'
         self.RECORDS_PREPROCESSING_FINISHED_MESSAGE = '<RECORDS PRE-PROCESSING FINISHED>'
         self.SENDING_ENCRYPTED_INVERTED_INDEX_MATRIX_MESSAGE = '<SENDING ENCRYPTED INVERTED INDEX MATRIX>'
-        self.SENDING_ENCRYPTED_INVERTED_INDEX_MATRIX_FINISHED_MESSAGE = '<SENDING ENCRYPTED INVERTED INDEX MATRIX FINISHED>'
+        self.SENDING_ENCRYPTED_INVERTED_INDEX_MATRIX_FINISHED_MESSAGE = \
+            '<SENDING ENCRYPTED INVERTED INDEX MATRIX FINISHED>'
         self.SEMANTIC_SEARCH_MESSAGE = '<SEMANTIC SEARCH>'
         self.ENCRYPT_QUERY_MESSAGE = '<ENCRYPT QUERY>'
         self.REQUEST_ENCRYPTED_RECORD_MESSAGE = '<REQUESTING ENCRYPTED RECORD>'
@@ -138,7 +139,8 @@ class Communicator(Utilities):
         """
 
         # Sends online message to the client.
-        connection = self.client_context.wrap_socket(socket(AF_INET, SOCK_STREAM), server_hostname=client_networking_certificate_path().stem)
+        connection = self.client_context.wrap_socket(socket(AF_INET, SOCK_STREAM),
+                                                     server_hostname=client_networking_certificate_path().stem)
         connection.connect(self.CLIENT_ADDR)
         connection.sendall(self.add_padding(self.ONLINE_MESSAGE))
         connection.shutdown(SHUT_WR)
@@ -231,7 +233,8 @@ class Communicator(Utilities):
         """
 
         # Sends the amount of dummy items needed.
-        connection = self.client_context.wrap_socket(socket(AF_INET, SOCK_STREAM), server_hostname=client_networking_certificate_path().stem)
+        connection = self.client_context.wrap_socket(socket(AF_INET, SOCK_STREAM),
+                                                     server_hostname=client_networking_certificate_path().stem)
         connection.connect(self.CLIENT_ADDR)
         connection.sendall(self.add_padding(self.REQUEST_DUMMY_ITEMS_MESSAGE))
         connection.sendall(self.add_padding(str(number_of_dummy_items())))
@@ -269,12 +272,14 @@ class Communicator(Utilities):
                 -
         """
 
-        encrypted_inverted_index_matrix_part_paths = [path for path in encrypted_inverted_index_matrix_directory().glob('*')]
+        encrypted_inverted_index_matrix_part_paths = [path for path in
+                                                      encrypted_inverted_index_matrix_directory().glob('*')]
         print(f'[SENT] {self.SENDING_ENCRYPTED_INVERTED_INDEX_MATRIX_MESSAGE} to client.')
 
         # Sends each part of the encrypted inverted index matrix to the client.
         for encrypted_inverted_index_matrix_part_path in encrypted_inverted_index_matrix_part_paths:
-            connection = self.client_context.wrap_socket(socket(AF_INET, SOCK_STREAM), server_hostname=client_networking_certificate_path().stem)
+            connection = self.client_context.wrap_socket(socket(AF_INET, SOCK_STREAM),
+                                                         server_hostname=client_networking_certificate_path().stem)
             connection.connect(self.CLIENT_ADDR)
             connection.sendall(self.add_padding(self.SENDING_ENCRYPTED_INVERTED_INDEX_MATRIX_MESSAGE))
 
@@ -293,7 +298,9 @@ class Communicator(Utilities):
             connection.shutdown(SHUT_WR)
             connection.close()
 
-        connection = self.client_context.wrap_socket(socket(AF_INET, SOCK_STREAM), server_hostname=client_networking_certificate_path().stem)
+        # Sends the sending encrypted inverted index matrix finished message to the client.
+        connection = self.client_context.wrap_socket(socket(AF_INET, SOCK_STREAM),
+                                                     server_hostname=client_networking_certificate_path().stem)
         connection.connect(self.CLIENT_ADDR)
         connection.sendall(self.add_padding(self.SENDING_ENCRYPTED_INVERTED_INDEX_MATRIX_FINISHED_MESSAGE))
         print(f'[SENT] {self.SENDING_ENCRYPTED_INVERTED_INDEX_MATRIX_FINISHED_MESSAGE} to client.')
@@ -364,6 +371,7 @@ class Communicator(Utilities):
         # Closes the connection with the client.
         connection.sendall(self.add_padding(self.DISCONNECT_MESSAGE))
 
+        # Runs the server side of the semantic search.
         address, port = self.CLIENT_ADDR
         self.semantic_search(address)
 
@@ -432,16 +440,10 @@ class Communicator(Utilities):
         if message == self.ONLINE_MESSAGE:
             print(f'[RECEIVED] {message} from client.')
             self.client_online = True
-            self.is_semantic_search = eval(
-                                                           connection.recv(self.HEADER).decode(self.FORMAT).strip(
-                                                                                                                  chr(0)
-                                                                                                                  )
-                                                           )
-            self.resume_from_previous_preprocessing = eval(
-                                                           connection.recv(self.HEADER).decode(self.FORMAT).strip(
-                                                                                                                  chr(0)
-                                                                                                                  )
-                                                           )
+            self.is_semantic_search = eval(connection.recv(
+                                           self.HEADER).decode(self.FORMAT).strip(chr(0)))
+            self.resume_from_previous_preprocessing = eval(connection.recv(
+                                                           self.HEADER).decode(self.FORMAT).strip(chr(0)))
         elif message == self.RECORDS_PREPROCESSING_MESSAGE:
             print(f'[RECEIVED] {message} from client.')
             self.received_records_preprocessing_message(connection)

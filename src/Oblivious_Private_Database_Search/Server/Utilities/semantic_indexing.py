@@ -9,11 +9,11 @@ from warnings import simplefilter
 
 # Local getter imports.
 from Oblivious_Private_Database_Search.getters import (get_server_semantic_indexing_path as
-                                                     server_semantic_indexing_path)
+                                                       server_semantic_indexing_path)
 from Oblivious_Private_Database_Search.getters import (get_embedding_model as
-                                                     embedding_model)
+                                                       embedding_model)
 from Oblivious_Private_Database_Search.getters import (get_float_to_integer_scalar as
-                                                     float_to_integer_scalar)
+                                                       float_to_integer_scalar)
 
 # Warning filtering.
 simplefilter('ignore', UserWarning)
@@ -71,6 +71,7 @@ def add_keys_and_values(flat_dictionary: dict, dictionary: dict, key_filter: lis
         - flat_dictionary (dict) : The dictionary where keys and values are added it.
         - dictionary (dict) : The dictionary to be flattened.
         - key_filter (list) : A list of values to filter out unwanted information.
+        - attribute_filter (dict) : A list of values to filter out unwanted information.
         - parent_key (str) : The key of the parent dictionary.
 
     Returns:
@@ -155,4 +156,3 @@ def run(record_pointers: list[Path]) -> None:
         f.close()
 
     return
-

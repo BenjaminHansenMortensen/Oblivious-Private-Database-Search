@@ -17,8 +17,8 @@ from Oblivious_Private_Database_Search.getters import (get_database_size as
                                                        database_size)
 from Oblivious_Private_Database_Search.getters import (get_number_of_bytes as
                                                        number_of_bytes)
-from Oblivious_Private_Database_Search.getters import (get_aes_128_with_circuit_mpc_script_path as
-                                                       aes_128_mpc_script_path)
+from Oblivious_Private_Database_Search.getters import (get_aes_128_ecb_with_circuit_mpc_script_path as
+                                                       aes_128_ecb_mpc_script_path)
 from Oblivious_Private_Database_Search.getters import (get_client_mp_spdz_input_path as
                                                        mp_spdz_input_path)
 from Oblivious_Private_Database_Search.getters import (get_client_mp_spdz_output_path as
@@ -28,7 +28,7 @@ from Oblivious_Private_Database_Search.getters import (get_mp_spdz_directory as
 from Oblivious_Private_Database_Search.getters import (get_working_directory as
                                                        working_directory)
 from Oblivious_Private_Database_Search.getters import (get_records_encryption_key_streams_directory as
-                                                       encryption_keys_directory)
+                                                       records_encryption_keys_directory)
 from Oblivious_Private_Database_Search.getters import (get_permutation_indexing_path as
                                                        permutation_indexing_path)
 from Oblivious_Private_Database_Search.getters import (get_sort_and_encrypt_with_circuit_mpc_script_path as
@@ -36,7 +36,7 @@ from Oblivious_Private_Database_Search.getters import (get_sort_and_encrypt_with
 from Oblivious_Private_Database_Search.getters import (get_sort_and_reencrypt_with_circuit_mpc_script_path as
                                                        sort_and_reencrypt_with_circuit_mpc_script_path)
 from Oblivious_Private_Database_Search.getters import (get_client_encrypted_inverted_index_matrix_directory as
-                                                       encrypted_indexing_path)
+                                                       encrypted_inverted_index_matrix_directory)
 from Oblivious_Private_Database_Search.getters import (get_requested_indices_path as
                                                        requested_indices_path)
 from Oblivious_Private_Database_Search.getters import (get_number_of_blocks as
@@ -45,11 +45,12 @@ from Oblivious_Private_Database_Search.getters import (get_records_encryption_ke
                                                        encryption_key_streams_directory)
 from Oblivious_Private_Database_Search.getters import (get_semantic_search_mpc_script_path as
                                                        semantic_search_mpc_script_path)
-from Oblivious_Private_Database_Search.getters import (get_request_threshold as
+from Oblivious_Private_Database_Search.getters import (get_semantic_search_request_threshold as
                                                        request_threshold)
 from Oblivious_Private_Database_Search.getters import (get_client_number_of_dummy_items_path as
                                                        number_of_dummy_items_path)
-
+from Oblivious_Private_Database_Search.getters import (get_embedding_model as
+                                                       embedding_model)
 from Oblivious_Private_Database_Search.getters import (get_float_to_integer_scalar as
                                                        float_to_integer_scalar)
 from Oblivious_Private_Database_Search.getters import (get_number_of_records as
@@ -113,10 +114,8 @@ class Utilities:
                     f.close()
 
             if not self.dummy_item_indices:
-                self.dummy_item_indices = list(
-                                               {str(i) for i in range(database_size() -
-                                                self.number_of_dummy_items, database_size())
-                                                } -
+                self.dummy_item_indices = list({str(i) for i in range(database_size() -
+                                                self.number_of_dummy_items, database_size())} -
                                                self.requested_indices
                                                )
         except FileNotFoundError:
@@ -144,11 +143,9 @@ class Utilities:
         self.write_permutation(self.permuted_indices)
 
         # Derives the indices of the dummy items.
-        self.dummy_item_indices = list(
-                                        {str(i) for i in range(database_size() -
-                                         self.number_of_dummy_items, database_size())
-                                         }
-                                        )
+        self.dummy_item_indices = list({str(i) for i in range(database_size() -
+                                        self.number_of_dummy_items, database_size())}
+                                       )
 
         return
 
@@ -160,6 +157,8 @@ class Utilities:
                 - swap (bool) : Indicator for whether the records should be swapped or not to be sorted.
                 - index_a (int) : Index to the pointer of a record.
                 - index_b (int) : Index to the pointer of a record.
+                - host_address (str) : The hostname of the party to host the MP-SPDZ execution.
+
 
             Returns:
                 :raises
@@ -186,6 +185,7 @@ class Utilities:
                 - swap (bool) : Indicator for whether the records should be swapped or not to be sorted.
                 - index_a (int) : Index to the pointer of a record.
                 - index_b (int) : Index to the pointer of a record.
+                - host_address (str) : The hostname of the party to host the MP-SPDZ execution.
                 
             Returns:
                 :raises
@@ -193,9 +193,10 @@ class Utilities:
         """
 
         # Paths to the decryption keys.
-        decryption_key_streams_a_path = encryption_keys_directory() / f'{index_a}.txt'
-        decryption_key_streams_b_path = encryption_keys_directory() / f'{index_b}.txt'
+        decryption_key_streams_a_path = records_encryption_keys_directory() / f'{index_a}.txt'
+        decryption_key_streams_b_path = records_encryption_keys_directory() / f'{index_b}.txt'
 
+        # Gets the decryption key streams and new encryption key streams.
         decryption_key_streams_a = self.get_stored_key_streams(decryption_key_streams_a_path)
         decryption_key_streams_b = self.get_stored_key_streams(decryption_key_streams_b_path)
         encryption_key_streams_a, encryption_key_a, nonce_a = get_key_streams()
@@ -275,15 +276,23 @@ class Utilities:
             index = indices[i]
             key = keys[i]
             nonce = nonces[i]
-            encryption_key_streams_path = encryption_keys_directory() / f'{index}.txt'
+            encryption_key_streams_path = records_encryption_keys_directory() / f'{index}.txt'
             with encryption_key_streams_path.open('w') as f:
                 f.write(f'{key} {nonce}')
                 f.close()
+
         return
 
-    def embedd_search_query(self, search_query: str) -> None:
+    def get_search_query_embedding(self, search_query: str) -> None:
         """
+            Gets the vector embedding of the user's search query.
 
+            Parameters:
+                - search_query (str) : The search query input from the user.
+
+            Returns:
+                :raises
+                -
         """
 
         # Text embedding model.
@@ -300,34 +309,46 @@ class Utilities:
 
     def semantic_search(self, host_address: str) -> None:
         """
+            Obliviously compares the search query embedding with the semantic indexing, and returns the result to the
+            client.
 
+            Parameters:
+                - host_address (str) : The hostname of the party to host the MP-SPDZ execution.
+
+            Returns:
+                :raises
+                -
         """
 
-        smallest_distance = None
-        pointer = None
-
+        # OBS INSECURE FOR DEMONSTRATIVE PURPOSES.
+        # Compares the search query embedding to each record embedding one by one and sorts them by smallest distance.
+        results = []
         player_id = 0
         self.write_embedding_mp_spdz_input(player_id)
         for _ in range(number_of_records()):
             self.run_mp_spdz(player_id, semantic_search_mpc_script_path().stem, host_address)
-            distance, index = self.get_semantic_search_result(player_id)
+            results.append(self.get_semantic_search_result(player_id))
 
-            if smallest_distance is None:
-                smallest_distance = distance
-                pointer = index
-            elif distance < smallest_distance:
-                smallest_distance = distance
-                pointer = index
-
-        self.indices_to_request.add(pointer)
+        # Updates local variable with the closes record indices.
+        results.sort(key=lambda x: x[0])
+        for i in range(request_threshold()):
+            self.indices_to_request.add(results[i][1])
 
         return
 
     def write_embedding_mp_spdz_input(self, player_id: int) -> None:
         """
+            Writes an embedding vectory to the MP-SPDZ input file.
 
+            Parameters:
+                - player_id (int) : The player ID the key streams will be written to.
+
+            Returns:
+                :raises
+                -
         """
 
+        # Writes each value of the vector embedding.
         with open(mp_spdz_input_path().parent / f'{mp_spdz_input_path()}-P{player_id}-0', 'w') as f:
             for value in self.query_embedding:
                 f.write(f'{value} ')
@@ -338,14 +359,22 @@ class Utilities:
     @staticmethod
     def get_semantic_search_result(player_id: int) -> tuple[str, str]:
         """
+            Gets the result of the oblivious comparison of the search query embedding and a record embedding from the
+            MP-SPDZ output file.
 
+            Parameters:
+                - player_id (int) : The player ID the key streams will be written to.
+
+            Returns:
+                :raises
+                -
         """
 
         with open(mp_spdz_output_path().parent / f'{mp_spdz_output_path()}-P{player_id}-0', 'r') as f:
-            distance, pointer = f.read().strip().split(' ')
+            distance, index = f.read().strip().split(' ')
             f.close()
 
-        return distance, pointer
+        return distance, index
 
     def encrypt_search_query(self, search_query: str, host_address: str) -> None:
         """
@@ -353,6 +382,7 @@ class Utilities:
             
             Parameters:
                 - search_query (str) : Client's search query.
+                - host_address (str) : The hostname of the party to host the MP-SPDZ execution.
 
             Returns:
                 :raises
@@ -363,7 +393,7 @@ class Utilities:
         player_id = 0
         query_digest = shake_128(search_query.encode('ASCII')).digest(number_of_bytes()).hex()
         self.write_mp_spdz_inputs(player_id, [[query_digest]])
-        self.run_mp_spdz(player_id, aes_128_mpc_script_path().stem, host_address)
+        self.run_mp_spdz(player_id, aes_128_ecb_mpc_script_path().stem, host_address)
         self.encrypted_query = self.get_mp_spdz_output()
 
         return
@@ -410,6 +440,7 @@ class Utilities:
             Parameters:
                 - player_id (int) : The player ID the records will be written to.
                 - mpc_script_name (str) : Name of the .mpo script to be used.
+                - host_address (str) : The hostname of the party to host the MP-SPDZ execution.
 
             Returns:
                 :raises
@@ -471,22 +502,27 @@ class Utilities:
 
             Returns:
                 :raises
-                - search_query_result (str) : Indices of the pointers of records.
+                - search_query_result (str) : Indices of the pointers to records.
         """
 
         if self.is_semantic_search:
+            # Returns the result from the semantic search.
             search_query_result = self.indices_to_request - self.requested_indices
             if self.indices_to_request.issubset(self.requested_indices):
                 print('[NO RESULT] Semantic search yielded an already requested record.')
-
         else:
-            encrypted_inverted_index_matrix_part_paths = [path for path in encrypted_indexing_path().glob('*')
+            # Gets the paths for all the parts of the encrypted inverted index matrix.
+            encrypted_inverted_index_matrix_part_paths = [path for path in
+                                                          encrypted_inverted_index_matrix_directory().glob('*')
                                                           if path.suffix == '.json']
+
+            # Searches each part of the encrypted inverted index matrix.
             for encrypted_inverted_index_matrix_part_path in encrypted_inverted_index_matrix_part_paths:
                 with encrypted_inverted_index_matrix_part_path.open('r') as f:
                     encrypted_inverted_index_matrix_part = load(f)
                     f.close()
 
+                # Updates the results from the search of that part.
                 if self.encrypted_query in encrypted_inverted_index_matrix_part:
                     self.indices_to_request.update(encrypted_inverted_index_matrix_part[self.encrypted_query])
 
@@ -538,10 +574,13 @@ class Utilities:
         # Inspects the encrypted inverted index matrix to find number of requests to be made so that all search query 
         # results look the same to the server.
         if not self.requests_to_make and not self.is_semantic_search:
-
             largest_set_of_indices = 0
-            encrypted_inverted_index_matrix_part_paths = [path for path in encrypted_indexing_path().glob('*')
+            # Gets the paths for all the parts of the encrypted inverted index matrix.
+            encrypted_inverted_index_matrix_part_paths = [path for path in
+                                                          encrypted_inverted_index_matrix_directory().glob('*')
                                                           if path.suffix == '.json']
+
+            # Finds the largest set of indices in each part and keeps the largest.
             for encrypted_inverted_index_matrix_part_path in encrypted_inverted_index_matrix_part_paths:
                 with encrypted_inverted_index_matrix_part_path.open('r') as f:
                     encrypted_inverted_index_matrix_part = load(f)

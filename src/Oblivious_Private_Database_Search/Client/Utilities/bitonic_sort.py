@@ -98,7 +98,7 @@ def init(client, permutation: list) -> None:
     descending = False
     for index in range(0, database_size(), partition_size):
 
-        #   Parallelizable
+        # Parallelizable
         compare_init(client, index, permutation, descending, partition_midpoint)
 
         descending = (descending + 1) % 2
@@ -124,7 +124,7 @@ def merge_partition(client, descending: bool, permutation: list, partition_index
     for value in range(partition_midpoint):
         index = partition_index + value
 
-        #   Parallelizable
+        # Parallelizable
         compare(client, index, permutation, descending, partition_midpoint)
     
     return 
@@ -148,7 +148,7 @@ def merge(client, permutation: list, partition_size, partition_midpoint: int) ->
     descending = False
     for partition_index in range(0, database_size(), partition_size):
 
-        #   Parallelizable
+        # Parallelizable
         merge_partition(client, descending, permutation, partition_index, partition_midpoint)
 
         descending = (descending + 1) % 2
@@ -177,7 +177,7 @@ def sort_subpartition(client, permutation: list, descending: bool, partition_ind
     for value in range(subpartition_midpoint):
         index = partition_index + subpartition_index + value
 
-        #   Parallelizable
+        # Parallelizable
         compare(client, index, permutation, descending, subpartition_midpoint)
     
     return 
@@ -205,8 +205,9 @@ def sort_partition(client, permutation: list, descending: bool, partition_size: 
 
         for subpartition_index in range(0, partition_size, subpartition_size):
 
-            #  Parallelizable
-            sort_subpartition(client, permutation, descending, partition_index, subpartition_index, subpartition_midpoint)
+            # Parallelizable
+            sort_subpartition(client, permutation, descending, partition_index, subpartition_index,
+                              subpartition_midpoint)
             
     return 
 
@@ -228,7 +229,7 @@ def sort(client, permutation: list, partition_size: int) -> None:
     descending = False
     for partition_index in range(0, database_size(), partition_size):
 
-        #   Parallelizable
+        # Parallelizable
         sort_partition(client, permutation, descending, partition_size, partition_index)
 
         descending = (descending + 1) % 2

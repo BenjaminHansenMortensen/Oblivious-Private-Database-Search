@@ -49,7 +49,7 @@ def get_server_ip() -> str:
     return server_ip
 
 
-def get_server_port() -> str:
+def get_server_port() -> int:
     """ Getter for the server_port variable. """
     global server_port
     return server_port
@@ -61,7 +61,7 @@ def get_client_ip() -> str:
     return client_ip
 
 
-def get_client_port() -> str:
+def get_client_port() -> int:
     """ Getter for the client_ip variable. """
     global client_port
     return client_port
@@ -110,14 +110,15 @@ def get_float_to_integer_scalar() -> int:
     return float_to_integer_scalar
 
 
-def get_request_threshold() -> int:
-    """ Getter for the request_threshold variable. """
-    request_threshold = 1
-    return request_threshold
+def get_semantic_search_request_threshold() -> int:
+    """ Getter for the semantic_search_request_threshold variable. """
+    semantic_search_request_threshold = 1
+    return semantic_search_request_threshold
 
 
 def get_semantic_search_mpc_script_path() -> Path:
-    """ getter for the semantic_search_mpc_script_path variable. """
+    """ Getter for the semantic_search_mpc_script_path variable. """
+    global working_directory
     semantic_search_mpc_script_path = working_directory.parent / 'MP_SPDZ_Scripts' / 'semantic_search.mpc'
     return semantic_search_mpc_script_path
 
@@ -126,24 +127,6 @@ def get_number_of_blocks() -> int:
     """ Getter for the number_of_blocks variable. """
     number_of_blocks = get_max_file_length() // get_encoding_base()
     return number_of_blocks
-
-
-def get_database_size() -> int:
-    """ Getter for the database_size variable. """
-    database_size = 2**4
-    return database_size
-
-
-def get_number_of_records() -> int:
-    """ Getter for the number_of_records variable. """
-    number_of_records = get_database_size() - 6
-    return number_of_records
-
-
-def get_number_of_dummy_items() -> int:
-    """ getter for the number_of_dummy_items variable. """
-    number_of_dummy_items = get_database_size() - get_number_of_records()
-    return number_of_dummy_items
 
 
 def get_working_directory() -> Path:
@@ -176,9 +159,11 @@ def get_hex_block_size() -> int:
     hex_block_size = 32
     return hex_block_size
 
+
 def get_records_directory() -> Path:
     """ Getter for the records_directory variable. """
-    records_directory = get_working_directory() / 'Server' / 'PNR_Records'
+    global working_directory
+    records_directory = working_directory / 'Server' / 'PNR_Records'
     return records_directory
 
 
@@ -267,8 +252,8 @@ def get_sort_and_reencrypt_with_circuit_mpc_script_path() -> Path:
     return sort_and_reencrypt_with_circuit_mpc_script_path
 
 
-def get_aes_128_with_circuit_mpc_script_path() -> Path:
-    """ Getter for the aes_128_mpc_script_path variable. """
+def get_aes_128_ecb_with_circuit_mpc_script_path() -> Path:
+    """ Getter for the aes_128_ecb_with_circuit_mpc_script_path variable. """
     global working_directory
     aes_128_ecb_with_circuit_mpc_script_path = (working_directory.parent / 'MP_SPDZ_Scripts' /
                                                 'aes_128_ecb_with_circuit.mpc')
@@ -374,36 +359,42 @@ def get_records_encryption_key_streams_directory() -> Path:
 
 def get_client_networking_key_path() -> Path:
     """ Getter for the client_networking_key_path variable. """
+    global mp_spdz_directory
     client_networking_key_path = mp_spdz_directory / 'Player-Data' / 'P0.key'
     return client_networking_key_path
 
 
 def get_client_networking_certificate_path() -> Path:
     """ Getter for the client_networking_key_path variable. """
+    global mp_spdz_directory
     client_networking_certificate_path = mp_spdz_directory / 'Player-Data' / 'P0.pem'
     return client_networking_certificate_path
 
 
 def get_server_networking_key_path() -> Path:
     """ Getter for the server_networking_key_path variable. """
+    global mp_spdz_directory
     server_networking_key_path = mp_spdz_directory / 'Player-Data' / 'P1.key'
     return server_networking_key_path
 
 
 def get_server_networking_certificate_path() -> Path:
     """ Getter for the client_networking_key_path variable. """
+    global mp_spdz_directory
     server_networking_certificate_path = mp_spdz_directory / 'Player-Data' / 'P1.pem'
     return server_networking_certificate_path
 
 
 def get_server_encryption_keys_directory() -> Path:
     """ Getter for the server_encryption_keys_directory variable. """
+    global working_directory
     server_encryption_keys_directory = working_directory / 'Server' / 'Encryption_Keys'
     return server_encryption_keys_directory
 
 
 def get_inverted_index_matrix_encryption_key_path() -> Path:
     """ Getter for the inverted_index_matrix_encryption_key_path variable. """
+    global working_directory
     inverted_index_matrix_encryption_key_path = working_directory / 'Server' / 'Encryption_Keys' / 'Encryption_Key.txt'
     return inverted_index_matrix_encryption_key_path
 
@@ -430,19 +421,39 @@ def get_server_semantic_indexing_path() -> Path:
 
 def get_client_number_of_dummy_items_path() -> Path:
     """ Getter for the client_number_of_dummy_items_path variable. """
+    global working_directory
     client_number_of_dummy_items_path = working_directory / 'Client' / 'Indexing' / 'number_of_dummy_items.txt'
     return client_number_of_dummy_items_path
 
 
 def get_server_record_pointers_path() -> Path:
     """ Getter for the server_record_pointers_path variable. """
+    global working_directory
     server_record_pointers_path = working_directory / 'Server' / 'Indexing' / 'Record_Pointers.json'
     return server_record_pointers_path
 
 
+def get_number_of_dummy_items() -> int:
+    """ Getter for the number_of_dummy_items variable. """
+    number_of_dummy_items = get_database_size() - get_number_of_records()
+    return number_of_dummy_items
+
+
+def get_database_size() -> int:
+    """ Getter for the database_size variable. """
+    database_size = 2**4
+    return database_size
+
+
+def get_number_of_records() -> int:
+    """ Getter for the number_of_records variable. """
+    number_of_records = 10
+    return number_of_records
+
+
 working_directory = Path.cwd()
 mp_spdz_directory = Path.cwd().parent.parent.parent.parent / 'mp-spdz-0.3.8'
-server_ip = ''
-server_port = 0
-client_ip = ''
-client_port = 0
+server_ip = 'localhost'
+server_port = 5500
+client_ip = 'localhost'
+client_port = 5005

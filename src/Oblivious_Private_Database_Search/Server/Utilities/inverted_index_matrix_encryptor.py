@@ -9,15 +9,15 @@ from cryptography.hazmat.primitives.ciphers import (Cipher, algorithms, modes)
 
 # Local getters imports.
 from Oblivious_Private_Database_Search.getters import (get_inverted_index_matrix_path as
-                                                     inverted_index_matrix_path)
+                                                       inverted_index_matrix_path)
 from Oblivious_Private_Database_Search.getters import (get_server_encrypted_inverted_index_matrix_directory as
-                                                     encrypted_inverted_index_matrix_directory)
+                                                       encrypted_inverted_index_matrix_directory)
 from Oblivious_Private_Database_Search.getters import (get_number_of_bytes as
-                                                     number_of_bytes)
+                                                       number_of_bytes)
 from Oblivious_Private_Database_Search.getters import (get_max_amount_of_attributes_per_record as
-                                                     max_amount_of_attributes_per_record)
+                                                       max_amount_of_attributes_per_record)
 from Oblivious_Private_Database_Search.getters import (get_encrypted_inverted_index_matrix_attribute_limit as
-                                                     encrypted_inverted_index_matrix_attribute_limit)
+                                                       encrypted_inverted_index_matrix_attribute_limit)
 
 
 def aes_128_ecb(key: bytes, plaintext: bytes) -> str:
@@ -51,6 +51,7 @@ def encrypt_attribute(attribute: str, encryption_key: bytes) -> str:
 
         Parameters:
             - attribute (str) : The attribute to be encrypted.
+            - encryption_key (bytes) : The encryption key.
 
         Returns:
             :raises
@@ -96,6 +97,8 @@ def encrypt_and_pad_inverted_index_matrix(inverted_index_matrix: dict[str, list[
 
         Parameters:
             - inverted_index_matrix (dict[str, list[str]]) : The inverted index matrix to be encoded.
+            - encryption_key (bytes) : The encryption key.
+
 
         Returns:
             :raises

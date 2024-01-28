@@ -5,9 +5,12 @@ from pathlib import Path
 from re import sub
 
 # Local getters imports.
-from Oblivious_Private_Database_Search.getters import get_encoding_base as encoding_base
-from Oblivious_Private_Database_Search.getters import get_max_file_length as max_file_length
-from Oblivious_Private_Database_Search.getters import get_block_size as block_size
+from Oblivious_Private_Database_Search.getters import (get_encoding_base as
+                                                       encoding_base)
+from Oblivious_Private_Database_Search.getters import (get_max_file_length as
+                                                       max_file_length)
+from Oblivious_Private_Database_Search.getters import (get_block_size as
+                                                       block_size)
 
 
 def read_record(record_path: Path) -> str:

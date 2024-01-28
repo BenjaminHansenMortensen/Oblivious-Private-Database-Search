@@ -3,13 +3,13 @@
 # Local getters imports.
 from Oblivious_Private_Database_Search.getters import working_directory_validation, mp_spdz_directory_validation
 from Oblivious_Private_Database_Search.getters import (get_encrypted_records_directory as
-                                                     encrypted_pnr_records_directory)
+                                                       encrypted_pnr_records_directory)
 from Oblivious_Private_Database_Search.getters import (get_excluded_records as
-                                                     excluded_pnr_records)
+                                                       excluded_pnr_records)
 from Oblivious_Private_Database_Search.getters import (get_records_directory as
-                                                     pnr_records_directory)
+                                                       records_directory)
 from Oblivious_Private_Database_Search.getters import (get_server_indexing_files_directory as
-                                                     server_indexing_files_directory)
+                                                       server_indexing_files_directory)
 
 # Server import.
 from Oblivious_Private_Database_Search.Server.server import Communicator as Server
@@ -33,7 +33,7 @@ def clean_up_files() -> None:
         file_path.unlink()
 
     # Removes the stored PNR records.
-    file_paths = [path for path in pnr_records_directory().glob('*') if (path.name not in excluded_pnr_records())]
+    file_paths = [path for path in records_directory().glob('*') if (path.name not in excluded_pnr_records())]
     for file_path in file_paths:
         file_path.unlink()
 

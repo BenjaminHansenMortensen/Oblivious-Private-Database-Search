@@ -1,5 +1,5 @@
 """ Setup for the application. """
-import argparse
+
 # Imports.
 from os import chdir
 from subprocess import run
@@ -21,7 +21,7 @@ from Oblivious_Private_Database_Search.getters import (get_sort_and_encrypt_circ
                                                        sort_and_encrypt_circuit_path)
 from Oblivious_Private_Database_Search.getters import (get_sort_and_reencrypt_circuit_path as
                                                        sort_and_reencrypt_circuit_path)
-from Oblivious_Private_Database_Search.getters import (get_aes_128_with_circuit_mpc_script_path as
+from Oblivious_Private_Database_Search.getters import (get_aes_128_ecb_with_circuit_mpc_script_path as
                                                        aes_128_ecb_with_circuit_mpc_script_path)
 from Oblivious_Private_Database_Search.getters import (get_mp_spdz_scripts_directory as
                                                        mp_spdz_scripts_directory)
@@ -40,7 +40,7 @@ from Oblivious_Private_Database_Search.getters import (get_server_mp_spdz_input_
 from Oblivious_Private_Database_Search.getters import (get_server_mp_spdz_output_directory as
                                                        server_mp_spdz_output_directory)
 from Oblivious_Private_Database_Search.getters import (get_records_directory as
-                                                       pnr_records_directory)
+                                                       records_directory)
 from Oblivious_Private_Database_Search.getters import (get_client_indexing_directory as
                                                        client_indexing_directory)
 from Oblivious_Private_Database_Search.getters import (get_client_encrypted_inverted_index_matrix_directory as
@@ -55,7 +55,7 @@ from Oblivious_Private_Database_Search.getters import (get_retrieved_records_dir
                                                        retrieved_records_directory)
 from Oblivious_Private_Database_Search.getters import (get_semantic_search_mpc_script_path as
                                                        semantic_search_mpc_script_path)
-from  Oblivious_Private_Database_Search.getters import (get_embedding_model as
+from Oblivious_Private_Database_Search.getters import (get_embedding_model as
                                                        embedding_model)
 
 
@@ -77,7 +77,7 @@ def create_necessary_directories() -> None:
     server_mp_spdz_input_directory().mkdir(exist_ok=True)
     server_mp_spdz_output_directory().mkdir(exist_ok=True)
     server_encryption_keys_directory().mkdir(exist_ok=True)
-    pnr_records_directory().mkdir(exist_ok=True)
+    records_directory().mkdir(exist_ok=True)
     client_indexing_directory().mkdir(exist_ok=True)
     client_encrypted_inverted_index_matrix_directory().mkdir(exist_ok=True)
     client_mp_spdz_input_directory().mkdir(exist_ok=True)

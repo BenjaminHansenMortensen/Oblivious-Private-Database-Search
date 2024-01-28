@@ -68,6 +68,7 @@ def add_keys_and_values(flat_dictionary: dict, dictionary: dict, key_filter: lis
         - flat_dictionary (dict) : The dictionary where keys and values are added it.
         - dictionary (dict) : The dictionary to be flattened.
         - key_filter (list) : A list of values to filter out unwanted information.
+        - attribute_filter (dict) : A list of values to filter out unwanted information.
         - parent_key (str) : The key of the parent dictionary.
 
     Returns:

@@ -10,35 +10,35 @@ from random import shuffle
 
 # Local getters imports.
 from Oblivious_Private_Database_Search.getters import (get_encoding_base as
-                                                     encoding_base)
+                                                       encoding_base)
 from Oblivious_Private_Database_Search.getters import (get_mp_spdz_directory as
-                                                     mp_spdz_directory)
+                                                       mp_spdz_directory)
 from Oblivious_Private_Database_Search.getters import (get_working_directory as
-                                                     working_directory)
+                                                       working_directory)
 from Oblivious_Private_Database_Search.getters import (get_number_of_blocks as
-                                                     number_of_blocks)
+                                                       number_of_blocks)
 from Oblivious_Private_Database_Search.getters import (get_number_of_records as
-                                                     number_of_records)
+                                                       number_of_records)
 from Oblivious_Private_Database_Search.getters import (get_encrypted_records_directory as
-                                                     encrypted_records_directory)
+                                                       encrypted_records_directory)
 from Oblivious_Private_Database_Search.getters import (get_server_mp_spdz_input_path as
-                                                     mp_spdz_input_path)
+                                                       mp_spdz_input_path)
 from Oblivious_Private_Database_Search.getters import (get_server_mp_spdz_output_path as
-                                                     mp_spdz_output_path)
-from Oblivious_Private_Database_Search.getters import (get_aes_128_with_circuit_mpc_script_path as
-                                                     aes_128_mpc_script_path)
+                                                       mp_spdz_output_path)
+from Oblivious_Private_Database_Search.getters import (get_aes_128_ecb_with_circuit_mpc_script_path as
+                                                       aes_128_ecb_mpc_script_path)
 from Oblivious_Private_Database_Search.getters import (get_inverted_index_matrix_encryption_key_path as
-                                                     inverted_index_matrix_encryption_key_path)
+                                                       inverted_index_matrix_encryption_key_path)
 from Oblivious_Private_Database_Search.getters import (get_server_semantic_indexing_path as
-                                                     semantic_indexing_path)
+                                                       semantic_indexing_path)
 from Oblivious_Private_Database_Search.getters import (get_semantic_search_mpc_script_path as
-                                                     semantic_search_mpc_script_path)
+                                                       semantic_search_mpc_script_path)
 from Oblivious_Private_Database_Search.getters import (get_records_directory as
-                                                     records_directory)
+                                                       records_directory)
 from Oblivious_Private_Database_Search.getters import (get_excluded_records as
-                                                     excluded_records)
+                                                       excluded_records)
 from Oblivious_Private_Database_Search.getters import (get_server_record_pointers_path as
-                                                     record_indexing_path)
+                                                       record_indexing_path)
 
 # Server imports.
 from Oblivious_Private_Database_Search.Server.Utilities.Data_Generation.generate_pnr_records import run as generate_pnr_records
@@ -201,6 +201,7 @@ class Utilities:
                 - index_a (int) : Index to the pointer of a record.
                 - index_b (int) : Index of the pointer of a record.
                 - mpc_script_name (str) : Name of the .mpc script to be used.
+                - host_address (str) : The hostname of the party to host the MP-SPDZ execution.
 
             Returns:
                 :raises
@@ -274,6 +275,7 @@ class Utilities:
             Parameters:
                 - player_id (int) : The player ID the records will be written to.
                 - mpc_script_name (str) : Name of the .mpo script to be used.
+                - host_address (str) : The hostname of the party to host the MP-SPDZ execution.
 
             Returns:
                 :raises
@@ -382,7 +384,14 @@ class Utilities:
 
     def semantic_search(self, host_address: str) -> None:
         """
+            Obliviously compares the search query embedding with the semantic indexing, and returns the result to the
+            client.
 
+            Parameters:
+                - host_address (str) : The hostname of the party to host the MP-SPDZ execution.
+            Returns:
+                :raises
+                -
         """
 
         with semantic_indexing_path().open('r') as f:
@@ -397,11 +406,20 @@ class Utilities:
         return
 
     @staticmethod
-    def write_embeddings_mp_spdz_input(player_id: int, semantic_indexing: dict, index: str) -> None:
+    def write_embeddings_mp_spdz_input(player_id: int, semantic_indexing: dict[str, list[int]], index: str) -> None:
+        """
+            Writes an embedding vectory to the MP-SPDZ input file.
+
+            Parameters:
+                - player_id (int) : The player ID the key streams will be written to.
+                - semantic_indexing (dict[str, list[int]]) : The embedding indexing of the records.
+                - index (str) : Index of the record.
+            Returns:
+                :raises
+                -
         """
 
-        """
-
+        # Writes each record indices and value of the vector embeddings.
         with open(mp_spdz_input_path().parent / f'{mp_spdz_input_path()}-P{player_id}-0', 'w') as f:
             f.write(f'{index} ')
             for value in semantic_indexing[index]:
@@ -415,7 +433,7 @@ class Utilities:
             Obliviously encrypts the client's search query with the server's inverted index matrix encryption key.
 
             Parameters:
-                -
+                - host_address (str) : The hostname of the party to host the MP-SPDZ execution.
 
             Returns:
                 :raises
@@ -425,7 +443,7 @@ class Utilities:
         # Runs MP-SPDZ to obliviously encrypt the client's search query.
         player_id = 1
         self.write_mp_spdz_input(player_id, [[self.inverted_index_matrix_encryption_key]])
-        mpc_script_name = aes_128_mpc_script_path().stem
+        mpc_script_name = aes_128_ecb_mpc_script_path().stem
         self.run_mp_spdz(player_id, mpc_script_name, host_address)
 
         return

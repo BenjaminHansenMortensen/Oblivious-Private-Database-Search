@@ -55,7 +55,8 @@ class Communicator(Utilities):
         self.REENCRYPT_RECORDS_MESSAGE = '<REENCRYPT RECORDS>'
         self.RECORDS_PREPROCESSING_FINISHED_MESSAGE = '<RECORDS PRE-PROCESSING FINISHED>'
         self.SENDING_ENCRYPTED_INVERTED_INDEX_MATRIX_MESSAGE = '<SENDING ENCRYPTED INVERTED INDEX MATRIX>'
-        self.SENDING_ENCRYPTED_INVERTED_INDEX_MATRIX_FINISHED_MESSAGE = '<SENDING ENCRYPTED INVERTED INDEX MATRIX FINISHED>'
+        self.SENDING_ENCRYPTED_INVERTED_INDEX_MATRIX_FINISHED_MESSAGE = \
+            '<SENDING ENCRYPTED INVERTED INDEX MATRIX FINISHED>'
         self.SEMANTIC_SEARCH_MESSAGE = '<SEMANTIC SEARCH>'
         self.ENCRYPT_QUERY_MESSAGE = '<ENCRYPT QUERY>'
         self.REQUEST_ENCRYPTED_RECORD_MESSAGE = '<REQUESTING ENCRYPTED RECORD>'
@@ -154,7 +155,8 @@ class Communicator(Utilities):
         """
 
         # Sends the online message to the server.
-        connection = self.server_context.wrap_socket(socket(AF_INET, SOCK_STREAM), server_hostname=server_networking_certificate_path().stem)
+        connection = self.server_context.wrap_socket(socket(AF_INET, SOCK_STREAM),
+                                                     server_hostname=server_networking_certificate_path().stem)
         connection.connect(self.SERVER_ADDR)
         connection.sendall(self.add_padding(self.ONLINE_MESSAGE))
         connection.sendall(self.add_padding(str(self.is_semantic_search)))
@@ -238,6 +240,7 @@ class Communicator(Utilities):
         
         connection.sendall(self.add_padding(self.DISCONNECT_MESSAGE))
 
+        # Writes the number of dummy items to a file.
         with number_of_dummy_items_path().open('w') as f:
             f.write(str(number_of_dummy_items))
             f.close()
@@ -278,12 +281,12 @@ class Communicator(Utilities):
                 -
         """
 
+        # Receives a part of the encrypted inverted index matrix.
         encrypted_inverted_index_matrix_part = ''
         while (message := connection.recv(self.HEADER).decode(self.FORMAT).strip(chr(0))) != self.END_FILE_MESSAGE:
-            # Receives the contents
             encrypted_inverted_index_matrix_part += message
 
-        # Writes the inverted index matrix.
+        # Writes a part of the encrypted inverted index matrix into its own file.
         with open(encrypted_inverted_index_matrix_directory() /
                   f'Encrypted_Inverted_Index{self.encrypted_inverted_index_matrix_part}.json', 'w') as f:
             dump(loads(encrypted_inverted_index_matrix_part), f, indent=4)
@@ -309,7 +312,8 @@ class Communicator(Utilities):
         """
 
         # Sends pre-processing message to the server.
-        connection = self.server_context.wrap_socket(socket(AF_INET, SOCK_STREAM), server_hostname=server_networking_certificate_path().stem)
+        connection = self.server_context.wrap_socket(socket(AF_INET, SOCK_STREAM),
+                                                     server_hostname=server_networking_certificate_path().stem)
         connection.connect(self.SERVER_ADDR)
         connection.sendall(self.add_padding(self.RECORDS_PREPROCESSING_MESSAGE))
         print(f'[SENT] {self.RECORDS_PREPROCESSING_MESSAGE} to server.')
@@ -333,6 +337,7 @@ class Communicator(Utilities):
                 - swap (bool) : Indicator to whether the records should be swapped or not.
                 - index_a (int) : Index to a server side pointer to a record.
                 - index_b (int) : Index to a server side pointer to a record.
+                - host_address (str) : The hostname of the party to host the MP-SPDZ execution.
 
             Returns:
                 :raises
@@ -340,7 +345,8 @@ class Communicator(Utilities):
         """
         
         # Sends which two records should be considered.
-        connection = self.server_context.wrap_socket(socket(AF_INET, SOCK_STREAM), server_hostname=server_networking_certificate_path().stem)
+        connection = self.server_context.wrap_socket(socket(AF_INET, SOCK_STREAM),
+                                                     server_hostname=server_networking_certificate_path().stem)
         connection.connect(self.SERVER_ADDR)
         connection.sendall(self.add_padding(self.ENCRYPT_RECORDS_MESSAGE))
         connection.sendall(self.add_padding(str(index_a)))
@@ -364,14 +370,16 @@ class Communicator(Utilities):
                 - swap (bool) : Indicator to whether the records should be swapped or not.
                 - index_a (int) : Index to a server side pointer to a record.
                 - index_b (int) : Index to a server side pointer to a record.
-                
+                - host_address (str) : The hostname of the party to host the MP-SPDZ execution.
+
             Returns:
                 :raises
                 -
         """
 
         # Sends which two records should be considered.
-        connection = self.server_context.wrap_socket(socket(AF_INET, SOCK_STREAM), server_hostname=server_networking_certificate_path().stem)
+        connection = self.server_context.wrap_socket(socket(AF_INET, SOCK_STREAM),
+                                                     server_hostname=server_networking_certificate_path().stem)
         connection.connect(self.SERVER_ADDR)
         connection.sendall(self.add_padding(self.REENCRYPT_RECORDS_MESSAGE))
         connection.sendall(self.add_padding(str(index_a)))
@@ -400,7 +408,8 @@ class Communicator(Utilities):
         """
         
         # Sends records preprocessing finished message to the server.
-        connection = self.server_context.wrap_socket(socket(AF_INET, SOCK_STREAM), server_hostname=server_networking_certificate_path().stem)
+        connection = self.server_context.wrap_socket(socket(AF_INET, SOCK_STREAM),
+                                                     server_hostname=server_networking_certificate_path().stem)
         connection.connect(self.SERVER_ADDR)
         connection.sendall(self.add_padding(self.RECORDS_PREPROCESSING_FINISHED_MESSAGE))
         print(f'[SENT] {self.RECORDS_PREPROCESSING_FINISHED_MESSAGE} to server.')
@@ -427,7 +436,8 @@ class Communicator(Utilities):
             raise Exception('Insufficient amount of dummy items. Please redo pre-processing of the database.')
 
         # Sends search query to the server.
-        connection = self.server_context.wrap_socket(socket(AF_INET, SOCK_STREAM), server_hostname=server_networking_certificate_path().stem)
+        connection = self.server_context.wrap_socket(socket(AF_INET, SOCK_STREAM),
+                                                     server_hostname=server_networking_certificate_path().stem)
         connection.connect(self.SERVER_ADDR)
         connection.sendall(self.add_padding(self.SEMANTIC_SEARCH_MESSAGE))
         print(f'[SENT] {self.SEMANTIC_SEARCH_MESSAGE} to server.')
@@ -437,7 +447,10 @@ class Communicator(Utilities):
         connection.shutdown(SHUT_WR)
         connection.close()
 
-        self.embedd_search_query(search_query)
+        # Gets the embedding of the search query and sets it locally.
+        self.get_search_query_embedding(search_query)
+
+        # Runs the client side of the semantic search.
         address, port = self.ADDR
         self.semantic_search(address)
 
@@ -461,7 +474,8 @@ class Communicator(Utilities):
             raise Exception('Insufficient amount of dummy items. Please redo pre-processing of the database.')
         
         # Sends search query to the server.
-        connection = self.server_context.wrap_socket(socket(AF_INET, SOCK_STREAM), server_hostname=server_networking_certificate_path().stem)
+        connection = self.server_context.wrap_socket(socket(AF_INET, SOCK_STREAM),
+                                                     server_hostname=server_networking_certificate_path().stem)
         connection.connect(self.SERVER_ADDR)
         connection.sendall(self.add_padding(self.ENCRYPT_QUERY_MESSAGE))
         print(f'[SENT] {self.ENCRYPT_QUERY_MESSAGE} to server.')
@@ -538,7 +552,8 @@ class Communicator(Utilities):
         """
         
         # Sends the pointer to the server.
-        connection = self.server_context.wrap_socket(socket(AF_INET, SOCK_STREAM), server_hostname=server_networking_certificate_path().stem)
+        connection = self.server_context.wrap_socket(socket(AF_INET, SOCK_STREAM),
+                                                     server_hostname=server_networking_certificate_path().stem)
         connection.connect(self.SERVER_ADDR)
         connection.sendall(self.add_padding(self.REQUEST_ENCRYPTED_RECORD_MESSAGE))
         print(f'[SENT] {self.REQUEST_ENCRYPTED_RECORD_MESSAGE} to server.')
@@ -567,13 +582,13 @@ class Communicator(Utilities):
         """
         
         # Sends the shutdown message.
-        connection = self.server_context.wrap_socket(socket(AF_INET, SOCK_STREAM), server_hostname=server_networking_certificate_path().stem)
+        connection = self.server_context.wrap_socket(socket(AF_INET, SOCK_STREAM),
+                                                     server_hostname=server_networking_certificate_path().stem)
         connection.connect(self.SERVER_ADDR)
         connection.sendall(self.add_padding(self.SHUTDOWN_MESSAGE))
+        print(f'[SENT] {self.SHUTDOWN_MESSAGE} from server.')
         connection.shutdown(SHUT_WR)
         connection.close()
-
-        print(f'[SENT] {self.SHUTDOWN_MESSAGE} from server.')
         
         return 
 
