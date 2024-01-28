@@ -63,12 +63,12 @@ class Communicator(Utilities):
         self.END_FILE_MESSAGE = '<END FILE>'
         self.SHUTDOWN_MESSAGE = '<SHUTTING DOWN>'
 
-        self.server_context = SSLContext(PROTOCOL_TLS_SERVER)
-        self.server_context.load_cert_chain(certfile=client_networking_certificate_path(),
+        self.client_context = SSLContext(PROTOCOL_TLS_SERVER)
+        self.client_context.load_cert_chain(certfile=client_networking_certificate_path(),
                                             keyfile=client_networking_key_path())
-        self.client_context = SSLContext(PROTOCOL_TLS_CLIENT)
-        self.client_context.load_verify_locations(server_networking_certificate_path())
-        self.listen_host = self.server_context.wrap_socket(socket(AF_INET, SOCK_STREAM), server_side=True)
+        self.server_context = SSLContext(PROTOCOL_TLS_CLIENT)
+        self.server_context.load_verify_locations(server_networking_certificate_path())
+        self.listen_host = self.client_context.wrap_socket(socket(AF_INET, SOCK_STREAM), server_side=True)
         self.listen_host.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
         self.listen_host.settimeout(0.1)
 
@@ -154,7 +154,7 @@ class Communicator(Utilities):
         """
 
         # Sends the online message to the server.
-        connection = self.client_context.wrap_socket(socket(AF_INET, SOCK_STREAM), server_hostname=client_networking_certificate_path().stem)
+        connection = self.server_context.wrap_socket(socket(AF_INET, SOCK_STREAM), server_hostname=server_networking_certificate_path().stem)
         connection.connect(self.SERVER_ADDR)
         connection.sendall(self.add_padding(self.ONLINE_MESSAGE))
         connection.sendall(self.add_padding(str(self.is_semantic_search)))
@@ -309,7 +309,7 @@ class Communicator(Utilities):
         """
 
         # Sends pre-processing message to the server.
-        connection = self.client_context.wrap_socket(socket(AF_INET, SOCK_STREAM), server_hostname=client_networking_certificate_path().stem)
+        connection = self.server_context.wrap_socket(socket(AF_INET, SOCK_STREAM), server_hostname=server_networking_certificate_path().stem)
         connection.connect(self.SERVER_ADDR)
         connection.sendall(self.add_padding(self.RECORDS_PREPROCESSING_MESSAGE))
         print(f'[SENT] {self.RECORDS_PREPROCESSING_MESSAGE} to server.')
@@ -340,7 +340,7 @@ class Communicator(Utilities):
         """
         
         # Sends which two records should be considered.
-        connection = self.client_context.wrap_socket(socket(AF_INET, SOCK_STREAM), server_hostname=client_networking_certificate_path().stem)
+        connection = self.server_context.wrap_socket(socket(AF_INET, SOCK_STREAM), server_hostname=server_networking_certificate_path().stem)
         connection.connect(self.SERVER_ADDR)
         connection.sendall(self.add_padding(self.ENCRYPT_RECORDS_MESSAGE))
         connection.sendall(self.add_padding(str(index_a)))
@@ -371,7 +371,7 @@ class Communicator(Utilities):
         """
 
         # Sends which two records should be considered.
-        connection = self.client_context.wrap_socket(socket(AF_INET, SOCK_STREAM), server_hostname=client_networking_certificate_path().stem)
+        connection = self.server_context.wrap_socket(socket(AF_INET, SOCK_STREAM), server_hostname=server_networking_certificate_path().stem)
         connection.connect(self.SERVER_ADDR)
         connection.sendall(self.add_padding(self.REENCRYPT_RECORDS_MESSAGE))
         connection.sendall(self.add_padding(str(index_a)))
@@ -400,7 +400,7 @@ class Communicator(Utilities):
         """
         
         # Sends records preprocessing finished message to the server.
-        connection = self.client_context.wrap_socket(socket(AF_INET, SOCK_STREAM), server_hostname=client_networking_certificate_path().stem)
+        connection = self.server_context.wrap_socket(socket(AF_INET, SOCK_STREAM), server_hostname=server_networking_certificate_path().stem)
         connection.connect(self.SERVER_ADDR)
         connection.sendall(self.add_padding(self.RECORDS_PREPROCESSING_FINISHED_MESSAGE))
         print(f'[SENT] {self.RECORDS_PREPROCESSING_FINISHED_MESSAGE} to server.')
@@ -427,7 +427,7 @@ class Communicator(Utilities):
             raise Exception('Insufficient amount of dummy items. Please redo pre-processing of the database.')
 
         # Sends search query to the server.
-        connection = self.client_context.wrap_socket(socket(AF_INET, SOCK_STREAM), server_hostname=client_networking_certificate_path().stem)
+        connection = self.server_context.wrap_socket(socket(AF_INET, SOCK_STREAM), server_hostname=server_networking_certificate_path().stem)
         connection.connect(self.SERVER_ADDR)
         connection.sendall(self.add_padding(self.SEMANTIC_SEARCH_MESSAGE))
         print(f'[SENT] {self.SEMANTIC_SEARCH_MESSAGE} to server.')
@@ -461,7 +461,7 @@ class Communicator(Utilities):
             raise Exception('Insufficient amount of dummy items. Please redo pre-processing of the database.')
         
         # Sends search query to the server.
-        connection = self.client_context.wrap_socket(socket(AF_INET, SOCK_STREAM), server_hostname=client_networking_certificate_path().stem)
+        connection = self.server_context.wrap_socket(socket(AF_INET, SOCK_STREAM), server_hostname=server_networking_certificate_path().stem)
         connection.connect(self.SERVER_ADDR)
         connection.sendall(self.add_padding(self.ENCRYPT_QUERY_MESSAGE))
         print(f'[SENT] {self.ENCRYPT_QUERY_MESSAGE} to server.')
@@ -538,7 +538,7 @@ class Communicator(Utilities):
         """
         
         # Sends the pointer to the server.
-        connection = self.client_context.wrap_socket(socket(AF_INET, SOCK_STREAM), server_hostname=client_networking_certificate_path().stem)
+        connection = self.server_context.wrap_socket(socket(AF_INET, SOCK_STREAM), server_hostname=server_networking_certificate_path().stem)
         connection.connect(self.SERVER_ADDR)
         connection.sendall(self.add_padding(self.REQUEST_ENCRYPTED_RECORD_MESSAGE))
         print(f'[SENT] {self.REQUEST_ENCRYPTED_RECORD_MESSAGE} to server.')
@@ -567,7 +567,7 @@ class Communicator(Utilities):
         """
         
         # Sends the shutdown message.
-        connection = self.client_context.wrap_socket(socket(AF_INET, SOCK_STREAM), server_hostname=client_networking_certificate_path().stem)
+        connection = self.server_context.wrap_socket(socket(AF_INET, SOCK_STREAM), server_hostname=server_networking_certificate_path().stem)
         connection.connect(self.SERVER_ADDR)
         connection.sendall(self.add_padding(self.SHUTDOWN_MESSAGE))
         connection.shutdown(SHUT_WR)
