@@ -442,7 +442,7 @@ def get_server_record_pointers_path() -> Path:
 
 working_directory = Path.cwd()
 mp_spdz_directory = Path.cwd().parent.parent.parent.parent / 'mp-spdz-0.3.8'
-server_ip = '192.168.38.148'
-server_port = 5500
-client_ip = '192.168.38.114'
-client_port = 5005
+server_ip = ''
+server_port = 0
+client_ip = ''
+client_port = 0
