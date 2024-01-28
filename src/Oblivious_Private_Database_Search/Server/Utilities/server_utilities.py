@@ -193,7 +193,7 @@ class Utilities:
 
         return
 
-    def encrypt_records(self, index_a: int, index_b: int, mpc_script_name: str, host_address: str, host_port: int) -> None:
+    def encrypt_records(self, index_a: int, index_b: int, mpc_script_name: str, host_address: str) -> None:
         """
             Obliviously encrypts the records with the client's keys.
 
@@ -214,7 +214,7 @@ class Utilities:
         # Runs MP-SPDZ to obliviously encrypt the records with the client's keys then overwrites it.
         player_id = 0
         self.write_mp_spdz_input(player_id, [record_a, record_b])
-        self.run_mp_spdz(player_id, mpc_script_name, host_address, host_port)
+        self.run_mp_spdz(player_id, mpc_script_name, host_address)
         record_path_a = encrypted_records_directory() / f"{index_a}.txt"
         record_path_b = encrypted_records_directory() / f"{index_b}.txt"
         self.encrypted_record_pointers[index_a], self.encrypted_record_pointers[index_b] = record_path_a, record_path_b
@@ -267,7 +267,7 @@ class Utilities:
         return
 
     @staticmethod
-    def run_mp_spdz(player_id: int, mpc_script_name: str, host_address: str, host_port: int) -> None:
+    def run_mp_spdz(player_id: int, mpc_script_name: str, host_address: str) -> None:
         """
             Runs the server party and an additional empty party of the MP-SPDZ execution.
 
@@ -288,7 +288,6 @@ class Utilities:
                                         f"{mpc_script_name}",
                                         "-p", f"{player_id}",
                                         '-h', f'{host_address}',
-                                        '-pn', f'{host_port}',
                                         "-IF", f"{mp_spdz_input_path()}",
                                         "-OF", f"{mp_spdz_output_path()}"],
                                        stdout=PIPE, stderr=PIPE
@@ -297,8 +296,7 @@ class Utilities:
         empty_party_mp_spdz_process = Popen([f"{mp_spdz_directory() / 'replicated-field-party.x'}",
                                              f"{mpc_script_name}",
                                              "-p", "2",
-                                             '-h', f'{host_address}',
-                                             '-pn', f'{host_port}'],
+                                             '-h', f'{host_address}'],
                                             stdout=PIPE, stderr=PIPE
                                             )
 
@@ -382,7 +380,7 @@ class Utilities:
 
         return
 
-    def semantic_search(self, host_address: str, host_port: int) -> None:
+    def semantic_search(self, host_address: str) -> None:
         """
 
         """
@@ -394,7 +392,7 @@ class Utilities:
         player_id = 1
         for index in semantic_indexing.keys():
             self.write_embeddings_mp_spdz_input(player_id, semantic_indexing, index)
-            self.run_mp_spdz(player_id, semantic_search_mpc_script_path().stem, host_address, host_port)
+            self.run_mp_spdz(player_id, semantic_search_mpc_script_path().stem, host_address)
 
         return
 
@@ -412,7 +410,7 @@ class Utilities:
 
         return
 
-    def encrypt_query(self, host_address: str, host_port: int) -> None:
+    def encrypt_query(self, host_address: str) -> None:
         """
             Obliviously encrypts the client's search query with the server's inverted index matrix encryption key.
 
@@ -428,6 +426,6 @@ class Utilities:
         player_id = 1
         self.write_mp_spdz_input(player_id, [[self.inverted_index_matrix_encryption_key]])
         mpc_script_name = aes_128_mpc_script_path().stem
-        self.run_mp_spdz(player_id, mpc_script_name, host_address, host_port)
+        self.run_mp_spdz(player_id, mpc_script_name, host_address)
 
         return

@@ -153,7 +153,7 @@ class Utilities:
 
         return
 
-    def encrypt_records(self, swap: bool, index_a: int, index_b: int, host_address: str, host_port: int) -> None:
+    def encrypt_records(self, swap: bool, index_a: int, index_b: int, host_address: str) -> None:
         """
             Obliviously encrypts the records with the client's keys.
 
@@ -174,12 +174,12 @@ class Utilities:
         # Runs MP-SPDZ to obliviously encrypt the records with the client's keys.
         player_id = 1
         self.write_mp_spdz_inputs(player_id, encryption_key_streams, int(swap))
-        self.run_mp_spdz(player_id, sort_and_encrypt_with_circuit_mpc_script_path().stem, host_address, host_port)
+        self.run_mp_spdz(player_id, sort_and_encrypt_with_circuit_mpc_script_path().stem, host_address)
         self.write_encryption_key_streams([index_a, index_b], [encryption_key_a, encryption_key_b], [nonce_a, nonce_b])
 
         return
 
-    def reencrypt_records(self, swap: bool, index_a: int, index_b: int, host_address: str, host_port: int) -> None:
+    def reencrypt_records(self, swap: bool, index_a: int, index_b: int, host_address: str) -> None:
         """
             Obliviously re-encrypts the records with the client's keys.
 
@@ -207,7 +207,7 @@ class Utilities:
         # Runs MP-SPDZ to obliviously re-encrypt the records with the client's keys.
         player_id = 1
         self.write_mp_spdz_inputs(player_id, encryption_key_streams, int(swap), decryption_key_streams)
-        self.run_mp_spdz(player_id, sort_and_reencrypt_with_circuit_mpc_script_path().stem, host_address, host_port)
+        self.run_mp_spdz(player_id, sort_and_reencrypt_with_circuit_mpc_script_path().stem, host_address)
         self.write_encryption_key_streams([index_a, index_b], [encryption_key_a, encryption_key_b], [nonce_a, nonce_b])
 
         return
@@ -299,7 +299,7 @@ class Utilities:
 
         return
 
-    def semantic_search(self, host_address: str, host_port: int) -> None:
+    def semantic_search(self, host_address: str) -> None:
         """
 
         """
@@ -310,7 +310,7 @@ class Utilities:
         player_id = 0
         self.write_embedding_mp_spdz_input(player_id)
         for _ in range(number_of_records()):
-            self.run_mp_spdz(player_id, semantic_search_mpc_script_path().stem, host_address, host_port)
+            self.run_mp_spdz(player_id, semantic_search_mpc_script_path().stem, host_address)
             distance, index = self.get_semantic_search_result(player_id)
 
             if smallest_distance is None:
@@ -348,7 +348,7 @@ class Utilities:
 
         return distance, pointer
 
-    def encrypt_search_query(self, search_query: str, host_address: str, host_port: int) -> None:
+    def encrypt_search_query(self, search_query: str, host_address: str) -> None:
         """
             Obliviously encrypts the client's search query with the server's inverted index matrix encryption key.
             
@@ -364,7 +364,7 @@ class Utilities:
         player_id = 0
         query_digest = shake_128(search_query.encode('ASCII')).digest(number_of_bytes()).hex()
         self.write_mp_spdz_inputs(player_id, [[query_digest]])
-        self.run_mp_spdz(player_id, aes_128_mpc_script_path().stem, host_address, host_port)
+        self.run_mp_spdz(player_id, aes_128_mpc_script_path().stem, host_address)
         self.encrypted_query = self.get_mp_spdz_output()
 
         return
@@ -404,7 +404,7 @@ class Utilities:
         return
 
     @staticmethod
-    def run_mp_spdz(player_id: int, mpc_script_name: str, host_address: str, host_port: int) -> None:
+    def run_mp_spdz(player_id: int, mpc_script_name: str, host_address: str) -> None:
         """
             Runs the client party of the MP-SPDZ execution.
 
@@ -425,7 +425,6 @@ class Utilities:
                                         f'{mpc_script_name}',
                                         '-p', f'{player_id}',
                                         '-h', f'{host_address}',
-                                        '-pn', f'{host_port}',
                                         '-IF', f'{mp_spdz_input_path()}',
                                         '-OF', f'{mp_spdz_output_path()}'],
                                        stdout=PIPE, stderr=PIPE
@@ -433,7 +432,7 @@ class Utilities:
 
         # Blocks until the process is finished and captures the standard out and standard error of the processes.
         client_output, client_error = client_mp_spdz_process.communicate()
-
+        print(client_error)
         # Terminates the processes.
         client_mp_spdz_process.kill()
 

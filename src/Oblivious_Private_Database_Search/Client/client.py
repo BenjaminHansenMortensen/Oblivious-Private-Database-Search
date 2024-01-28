@@ -8,16 +8,24 @@ from socket import socket, AF_INET, SOCK_STREAM, SOL_SOCKET, SO_REUSEADDR, timeo
 from ssl import SSLContext, PROTOCOL_TLS_CLIENT, PROTOCOL_TLS_SERVER, SSLSocket
 
 # Local getters imports.
+from Oblivious_Private_Database_Search.getters import (get_server_ip as
+                                                       server_ip)
+from Oblivious_Private_Database_Search.getters import (get_server_port as
+                                                       server_port)
+from Oblivious_Private_Database_Search.getters import (get_client_ip as
+                                                       client_ip)
+from Oblivious_Private_Database_Search.getters import (get_client_port as
+                                                       client_port)
 from Oblivious_Private_Database_Search.getters import (get_client_networking_key_path as
-                                                     client_networking_key_path)
+                                                       client_networking_key_path)
 from Oblivious_Private_Database_Search.getters import (get_client_networking_certificate_path as
-                                                     client_networking_certificate_path)
+                                                       client_networking_certificate_path)
 from Oblivious_Private_Database_Search.getters import (get_server_networking_certificate_path as
-                                                     server_networking_certificate_path)
+                                                       server_networking_certificate_path)
 from Oblivious_Private_Database_Search.getters import (get_client_encrypted_inverted_index_matrix_directory as
-                                                     encrypted_inverted_index_matrix_directory)
+                                                       encrypted_inverted_index_matrix_directory)
 from Oblivious_Private_Database_Search.getters import (get_client_number_of_dummy_items_path as
-                                                     number_of_dummy_items_path)
+                                                       number_of_dummy_items_path)
 
 
 # Client utility imports.
@@ -34,10 +42,10 @@ class Communicator(Utilities):
     def __init__(self) -> None:
         super().__init__()
         self.HEADER = 1024
-        self.LISTEN_PORT = 5500
-        self.HOST = 'localhost'
+        self.LISTEN_PORT = client_port()
+        self.HOST = client_ip()
         self.ADDR = (self.HOST, self.LISTEN_PORT)
-        self.SERVER_ADDR = ('localhost', 5005)
+        self.SERVER_ADDR = (server_ip(), server_port())
         self.FORMAT = 'utf-8'
 
         self.ONLINE_MESSAGE = '<ONLINE>'
@@ -317,7 +325,7 @@ class Communicator(Utilities):
 
         return 
 
-    def send_indices_and_encrypt(self, swap: bool, index_a: int, index_b: int, host_address: str, host_port: int) -> None:
+    def send_indices_and_encrypt(self, swap: bool, index_a: int, index_b: int, host_address: str) -> None:
         """
             Obliviously sorts and encrypts two of the server's records with the client's key.
 
@@ -344,11 +352,11 @@ class Communicator(Utilities):
         connection.close()
 
         # Obliviously encrypts and sorts the two of the server's records with the client's key.
-        self.encrypt_records(swap, index_a, index_b, host_address, host_port)
+        self.encrypt_records(swap, index_a, index_b, host_address)
         
         return 
 
-    def send_indices_and_reencrypt(self, swap: bool, index_a: int, index_b: int, host_address: str, host_port: int) -> None:
+    def send_indices_and_reencrypt(self, swap: bool, index_a: int, index_b: int, host_address: str) -> None:
         """
             Obliviously sorts and re-encrypts two of the server's records with the client's key.
 
@@ -375,7 +383,7 @@ class Communicator(Utilities):
         connection.close()
 
         # Obliviously re-encrypts and sorts the two of the server's records with the client's key.
-        self.reencrypt_records(swap, index_a, index_b, host_address, host_port)
+        self.reencrypt_records(swap, index_a, index_b, host_address)
         
         return 
 
@@ -431,7 +439,7 @@ class Communicator(Utilities):
 
         self.embedd_search_query(search_query)
         address, port = self.ADDR
-        self.semantic_search(address, port)
+        self.semantic_search(address)
 
         return
 
@@ -465,7 +473,7 @@ class Communicator(Utilities):
 
         # Obliviously encrypts the search query with the server's key.
         address, port = self.ADDR
-        self.encrypt_search_query(search_query, address, port)
+        self.encrypt_search_query(search_query, address)
         
         return 
 

@@ -7,26 +7,34 @@ from socket import socket, AF_INET, SOCK_STREAM, SOL_SOCKET, SO_REUSEADDR, timeo
 from ssl import SSLContext, PROTOCOL_TLS_CLIENT, PROTOCOL_TLS_SERVER, SSLSocket
 
 # Local getters imports.
+from Oblivious_Private_Database_Search.getters import (get_server_ip as
+                                                       server_ip)
+from Oblivious_Private_Database_Search.getters import (get_server_port as
+                                                       server_port)
+from Oblivious_Private_Database_Search.getters import (get_client_ip as
+                                                       client_ip)
+from Oblivious_Private_Database_Search.getters import (get_client_port as
+                                                       client_port)
 from Oblivious_Private_Database_Search.getters import (get_database_size as
-                                                     database_size)
+                                                       database_size)
 from Oblivious_Private_Database_Search.getters import (get_number_of_records as
-                                                     number_of_records)
+                                                       number_of_records)
 from Oblivious_Private_Database_Search.getters import (get_number_of_dummy_items as
-                                                     number_of_dummy_items)
+                                                       number_of_dummy_items)
 from Oblivious_Private_Database_Search.getters import (get_server_networking_key_path as
-                                                     server_networking_key_path)
+                                                       server_networking_key_path)
 from Oblivious_Private_Database_Search.getters import (get_server_networking_certificate_path as
-                                                     server_networking_certificate_path)
+                                                       server_networking_certificate_path)
 from Oblivious_Private_Database_Search.getters import (get_client_networking_certificate_path as
-                                                     client_networking_certificate_path)
+                                                       client_networking_certificate_path)
 from Oblivious_Private_Database_Search.getters import (get_sort_and_encrypt_with_circuit_mpc_script_path as
-                                                     sort_and_encrypt_with_circuit_mpc_script_path)
+                                                       sort_and_encrypt_with_circuit_mpc_script_path)
 from Oblivious_Private_Database_Search.getters import (get_sort_and_reencrypt_with_circuit_mpc_script_path as
-                                                     sort_and_reencrypt_with_circuit_mpc_script_path)
+                                                       sort_and_reencrypt_with_circuit_mpc_script_path)
 from Oblivious_Private_Database_Search.getters import (get_server_encrypted_inverted_index_matrix_directory as
-                                                     encrypted_inverted_index_matrix_directory)
+                                                       encrypted_inverted_index_matrix_directory)
 from Oblivious_Private_Database_Search.getters import (get_records_directory as
-                                                     records_directory)
+                                                       records_directory)
 
 # Server utility imports.
 from Oblivious_Private_Database_Search.Server.Utilities.server_utilities import Utilities
@@ -41,10 +49,10 @@ class Communicator(Utilities):
         super().__init__()
 
         self.HEADER = 1024
-        self.LISTEN_PORT = 5005
-        self.HOST = 'localhost'
+        self.LISTEN_PORT = server_port()
+        self.HOST = server_ip()
         self.ADDR = (self.HOST, self.LISTEN_PORT)
-        self.CLIENT_ADDR = ('localhost', 5500)
+        self.CLIENT_ADDR = (client_ip(), client_port())
         self.FORMAT = 'utf-8'
 
         self.ONLINE_MESSAGE = '<ONLINE>'
@@ -335,7 +343,7 @@ class Communicator(Utilities):
         # Obliviously encrypts the requested records, with the client's key.
         if index_a is not None and index_b is not None:
             address, port = self.ADDR
-            self.encrypt_records(index_a, index_b, mpc_script_name, address, port)
+            self.encrypt_records(index_a, index_b, mpc_script_name, address)
         else:
             raise ValueError('The received indices are not valid.')
 
@@ -357,7 +365,7 @@ class Communicator(Utilities):
         connection.sendall(self.add_padding(self.DISCONNECT_MESSAGE))
 
         address, port = self.CLIENT_ADDR
-        self.semantic_search(address, port)
+        self.semantic_search(address)
 
         return
 
@@ -378,7 +386,7 @@ class Communicator(Utilities):
 
         # Obliviously encrypts the client's search query with the server's key.
         address, port = self.CLIENT_ADDR
-        self.encrypt_query(address, port)
+        self.encrypt_query(address)
 
         return
 

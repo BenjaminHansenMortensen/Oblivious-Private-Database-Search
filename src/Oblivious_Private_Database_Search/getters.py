@@ -43,6 +43,30 @@ def mp_spdz_directory_validation() -> None:
         raise NotADirectoryError('The MP-SPDZ path is not valid.')
 
 
+def get_server_ip() -> str:
+    """ Getter for the server_ip variable. """
+    global server_ip
+    return server_ip
+
+
+def get_server_port() -> str:
+    """ Getter for the server_port variable. """
+    global server_port
+    return server_port
+
+
+def get_client_ip() -> str:
+    """ Getter for the client_ip variable. """
+    global client_ip
+    return client_ip
+
+
+def get_client_port() -> str:
+    """ Getter for the client_ip variable. """
+    global client_port
+    return client_port
+
+
 def get_encoding_base() -> int:
     """ Getter for the encoding_base variable. """
     encoding_base = 16
@@ -427,5 +451,10 @@ def get_server_record_pointers_path() -> Path:
     server_record_pointers_path = working_directory / 'Server' / 'Indexing' / 'Record_Pointers.json'
     return server_record_pointers_path
 
+
 working_directory = Path.cwd()
 mp_spdz_directory = Path.cwd().parent.parent.parent.parent / 'mp-spdz-0.3.8'
+server_ip = ''
+server_port = 0
+client_ip = ''
+client_port = 0
