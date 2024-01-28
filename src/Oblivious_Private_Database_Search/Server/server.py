@@ -316,7 +316,7 @@ class Communicator(Utilities):
 
     def mp_spdz_record_encryption(self, connection: SSLSocket, mpc_script_name: str) -> None:
         """
-            Obliviously encrypts, with client's key, two records of the client's choosing.
+            Obliviously encrypts, with the client's keys, two records of the client's choosing.
 
             Parameters:
                 - connection (SSLSocket) : Connection with the client.
@@ -334,7 +334,8 @@ class Communicator(Utilities):
 
         # Obliviously encrypts the requested records, with the client's key.
         if index_a is not None and index_b is not None:
-            self.encrypt_records(index_a, index_b, mpc_script_name, self.ADDR)
+            address, port = self.ADDR
+            self.encrypt_records(index_a, index_b, mpc_script_name, address, port)
         else:
             raise ValueError('The received indices are not valid.')
 
@@ -355,7 +356,8 @@ class Communicator(Utilities):
         # Closes the connection with the client.
         connection.sendall(self.add_padding(self.DISCONNECT_MESSAGE))
 
-        self.semantic_search(self.CLIENT_ADDR)
+        address, port = self.CLIENT_ADDR
+        self.semantic_search(address, port)
 
         return
 
@@ -375,7 +377,8 @@ class Communicator(Utilities):
         connection.sendall(self.add_padding(self.DISCONNECT_MESSAGE))
 
         # Obliviously encrypts the client's search query with the server's key.
-        self.encrypt_query(self.CLIENT_ADDR)
+        address, port = self.CLIENT_ADDR
+        self.encrypt_query(address, port)
 
         return
 

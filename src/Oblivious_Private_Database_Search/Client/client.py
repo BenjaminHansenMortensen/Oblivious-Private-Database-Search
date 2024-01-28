@@ -317,7 +317,7 @@ class Communicator(Utilities):
 
         return 
 
-    def send_indices_and_encrypt(self, swap: bool, index_a: int, index_b: int, host_address: str) -> None:
+    def send_indices_and_encrypt(self, swap: bool, index_a: int, index_b: int, host_address: str, host_port: int) -> None:
         """
             Obliviously sorts and encrypts two of the server's records with the client's key.
 
@@ -344,11 +344,11 @@ class Communicator(Utilities):
         connection.close()
 
         # Obliviously encrypts and sorts the two of the server's records with the client's key.
-        self.encrypt_records(swap, index_a, index_b, host_address)
+        self.encrypt_records(swap, index_a, index_b, host_address, host_port)
         
         return 
 
-    def send_indices_and_reencrypt(self, swap: bool, index_a: int, index_b: int, host_address: str) -> None:
+    def send_indices_and_reencrypt(self, swap: bool, index_a: int, index_b: int, host_address: str, host_port: int) -> None:
         """
             Obliviously sorts and re-encrypts two of the server's records with the client's key.
 
@@ -375,7 +375,7 @@ class Communicator(Utilities):
         connection.close()
 
         # Obliviously re-encrypts and sorts the two of the server's records with the client's key.
-        self.reencrypt_records(swap, index_a, index_b, host_address)
+        self.reencrypt_records(swap, index_a, index_b, host_address, host_port)
         
         return 
 
@@ -430,7 +430,8 @@ class Communicator(Utilities):
         connection.close()
 
         self.embedd_search_query(search_query)
-        self.semantic_search()
+        address, port = self.ADDR
+        self.semantic_search(address, port)
 
         return
 
@@ -463,7 +464,8 @@ class Communicator(Utilities):
         connection.close()
 
         # Obliviously encrypts the search query with the server's key.
-        self.encrypt_search_query(search_query, self.ADDR)
+        address, port = self.ADDR
+        self.encrypt_search_query(search_query, address, port)
         
         return 
 
