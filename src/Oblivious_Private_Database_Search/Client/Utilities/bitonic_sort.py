@@ -38,7 +38,7 @@ def compare_init(client, index: int, permutation: list, descending: bool, midpoi
     permutation[index_a], permutation[index_b] = permutation_a, permutation_b
 
     # Executes the mpc encryption and sorting.
-    client.send_indices_and_encrypt(swap, index_a, index_b)
+    client.send_indices_and_encrypt(swap, index_a, index_b, client.SERVER_ADDR)
     
     return 
 
@@ -72,7 +72,7 @@ def compare(client, index: int, permutation: list, descending: bool, midpoint: i
     permutation[index], permutation[index + midpoint] = permutation_a, permutation_b
 
     # Executes the mpc encryption and sorting.
-    client.send_indices_and_reencrypt(swap, index_record_a, index_record_b)
+    client.send_indices_and_reencrypt(swap, index_record_a, index_record_b, client.SERVER_ADDR)
 
     return
 

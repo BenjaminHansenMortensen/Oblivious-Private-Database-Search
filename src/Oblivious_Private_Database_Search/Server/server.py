@@ -334,9 +334,9 @@ class Communicator(Utilities):
 
         # Obliviously encrypts the requested records, with the client's key.
         if index_a is not None and index_b is not None:
-            self.encrypt_records(index_a, index_b, mpc_script_name)
+            self.encrypt_records(index_a, index_b, mpc_script_name, self.ADDR)
         else:
-            raise ValueError('The received pointers are not valid.')
+            raise ValueError('The received indices are not valid.')
 
         return
 
@@ -355,7 +355,7 @@ class Communicator(Utilities):
         # Closes the connection with the client.
         connection.sendall(self.add_padding(self.DISCONNECT_MESSAGE))
 
-        self.semantic_search()
+        self.semantic_search(self.CLIENT_ADDR)
 
         return
 
@@ -375,7 +375,7 @@ class Communicator(Utilities):
         connection.sendall(self.add_padding(self.DISCONNECT_MESSAGE))
 
         # Obliviously encrypts the client's search query with the server's key.
-        self.encrypt_query()
+        self.encrypt_query(self.CLIENT_ADDR)
 
         return
 
