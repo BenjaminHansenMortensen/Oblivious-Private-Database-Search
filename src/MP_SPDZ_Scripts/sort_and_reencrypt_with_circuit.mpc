@@ -1,0 +1,34 @@
+from Oblivious_Private_Database_Search.getters import get_block_size as block_size
+from Oblivious_Private_Database_Search.getters import get_number_of_blocks as number_of_blocks
+
+from circuit import Circuit
+sort_and_reencrypt = Circuit(f'sort_and_reencrypt{block_size()}')
+
+
+sb128 = sbits.get_type(block_size())
+
+# Party 0 plaintexts
+ciphertexts_a = sbitvec([sb128.get_input_from(0) for _ in range(number_of_blocks())])
+ciphertexts_b = sbitvec([sb128.get_input_from(0) for _ in range(number_of_blocks())])
+
+# Party 1 swap plaintexts indicator
+swap = sbit.get_input_from(1)
+
+# Party 1 key streams
+decryption_key_streams_a = sbitvec([sb128.get_input_from(1) for _ in range(number_of_blocks())])
+decryption_key_streams_b = sbitvec([sb128.get_input_from(1) for _ in range(number_of_blocks())])
+encryption_key_streams_a = sbitvec([sb128.get_input_from(1) for _ in range(number_of_blocks())])
+encryption_key_streams_b = sbitvec([sb128.get_input_from(1) for _ in range(number_of_blocks())])
+
+# New Ciphertexts
+new_ciphertexts_a, new_ciphertexts_b = sort_and_reencrypt(sbitvec([swap] * number_of_blocks()),
+                                                          decryption_key_streams_a, decryption_key_streams_b,
+                                                          ciphertexts_a, ciphertexts_b,
+                                                          encryption_key_streams_a, encryption_key_streams_b
+                                                         )
+
+# Reveal ciphertexts to party 0
+for i in range(number_of_blocks()):
+    new_ciphertexts_a.elements()[i].reveal().print_reg()
+for i in range(number_of_blocks()):
+    new_ciphertexts_b.elements()[i].reveal().print_reg()

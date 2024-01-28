@@ -1,0 +1,20 @@
+[build-system]
+requires = ['setuptools>=61']
+build-backend = 'setuptools.build_meta'
+
+[project]
+version = '1.0.0'
+requires-python = '>=3.10'
+license = {text = 'MIT License'}
+name = 'Oblivious-Private-Database-Search'
+description = 'Implementation of oblivious private database search showcasing regular searching and semantic search of PNR records.'
+readme = 'README.md'
+dependencies = ['cryptography', 'names', 'random-address']
+
+[project.optional-dependencies]
+semantic_search = ['sentence-transformers']
+
+[project.scripts]
+opds_setup = 'Oblivious_Private_Database_Search.setup:main'
+opds_client = 'Oblivious_Private_Database_Search.app_client:main'
+opds_server = 'Oblivious_Private_Database_Search.app_server:main'
