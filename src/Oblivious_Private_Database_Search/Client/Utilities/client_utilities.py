@@ -432,7 +432,7 @@ class Utilities:
 
         # Blocks until the process is finished and captures the standard out and standard error of the processes.
         client_output, client_error = client_mp_spdz_process.communicate()
-        print(client_error)
+
         # Terminates the processes.
         client_mp_spdz_process.kill()
 

@@ -372,39 +372,27 @@ def get_records_encryption_key_streams_directory() -> Path:
     return records_encryption_keys_directory
 
 
-def get_client_networking_directory() -> Path:
-    """ Getter for the client_networking_directory variable. """
-    client_networking_directory = working_directory / 'Client' / 'Networking'
-    return client_networking_directory
-
-
 def get_client_networking_key_path() -> Path:
     """ Getter for the client_networking_key_path variable. """
-    client_networking_key_path = working_directory / 'Client' / 'Networking' / 'key.pem'
+    client_networking_key_path = mp_spdz_directory / 'Player-Data' / 'P0.key'
     return client_networking_key_path
 
 
 def get_client_networking_certificate_path() -> Path:
     """ Getter for the client_networking_key_path variable. """
-    client_networking_certificate_path = working_directory / 'Client' / 'Networking' / 'cert.pem'
+    client_networking_certificate_path = mp_spdz_directory / 'Player-Data' / 'P0.pem'
     return client_networking_certificate_path
-
-
-def get_server_networking_directory() -> Path:
-    """ Getter for the server_networking_directory variable. """
-    server_networking_directory = working_directory / 'Server' / 'Networking'
-    return server_networking_directory
 
 
 def get_server_networking_key_path() -> Path:
     """ Getter for the server_networking_key_path variable. """
-    server_networking_key_path = working_directory / 'Server' / 'Networking' / 'key.pem'
+    server_networking_key_path = mp_spdz_directory / 'Player-Data' / 'P1.key'
     return server_networking_key_path
 
 
 def get_server_networking_certificate_path() -> Path:
     """ Getter for the client_networking_key_path variable. """
-    server_networking_certificate_path = working_directory / 'Server' / 'Networking' / 'cert.pem'
+    server_networking_certificate_path = mp_spdz_directory / 'Player-Data' / 'P1.pem'
     return server_networking_certificate_path
 
 
