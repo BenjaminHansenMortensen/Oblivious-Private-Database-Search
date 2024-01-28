@@ -138,7 +138,7 @@ class Communicator(Utilities):
         """
 
         # Sends online message to the client.
-        connection = self.client_context.wrap_socket(socket(AF_INET, SOCK_STREAM), server_hostname='localhost')
+        connection = self.client_context.wrap_socket(socket(AF_INET, SOCK_STREAM), server_hostname=client_networking_certificate_path().stem)
         connection.connect(self.CLIENT_ADDR)
         connection.sendall(self.add_padding(self.ONLINE_MESSAGE))
         connection.shutdown(SHUT_WR)
@@ -231,7 +231,7 @@ class Communicator(Utilities):
         """
 
         # Sends the amount of dummy items needed.
-        connection = self.client_context.wrap_socket(socket(AF_INET, SOCK_STREAM), server_hostname='localhost')
+        connection = self.client_context.wrap_socket(socket(AF_INET, SOCK_STREAM), server_hostname=client_networking_certificate_path().stem)
         connection.connect(self.CLIENT_ADDR)
         connection.sendall(self.add_padding(self.REQUEST_DUMMY_ITEMS_MESSAGE))
         connection.sendall(self.add_padding(str(number_of_dummy_items())))
@@ -274,7 +274,7 @@ class Communicator(Utilities):
 
         # Sends each part of the encrypted inverted index matrix to the client.
         for encrypted_inverted_index_matrix_part_path in encrypted_inverted_index_matrix_part_paths:
-            connection = self.client_context.wrap_socket(socket(AF_INET, SOCK_STREAM), server_hostname='localhost')
+            connection = self.client_context.wrap_socket(socket(AF_INET, SOCK_STREAM), server_hostname=client_networking_certificate_path().stem)
             connection.connect(self.CLIENT_ADDR)
             connection.sendall(self.add_padding(self.SENDING_ENCRYPTED_INVERTED_INDEX_MATRIX_MESSAGE))
 
@@ -293,7 +293,7 @@ class Communicator(Utilities):
             connection.shutdown(SHUT_WR)
             connection.close()
 
-        connection = self.client_context.wrap_socket(socket(AF_INET, SOCK_STREAM), server_hostname='localhost')
+        connection = self.client_context.wrap_socket(socket(AF_INET, SOCK_STREAM), server_hostname=client_networking_certificate_path().stem)
         connection.connect(self.CLIENT_ADDR)
         connection.sendall(self.add_padding(self.SENDING_ENCRYPTED_INVERTED_INDEX_MATRIX_FINISHED_MESSAGE))
         print(f'[SENT] {self.SENDING_ENCRYPTED_INVERTED_INDEX_MATRIX_FINISHED_MESSAGE} to client.')
