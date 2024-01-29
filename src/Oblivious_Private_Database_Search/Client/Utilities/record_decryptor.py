@@ -1,4 +1,4 @@
-""" Decrypts retrieved files. """
+""" Decrypts retrieved records. """
 
 # Imports.
 from json import dump

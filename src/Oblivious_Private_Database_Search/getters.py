@@ -451,6 +451,12 @@ def get_number_of_records() -> int:
     return number_of_records
 
 
+def get_mp_spdz_protocol() -> str:
+    """ Getter for the mp_spdz_protocol variable. """
+    mp_spdz_protocol = 'replicated-bin-party.x'
+    return mp_spdz_protocol
+
+
 working_directory = Path.cwd()
 mp_spdz_directory = Path.cwd().parent.parent.parent.parent / 'mp-spdz-0.3.8'
 server_ip = 'localhost'

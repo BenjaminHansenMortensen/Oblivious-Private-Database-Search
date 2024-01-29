@@ -13,6 +13,8 @@ from sentence_transformers import SentenceTransformer
 from warnings import simplefilter
 
 # Local getters imports.
+from Oblivious_Private_Database_Search.getters import (get_mp_spdz_protocol as
+                                                       mp_spdz_protocol)
 from Oblivious_Private_Database_Search.getters import (get_database_size as
                                                        database_size)
 from Oblivious_Private_Database_Search.getters import (get_number_of_bytes as
@@ -451,7 +453,7 @@ class Utilities:
         chdir(mp_spdz_directory())
 
         # Runs the client party.
-        client_mp_spdz_process = Popen([f'{mp_spdz_directory() / "replicated-field-party.x"}',
+        client_mp_spdz_process = Popen([f'{mp_spdz_directory() / mp_spdz_protocol()}',
                                         f'{mpc_script_name}',
                                         '-p', f'{player_id}',
                                         '-h', f'{host_address}',

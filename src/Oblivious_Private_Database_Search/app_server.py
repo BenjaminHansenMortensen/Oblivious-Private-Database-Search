@@ -17,7 +17,7 @@ from Oblivious_Private_Database_Search.Server.server import Communicator as Serv
 
 def clean_up_files() -> None:
     """
-        Removes files created from previous pre-processing.
+        Removes records created from previous pre-processing.
 
         Parameters:
             -
@@ -37,7 +37,7 @@ def clean_up_files() -> None:
     for file_path in file_paths:
         file_path.unlink()
 
-    # removes the stored indexing files.
+    # removes the stored indexing records.
     file_paths = [path for path in server_indexing_files_directory().rglob('*') if path.is_file()]
     for file_path in file_paths:
         file_path.unlink()
@@ -57,7 +57,7 @@ def main() -> None:
     # Executes a new pre-processing of the database.
     if not server.resume_from_previous_preprocessing:
 
-        # Removes files from the previous pre-processing.
+        # Removes records from the previous pre-processing.
         clean_up_files()
 
         # Initializes the database with PNR records.

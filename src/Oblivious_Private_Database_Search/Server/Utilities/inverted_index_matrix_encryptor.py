@@ -148,7 +148,7 @@ def shuffle_dictionary(encrypted_inverted_index_matrix: dict[str, list[str]]) ->
 
 def write_encrypted_inverted_index_matrix(encrypted_inverted_index_matrix: dict[str, list[str]]) -> None:
     """
-        Writes the encrypted inverted index matrix to multiple files depending on its length.
+        Writes the encrypted inverted index matrix to multiple records depending on its length.
 
         Parameters:
             - encrypted_inverted_index_matrix (dict) : The dictionary to be written.

@@ -1,10 +1,22 @@
 """ MP-SPDZ only supports a few data types, so we have to encode our data to use it. """
 
-#Imports
+# Imports
 from pathlib import Path
 from json import load
 from hashlib import sha256
 from re import sub
+
+# Local getter imports.
+from Proof_of_Concept.getters import (get_encoding_base as
+                                      encoding_base)
+from Proof_of_Concept.getters import (get_records_length_upper_bound as
+                                      records_length_upper_bound)
+from Proof_of_Concept.getters import (get_inverted_index_matrix_path as
+                                      inverted_index_matrix_path)
+from Proof_of_Concept.getters import (get_records_directory as
+                                      records_directory)
+from Proof_of_Concept.getters import (get_server_mp_spdz_input_path as
+                                      mp_spdz_input_path)
 
 
 def get_size_of_largest_set_of_pointers(inverted_index_matrix: dict[str, list[str]]) -> int:
@@ -16,23 +28,24 @@ def get_size_of_largest_set_of_pointers(inverted_index_matrix: dict[str, list[st
              - inverted_index_matrix (dict[str, list[str]]) : The inverted index matrix to be traversed.
 
         Returns:
-            size_of_largest_set (int) : The size of the largest set of pointers.
+            :raises
+            - size_of_largest_set (int) : The size of the largest set of pointers.
     """
 
-    if type(inverted_index_matrix) != dict:
+    if type(inverted_index_matrix) is not dict:
         raise TypeError('Is not of type dictionary.')
-    elif all(type(value) != list for value in inverted_index_matrix.values()):
+    elif all(type(value) is not list for value in inverted_index_matrix.values()):
         raise TypeError('Dictionary is not formatted correctly.')
-    elif all(type(key) != str for key in inverted_index_matrix.keys()):
+    elif all(type(key) is not str for key in inverted_index_matrix.keys()):
         raise TypeError('Dictionary is not encoded as strings.')
 
-    max = 1
+    max_size = 1
     for pointers in inverted_index_matrix.values():
         size_of_set = len(pointers)
-        if  size_of_set > max:
-            max = size_of_set
+        if size_of_set > max_size:
+            max_size = size_of_set
 
-    return max
+    return max_size
 
 
 def convert_file_to_integers(contents: str) -> list[int]:
@@ -44,21 +57,21 @@ def convert_file_to_integers(contents: str) -> list[int]:
             - file (dict) : The file to be converted.
 
         Returns:
-            integer_encodings (list) = The file encoded as ascii value.
+            :raises
+            - integer_encodings (list) = The file encoded as ascii value.
     """
 
-    if type(contents) != str:
+    if type(contents) is not str:
         raise TypeError('Inverse index matrix is not a string.')
 
     contents = contents.strip().replace('\n', '')
-    contents = sub(r'\s+(?=([^"]*"[^"]*")*[^"]*$)', '', contents)   # Removes all whitespace outside quotes
+    contents = sub(r'\s+(?=([^"]*"[^"]*")*[^"]*$)', '', contents)   # Removes all whitespace outside quotes.
 
     integer_encodings = []
     for character in contents:
         integer_encodings.append(ord(character))
 
-    file_length_upper_bound = 6000
-    padding_amount = file_length_upper_bound - len(integer_encodings)
+    padding_amount = records_length_upper_bound() - len(integer_encodings)
     for i in range(padding_amount):
         integer_encodings.append(0)
 
@@ -74,14 +87,14 @@ def convert_string_to_unique_integer(index: str) -> int:
 
         Returns:
             :raises TypeError
-            decimal_digest (int) = The index encoded as integers.
+            - decimal_digest (int) = The index encoded as integers.
     """
 
-    if type(index) != str:
+    if type(index) is not str:
         raise TypeError('Inverse index matrix is not a string.')
 
     binary_digest = sha256(index.encode('ASCII')).hexdigest()
-    decimal_digest = int(binary_digest, 16)
+    decimal_digest = int(binary_digest, encoding_base())
 
     return decimal_digest
 
@@ -95,19 +108,19 @@ def encode_inverted_index_matrix(inverted_index_matrix: dict[str, list[str]]) ->
 
         Returns:
             :raises TypeError
-            encoded_inverted_index_matrix (dict[int, list[int]]) : The encoded inverted index matrix.
+           -  encoded_inverted_index_matrix (dict[int, list[int]]) : The encoded inverted index matrix.
 
     """
 
-    if type(inverted_index_matrix) != dict:
+    if type(inverted_index_matrix) is not dict:
         raise TypeError('Is not of type dictionary.')
-    elif all(type(value) != list for value in inverted_index_matrix.values()):
+    elif all(type(value) is not list for value in inverted_index_matrix.values()):
         raise TypeError('Dictionary is not formatted correctly.')
-    elif all(type(key) != str for key in inverted_index_matrix.keys()):
+    elif all(type(key) is not str for key in inverted_index_matrix.keys()):
         raise TypeError('Dictionary is not encoded as strings.')
     for pointers in inverted_index_matrix.values():
         for pointer in pointers:
-            if type(pointer) != str:
+            if type(pointer) is not str:
                 raise TypeError('Dictionary is not encoded as strings.')
 
     encoded_inverted_index_matrix = {}
@@ -136,12 +149,11 @@ def get_encoded_database(index_pointer_dictionary: dict, base_path: Path | str) 
 
         Parameters:
             - index_pointer_dictionary (dict) : The inverse index matrix dictionary with pointers.
-            - base_path (Path | str) : The path to the database files.
+            - base_path (Path | str) : The path to the database records.
 
         Returns:
             :raises TypeError
-            encoded_database (list[list[int]]) : The encoded database as integers.
-
+            - encoded_database (list[list[int]]) : The encoded database as integers.
     """
 
     try:
@@ -149,15 +161,15 @@ def get_encoded_database(index_pointer_dictionary: dict, base_path: Path | str) 
 
     except TypeError:
         raise TypeError('Cannot covert base path to Path object.')
-    if type(index_pointer_dictionary) != dict:
+    if type(index_pointer_dictionary) is not dict:
         raise TypeError('Is not of type dictionary.')
-    elif all(type(value) != list for value in index_pointer_dictionary.values()):
+    elif all(type(value) is not list for value in index_pointer_dictionary.values()):
         raise TypeError('Dictionary is not formatted correctly.')
-    elif all(type(key) != str for key in index_pointer_dictionary.keys()):
+    elif all(type(key) is not str for key in index_pointer_dictionary.keys()):
         raise TypeError('Dictionary is not encoded as string.')
     for pointers in index_pointer_dictionary.values():
         for pointer in pointers:
-            if type(pointer) != str:
+            if type(pointer) is not str:
                 raise TypeError('Dictionary is not encoded as string.')
 
     visited_pointers = set()
@@ -172,9 +184,10 @@ def get_encoded_database(index_pointer_dictionary: dict, base_path: Path | str) 
 
             visited_pointers.add(pointer)
 
-            file_path = base_path / pointer
+            file_path = base_path / f'record{pointer}.json'
             with file_path.open(mode='r') as f:
                 contents = f.read()
+                f.close()
             integer_encoding = convert_file_to_integers(contents)
 
             files += integer_encoding
@@ -199,7 +212,8 @@ def write_dictionary(inverted_index_matrix: dict[int, list[int]], database: list
             - output_path (Path | str) : The output where the dictionary will be written to.
 
         Returns:
-
+            :raises
+            -
     """
 
     try:
@@ -207,21 +221,21 @@ def write_dictionary(inverted_index_matrix: dict[int, list[int]], database: list
 
     except TypeError:
         raise TypeError('Cannot covert output path to Path object.')
-    if type(inverted_index_matrix) != dict:
+    if type(inverted_index_matrix) is not dict:
         raise TypeError('Is not of type dictionary.')
-    elif all(type(value) != list for value in inverted_index_matrix.values()):
+    elif all(type(value) is not list for value in inverted_index_matrix.values()):
         raise TypeError('Dictionary is not formatted correctly.')
-    elif all(type(key) != int for key in inverted_index_matrix.keys()):
+    elif all(type(key) is not int for key in inverted_index_matrix.keys()):
         raise TypeError('Dictionary is not encoded as integers.')
     for pointers in inverted_index_matrix.values():
         for pointer in pointers:
-            if type(pointer) != int:
+            if type(pointer) is not int:
                 raise TypeError('Dictionary is not encoded as integers.')
-    if all(type(file) != list for file in database):
+    if all(type(file) is not list for file in database):
         raise TypeError('The database is not encoded correctly.')
     for file in database:
         for character in file:
-            if type(character) != int:
+            if type(character) is not int:
                 raise TypeError('The database is not encoded as integers.')
 
     output = ''
@@ -236,16 +250,29 @@ def write_dictionary(inverted_index_matrix: dict[int, list[int]], database: list
 
     with output_path.open(mode='w') as f:
         f.write(output)
+        f.close()
 
 
-def run():
-    index_path = Path('Server/Indexing/Index_Files/Inverted_Index_Matrix.json')
-    with index_path.open(mode='r') as f:
+def run() -> None:
+    """
+        Creates an inverted index matrix of the records and writes it.
+
+        Parameters:
+            -
+
+        Returns:
+            :raises
+            -
+    """
+
+    with inverted_index_matrix_path().open(mode='r') as f:
         inverted_index_matrix = load(f)
+        f.close()
 
-    base_path = Path('Server/PNR_Records/')
-    encoded_database = get_encoded_database(inverted_index_matrix, base_path)
+    encoded_database = get_encoded_database(inverted_index_matrix, records_directory())
     encoded_inverted_index_matrix = encode_inverted_index_matrix(inverted_index_matrix)
 
-    output_path = Path('Server/MP_SPDZ_Inputs/MP_SPDZ_Only_Input-P1-0')
+    output_path = mp_spdz_input_path().parent / f'{mp_spdz_input_path().name}-P1-0'
     write_dictionary(encoded_inverted_index_matrix, encoded_database, output_path)
+
+    return

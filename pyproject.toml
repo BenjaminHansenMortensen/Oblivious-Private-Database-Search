@@ -12,6 +12,6 @@ readme = 'README.md'
 dependencies = ['cryptography', 'names', 'random-address', 'sentence-transformers']
 
 [project.scripts]
-opds_setup = 'Oblivious_Private_Database_Search.setup:main'
+opds_setup = 'Oblivious_Private_Database_Search.app:main'
 opds_client = 'Oblivious_Private_Database_Search.app_client:main'
 opds_server = 'Oblivious_Private_Database_Search.app_server:main'

@@ -9,6 +9,8 @@ from json import loads
 from random import shuffle
 
 # Local getters imports.
+from Oblivious_Private_Database_Search.getters import (get_mp_spdz_protocol as
+                                                       mp_spdz_protocol)
 from Oblivious_Private_Database_Search.getters import (get_encoding_base as
                                                        encoding_base)
 from Oblivious_Private_Database_Search.getters import (get_mp_spdz_directory as
@@ -286,7 +288,7 @@ class Utilities:
         chdir(mp_spdz_directory())
 
         # Runs the server party.
-        server_mp_spdz_process = Popen([f"{mp_spdz_directory() / 'replicated-field-party.x'}",
+        server_mp_spdz_process = Popen([f"{mp_spdz_directory() / mp_spdz_protocol()}",
                                         f"{mpc_script_name}",
                                         "-p", f"{player_id}",
                                         '-h', f'{host_address}',
@@ -295,7 +297,7 @@ class Utilities:
                                        stdout=PIPE, stderr=PIPE
                                        )
         # Runs the empty party.
-        empty_party_mp_spdz_process = Popen([f"{mp_spdz_directory() / 'replicated-field-party.x'}",
+        empty_party_mp_spdz_process = Popen([f"{mp_spdz_directory() / mp_spdz_protocol()}",
                                              f"{mpc_script_name}",
                                              "-p", "2",
                                              '-h', f'{host_address}'],

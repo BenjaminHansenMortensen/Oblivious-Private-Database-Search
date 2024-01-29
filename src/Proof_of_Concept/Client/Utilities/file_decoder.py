@@ -1,11 +1,17 @@
 """ Transforms the retrieved file from the MP-SPDZ only scheme to a legitimate json file. """
 
-#Imports
+# Imports
 from pathlib import Path
 from json import load, dump
 
+# Local getter imports.
+from Proof_of_Concept.getters import (get_retrieved_records_directory as
+                                      retrieved_records_path)
+from Proof_of_Concept.getters import (get_client_mp_spdz_output_path as
+                                      mp_spdz_output_path)
 
-def read_file(file_path: Path | str) -> str:
+
+def read_file(file_path: Path | str) -> list[int]:
     """
         Reads the integer encoded file.
 
@@ -14,7 +20,7 @@ def read_file(file_path: Path | str) -> str:
 
         Returns:
             :raises TypeError
-            - contents (list) : The contents of the file.
+            - contents (list[int]) : The contents of the file.
     """
 
     try:
@@ -26,6 +32,7 @@ def read_file(file_path: Path | str) -> str:
 
     with file_path.open(mode='r') as f:
         contents = load(f)
+        f.close()
 
     return contents
 
@@ -35,16 +42,16 @@ def decode_file(contents: list[int]) -> list[dict]:
         Decodes the file from ascii integers to ascii characters.
 
         Parameters:
-            - contents (list) : The contents of the encoded file.
+            - contents (list[int]) : The contents of the encoded file.
 
         Returns:
             :raises TypeError
-            - files (list[dict]) : The dictionary representation of the json file.
+            - records (list[dict]) : The dictionary representation of the json file.
     """
 
-    if type(contents) != list:
+    if type(contents) is not list:
         raise TypeError('Is not of type list.')
-    elif all(type(value) != int for value in contents):
+    elif all(type(value) is not int for value in contents):
         raise TypeError('Contents is not ascii value encoded.')
 
     decoded_contents = []
@@ -65,23 +72,24 @@ def decode_file(contents: list[int]) -> list[dict]:
                 open_close -= 1
 
         if decoded_contents[i] == '}' and open_close == 0:
-            file = eval(''.join(decoded_contents[start : i + 1]))
+            file = eval(''.join(decoded_contents[start: i + 1]))
             files.append(file)
             start = i + 1
 
     return files
 
 
-def write_file(files: list[dict], output_path: Path | str):
+def write_file(records: list[dict], output_path: Path | str) -> None:
     """
-        Writes the json files.
+        Writes the json records.
 
         Parameters:
-            - files (list[dict]) : The files to be written.
-            - file_path (Path | str) : Path to the file.
+            - records (list[dict]) : The records to be written.
+            - file_path (Path | str) : Path to the record.
 
         Returns:
             :raises TypeError
+            -
     """
 
     try:
@@ -91,25 +99,39 @@ def write_file(files: list[dict], output_path: Path | str):
             raise ValueError('Directory does not exist.')
     except TypeError:
         raise TypeError('Cannot covert output path to Path object')
-    if type(files) != list:
+    if type(records) is not list:
         raise TypeError('Is not of type list.')
-    elif all(type(file) != dict for file in files):
-        if len(files) == 0:
+    elif all(type(file) is not dict for file in records):
+        if len(records) == 0:
             return
-        raise TypeError('Not all values are decoded files.')
+        raise TypeError('Not all values are decoded records.')
 
-    for i in range(len(files)):
-        file = files[i]
-        pnr_number = file['PNR Number']
+    for i in range(len(records)):
+        record = records[i]
+        pnr_number = record['PNR Number']
         file_path = output_path / f'record{pnr_number}.json'
-        with file_path.open('w') as fp:
-            dump(file, fp, indent=4)
+        with file_path.open('w') as f:
+            dump(record, f, indent=4)
+            f.close()
+
+    return
 
 
-def run():
-    file_path = Path('Client/MP_SPDZ_Outputs/MP_SPDZ_Only_Output-P0-0')
-    contents = read_file(file_path)
+def run() -> None:
+    """
+        Decodes the record from the MP-SPDZ output file.
+
+        Parameters:
+            -
+
+        Returns:
+            :raises
+            -
+    """
+
+    encoded_record_path = mp_spdz_output_path().parent / f'{mp_spdz_output_path().name}-P0-0'
+    contents = read_file(encoded_record_path)
     files = decode_file(contents)
-    output_path = Path('Client/Retrieved_Records/')
-    write_file(files, output_path)
+    write_file(files, retrieved_records_path())
 
+    return

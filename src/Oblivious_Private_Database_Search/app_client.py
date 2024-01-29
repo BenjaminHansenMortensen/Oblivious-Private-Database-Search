@@ -15,7 +15,7 @@ from Oblivious_Private_Database_Search.Client.client import Communicator as Clie
 
 def clean_up_files() -> None:
     """
-        Removes files created from previous pre-processing.
+        Removes records created from previous pre-processing.
 
         Parameters:
             -
@@ -25,7 +25,7 @@ def clean_up_files() -> None:
             -
     """
 
-    # Removes the stored indexing files.
+    # Removes the stored indexing records.
     file_paths = [path for path in client_indexing_directory().rglob('*') if path.is_file()]
     for file_path in file_paths:
         file_path.unlink()
@@ -61,7 +61,7 @@ def main() -> None:
 
     if not client.resume_from_previous_preprocessing:
 
-        # Removes files from the previous pre-processing.
+        # Removes records from the previous pre-processing.
         clean_up_files()
 
     # Waits for the server to connect.

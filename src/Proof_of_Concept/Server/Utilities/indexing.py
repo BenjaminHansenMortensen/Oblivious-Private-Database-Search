@@ -1,8 +1,16 @@
-""" To build the database we want to index the records to create an inverse index martix """
+""" To build the database we want to index the records. """
 
-#Imports
+# Imports
 from pathlib import Path
 from json import load, dump
+
+# Local getter imports.
+from Proof_of_Concept.getters import (get_excluded_records as
+                                      excluded_records)
+from Proof_of_Concept.getters import (get_records_directory as
+                                      records_directory)
+from Proof_of_Concept.getters import (get_indexing_path as
+                                      indexing_path)
 
 
 def read_record(path: str | Path) -> dict:
@@ -13,7 +21,8 @@ def read_record(path: str | Path) -> dict:
             - path (str) : The path to the file including name.
 
         Returns:
-            record (dict) = The record.
+            :raises
+            - record (dict) = The record.
     """
     try:
         path = Path(path)
@@ -23,9 +32,9 @@ def read_record(path: str | Path) -> dict:
     except TypeError:
         raise TypeError(f'Cannot covert to Path object')
 
-
-    with open(path, 'r') as file:
-        record = dict(load(file))
+    with path.open('r') as f:
+        record = dict(load(f))
+        f.close()
 
     return record
 
@@ -39,10 +48,10 @@ def flatten_and_filter_dictionary(dictionary: dict) -> dict:
 
         Returns:
             :raises TypeError
-            flat_dictionary (dict) = The flattened dictionary.
+            - flat_dictionary (dict) = The flattened dictionary.
     """
 
-    if type(dictionary) != dict:
+    if type(dictionary) is not dict:
         raise TypeError('The provided dictionary is not of type dictionary.')
 
     key_filter = ['Date', 'City', 'Zip Code', 'Vendor', 'Type', 'Bonus Program', 'Airline', 'Travel Agency',
@@ -55,7 +64,7 @@ def flatten_and_filter_dictionary(dictionary: dict) -> dict:
     return flat_dictionary
 
 
-def add_keys_and_values(flat_dictionary: dict, dictionary: dict, key_filter: list, parent_key: str = '') -> dict:
+def add_keys_and_values(flat_dictionary: dict, dictionary: dict, key_filter: list, parent_key: str = ''):
     """
     Add keys and values to the flattened dictionary. Iterates through child dictionaries.
 
@@ -66,13 +75,14 @@ def add_keys_and_values(flat_dictionary: dict, dictionary: dict, key_filter: lis
         - parent_key (str) : The key of the parent dictionary.
 
     Returns:
-
+        :raises
+        -
     """
 
     for key, value in dictionary.items():
         if key in key_filter:
             continue
-        elif type(value) == dict:
+        elif type(value) is dict:
             if parent_key != '':
                 key = f'{parent_key} {key}'
 
@@ -90,14 +100,14 @@ def update_index(indexing: dict, record: dict[str, str], memory_location: str | 
             - dictionary (dict) : The memory location of the record.
 
         Returns:
-
+            :raises
+            -
     """
 
-    if type(record) != dict:
+    if type(record) is not dict:
         raise TypeError(' Record is not a dictionary.')
-    elif all(type(value) == dict for value in record.values()):
+    elif all(type(value) is dict for value in record.values()):
         raise ValueError('Dictionary is not flat.')
-    # TODO Memory Location Error Handling
 
     memory_location = memory_location.name
 
@@ -122,33 +132,43 @@ def get_contents(path: str | Path) -> list[str | Path]:
 
         Returns:
             :raises: NotADirectoryError, TypeError
-            contents (list[str]) : All the contents of the directory.
-
+            - contents (list[str]) : All the contents of the directory.
     """
 
     try:
-        dir = Path(path)
+        directory = Path(path)
 
-        if not dir.is_dir() or not dir.exists():
+        if not directory.is_dir() or not directory.exists():
             raise NotADirectoryError
     except TypeError:
         raise TypeError('Cannot covert directory to Path object')
 
-    exclude = ['Sample_Record.json']
-
-    contents = [path for path in dir.rglob('*') if path.name not in exclude]
+    contents = [path for path in directory.rglob('*') if path.name not in excluded_records()]
 
     return contents
 
 
-def run():
-    indexing = {}
-    path = 'Server/PNR_Records/'
-    files = get_contents(path)
-    for file in files:
-        record = read_record(file)
-        record = flatten_and_filter_dictionary(record)
-        update_index(indexing, record, file)
+def run() -> None:
+    """
+        Creates an indexing of records and writes it.
 
-    with open(f'Server/Indexing/Indexing.json', 'w') as fp:
-        dump(indexing, fp, indent=4)
+        Parameters:
+            -
+
+        Returns:
+            :raises
+            -
+    """
+
+    indexing = {}
+    record_paths = get_contents(records_directory())
+    for record_path in record_paths:
+        record = read_record(record_path)
+        record = flatten_and_filter_dictionary(record)
+        update_index(indexing, record, record_path)
+
+    with indexing_path().open('w') as f:
+        dump(indexing, f, indent=4)
+        f.close()
+
+    return
