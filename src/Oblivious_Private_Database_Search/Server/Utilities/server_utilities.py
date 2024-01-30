@@ -58,6 +58,7 @@ class Utilities:
     def __init__(self) -> None:
         self.is_semantic_search = None
         self.resume_from_previous_preprocessing = None
+        self.indexing_finished = False
         self.record_pointers = None
         self.encrypted_record_pointers = None
         self.inverted_index_matrix_encryption_key = None
@@ -87,6 +88,9 @@ class Utilities:
                 with record_indexing_path().open('r') as f:
                     self.encrypted_record_pointers = eval(f.read())
                     f.close()
+
+            if self.is_semantic_search:
+                self.indexing_finished = True
         except FileNotFoundError:
             pass
 
@@ -116,7 +120,7 @@ class Utilities:
 
         return
 
-    def create_semantic_indexing(self) -> None:
+    def semantic_indexing(self) -> None:
         """
             Creates a semantic indexing of the records.
 
@@ -127,7 +131,7 @@ class Utilities:
                 :raises
                 -
         """
-        print('[INDEXING] Creating the semantic indexing of the records.')
+
         create_semantic_indexing(self.record_pointers)
 
         return

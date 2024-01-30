@@ -118,7 +118,7 @@ def get_semantic_search_request_threshold() -> int:
 
 def get_semantic_search_mpc_script_path() -> Path:
     """ Getter for the semantic_search_mpc_script_path variable. """
-    semantic_search_mpc_script_path = get_mp_spdz_scripts_directory() / 'semantic_search.mpc'
+    semantic_search_mpc_script_path = get_application_mp_spdz_scripts_directory() / 'semantic_search.mpc'
     return semantic_search_mpc_script_path
 
 
@@ -478,7 +478,7 @@ def get_mp_spdz_protocol() -> str:
 
 
 working_directory = Path(__file__).parent
-mp_spdz_directory = working_directory.parent.parent.parent.parent / 'mp-spdz-0.3.8'
+mp_spdz_directory = None
 server_ip = 'localhost'
 server_port = 5500
 client_ip = 'localhost'

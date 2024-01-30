@@ -184,6 +184,24 @@ class Communicator(Utilities):
 
         return
 
+    def wait_for_indexing(self) -> None:
+        """
+            Waits until the indexing is complete.
+
+            Parameters:
+                -
+
+            Returns:
+                :raises
+                -
+        """
+
+        # Waits until the shutdown message is received from the client.
+        while not self.indexing_finished:
+            sleep(1)
+
+        return
+
     def add_padding(self, message: str) -> bytes:
         """
             Encodes and adds the appropriate padding to a message to match the header size.
@@ -356,6 +374,25 @@ class Communicator(Utilities):
 
         return
 
+    def create_semantic_indexing(self) -> None:
+        """
+            Creates a semantic indexing of the records.
+
+            Parameters:
+                -
+
+            Returns:
+                :raises
+                -
+        """
+        print('[INDEXING] Creating the semantic indexing of the records.')
+        self.semantic_indexing()
+
+        print('[INDEXING FINISHED] Finished creating the semantic indexing.')
+        self.indexing_finished = True
+
+        return
+
     def received_semantic_search_message(self, connection: SSLSocket) -> None:
         """
             Obliviously compares the search query embedding to the embedding of each record.
@@ -457,6 +494,7 @@ class Communicator(Utilities):
         elif message == self.REENCRYPT_RECORDS_MESSAGE:
             self.mp_spdz_record_encryption(connection, sort_and_reencrypt_with_circuit_mpc_script_path().stem)
         elif message == self.SEMANTIC_SEARCH_MESSAGE:
+            self.wait_for_indexing()
             print(f'[RECEIVED] {message} from client.')
             self.received_semantic_search_message(connection)
         elif message == self.ENCRYPT_QUERY_MESSAGE:
