@@ -41,6 +41,8 @@ from Proof_of_Concept.getters import (get_records_length_upper_bound as
                                       records_length_upper_bound)
 from Proof_of_Concept.getters import (get_mp_spdz_protocol as
                                       mp_spdz_protocol)
+from Proof_of_Concept.getters import (get_excluded_records as
+                                      excluded_records)
 
 
 # Client and Server imports.
@@ -52,6 +54,36 @@ from Proof_of_Concept.Server.Utilities.inverted_index_matrix_integer_encoder imp
 from Proof_of_Concept.Server.Utilities.inverted_index_matrix_integer_encoder import run as encode_database_and_inverse_index_matrix
 from Proof_of_Concept.Client.Utilities.query_encoder import run as encode_query
 from Proof_of_Concept.Client.Utilities.file_decoder import run as decode_retrieval
+
+
+def clean_up_files() -> None:
+    """
+        Removes records created from previous execution.
+
+        Parameters:
+            -
+
+        Returns:
+            :raises
+            -
+    """
+
+    # Removes the stored PNR records.
+    file_paths = [path for path in records_directory().glob('*') if (path.name not in excluded_records())]
+    for file_path in file_paths:
+        file_path.unlink()
+
+    # Removes the stored indexing records.
+    file_paths = [path for path in server_indexing_directory().rglob('*') if path.is_file()]
+    for file_path in file_paths:
+        file_path.unlink()
+
+    # Removes the stored retrieved indices.
+    file_paths = [path for path in retrieved_records_directory().glob('*')]
+    for file_path in file_paths:
+        file_path.unlink()
+
+    return
 
 
 def setup_directories() -> None:
@@ -179,6 +211,8 @@ def main() -> None:
             -
     """
 
+    clean_up_files()
+
     use_inverted_index_matrix = input("User an inverted index matrix for record indexing?: (y/n) ")
 
     if use_inverted_index_matrix == 'y':
@@ -205,3 +239,6 @@ def main() -> None:
     decode_retrieval()
 
     return
+
+
+main()

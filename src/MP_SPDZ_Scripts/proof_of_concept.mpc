@@ -312,9 +312,9 @@ def test_inverse_searching_oram_retrival_oram():
 # Defining global variables
 
 index_length = 1
-number_of_indices = 1
+number_of_indices = 16
 size_of_set_of_pointers = 1
-size_of_set_of_attributes = 8
+size_of_set_of_attributes = 14
 
 file_signature_length = 1
 number_of_files = 1
@@ -328,10 +328,10 @@ database = sint.input_tensor_from(1, [number_of_files, file_signature_length + f
 # Testing different combinations of approaches
 
 # Results: Time = 1.492 seconds, Data sent = 178.9 MB, for ten file and one query
-test_searching_retrieval()
+#test_searching_retrieval()
 
 # Results: Time = 1.1 seconds, Data sent = 126.5 MB, for four file and one query
-#test_inverse_searching_retrieval()
+test_inverse_searching_retrieval()
 
 # Results: Time = 0.665 seconds, Global data sent = 34.7 MB, for four file and one query
 #test_inverse_searching_oram_retrival()

@@ -29,7 +29,7 @@ from Oblivious_Private_Database_Search.getters import (get_mp_spdz_circuits_dire
                                                        mp_spdz_circuits_directory)
 from Oblivious_Private_Database_Search.getters import (get_encrypted_records_directory as
                                                        encrypted_pnr_records_directory)
-from Oblivious_Private_Database_Search.getters import (get_server_indexing_files_directory as
+from Oblivious_Private_Database_Search.getters import (get_server_indexing_directory as
                                                        server_indexing_files_directory)
 from Oblivious_Private_Database_Search.getters import (get_server_encrypted_inverted_index_matrix_directory as
                                                        server_encrypted_inverted_index_matrix_directory)
