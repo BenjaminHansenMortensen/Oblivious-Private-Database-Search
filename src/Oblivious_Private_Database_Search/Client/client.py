@@ -30,8 +30,6 @@ from Oblivious_Private_Database_Search.getters import (get_client_encrypted_inve
                                                        encrypted_inverted_index_matrix_directory)
 from Oblivious_Private_Database_Search.getters import (get_client_number_of_dummy_items_path as
                                                        number_of_dummy_items_path)
-from Oblivious_Private_Database_Search.getters import (get_records_encryption_key_streams_directory as
-                                                       records_encryption_keys_directory)
 
 
 # Client utility imports.
@@ -333,42 +331,9 @@ class Communicator(Utilities):
         self.records_preprocessing(self)
         self.send_records_preprocessing_finished_message()
 
-        return 
-
-    def send_indices_and_encrypt(self, swap: bool, index_a: int, index_b: int, host_address: str) -> None:
-        """
-            Obliviously sorts and encrypts two of the server's records with the client's key.
-
-            Parameters:
-                - swap (bool) : Indicator to whether the records should be swapped or not.
-                - index_a (int) : Index to a server side pointer to a record.
-                - index_b (int) : Index to a server side pointer to a record.
-                - host_address (str) : The hostname of the party to host the MP-SPDZ execution.
-
-            Returns:
-                :raises
-                -
-        """
-        
-        # Sends which two records should be considered.
-        connection = self.server_context.wrap_socket(socket(AF_INET, SOCK_STREAM),
-                                                     server_hostname=server_networking_certificate_path().stem)
-        connection.connect(self.SERVER_ADDR)
-        connection.sendall(self.add_padding(self.ENCRYPT_RECORDS_MESSAGE))
-        connection.sendall(self.add_padding(str(index_a)))
-        connection.sendall(self.add_padding(str(index_b)))
-        
-        # Waits until the server disconnects.
-        self.wait(connection)
-        connection.shutdown(SHUT_WR)
-        connection.close()
-
-        # Obliviously encrypts and sorts the two of the server's records with the client's key.
-        self.encrypt_records(swap, index_a, index_b, host_address)
-        
         return
 
-    def new_send_indices_and_encrypt(self, swap: bool, index_a: int, index_b: int, reencrypt: bool) -> None:
+    def send_indices_and_encrypt(self, swap: bool, index_a: int, index_b: int, decrypt_first: bool) -> None:
         """
             Obliviously sorts and encrypts two of the server's records with the client's key.
 
@@ -376,7 +341,7 @@ class Communicator(Utilities):
                 - swap (bool) : Indicator to whether the records should be swapped or not.
                 - index_a (int) : Index to a server side pointer to a record.
                 - index_b (int) : Index to a server side pointer to a record.
-                - host_address (str) : The hostname of the party to host the MP-SPDZ execution.
+                - decrypt_first (bool) : Signals to if the record is already encrypted.
 
             Returns:
                 :raises
@@ -401,14 +366,16 @@ class Communicator(Utilities):
 
         length_of_record = number_of_bytes() * number_of_blocks()
 
-        if reencrypt:
+        if decrypt_first:
             # Gets the decryption key streams and new encryption key streams.
             decryption_key_stream_a = self.get_stored_encryption_key(index_a)
             decryption_key_stream_b = self.get_stored_encryption_key(index_b)
 
+            # Decrypts the received records.
             masked_record_a = self.xor(connection.recv(length_of_record), decryption_key_stream_a)
             masked_record_b = self.xor(connection.recv(length_of_record), decryption_key_stream_b)
         else:
+            # Receives the records.
             masked_record_a = connection.recv(length_of_record)
             masked_record_b = connection.recv(length_of_record)
 
@@ -445,78 +412,13 @@ class Communicator(Utilities):
         connection.sendall(masked_record_a)
         connection.sendall(masked_record_b)
 
+        # Writes the keys and nonces
         self.write_encryption_keys([index_a, index_b], [encryption_key_e, encryption_key_f], [nonce_e, nonce_f])
 
         # Waits until the server disconnects.
         self.wait(connection)
         connection.shutdown(SHUT_WR)
         connection.close()
-
-        return
-
-    def send_indices_and_reencrypt(self, swap: bool, index_a: int, index_b: int, host_address: str) -> None:
-        """
-            Obliviously sorts and re-encrypts two of the server's records with the client's key.
-
-            Parameters:
-                - swap (bool) : Indicator to whether the records should be swapped or not.
-                - index_a (int) : Index to a server side pointer to a record.
-                - index_b (int) : Index to a server side pointer to a record.
-                - host_address (str) : The hostname of the party to host the MP-SPDZ execution.
-
-            Returns:
-                :raises
-                -
-        """
-
-        # Sends which two records should be considered.
-        connection = self.server_context.wrap_socket(socket(AF_INET, SOCK_STREAM),
-                                                     server_hostname=server_networking_certificate_path().stem)
-        connection.connect(self.SERVER_ADDR)
-        connection.sendall(self.add_padding(self.REENCRYPT_RECORDS_MESSAGE))
-        connection.sendall(self.add_padding(str(index_a)))
-        connection.sendall(self.add_padding(str(index_b)))
-        
-        # Waits until the server disconnects.
-        self.wait(connection)
-        connection.shutdown(SHUT_WR)
-        connection.close()
-
-        # Obliviously re-encrypts and sorts the two of the server's records with the client's key.
-        self.reencrypt_records(swap, index_a, index_b, host_address)
-        
-        return
-
-    def new_send_indices_and_reencrypt(self, swap: bool, index_a: int, index_b: int, host_address: str) -> None:
-        """
-            Obliviously sorts and re-encrypts two of the server's records with the client's key.
-
-            Parameters:
-                - swap (bool) : Indicator to whether the records should be swapped or not.
-                - index_a (int) : Index to a server side pointer to a record.
-                - index_b (int) : Index to a server side pointer to a record.
-                - host_address (str) : The hostname of the party to host the MP-SPDZ execution.
-
-            Returns:
-                :raises
-                -
-        """
-
-        # Sends which two records should be considered.
-        connection = self.server_context.wrap_socket(socket(AF_INET, SOCK_STREAM),
-                                                     server_hostname=server_networking_certificate_path().stem)
-        connection.connect(self.SERVER_ADDR)
-        connection.sendall(self.add_padding(self.REENCRYPT_RECORDS_MESSAGE))
-        connection.sendall(self.add_padding(str(index_a)))
-        connection.sendall(self.add_padding(str(index_b)))
-
-        # Waits until the server disconnects.
-        self.wait(connection)
-        connection.shutdown(SHUT_WR)
-        connection.close()
-
-        # Obliviously re-encrypts and sorts the two of the server's records with the client's key.
-        self.reencrypt_records(swap, index_a, index_b, host_address)
 
         return
 
@@ -644,7 +546,7 @@ class Communicator(Utilities):
             encrypted_records = self.request_encrypted_record(database_index)
             
             # Decrypts and stores the record.
-            decrypt_and_store_files([encrypted_records], [encryption_keys])
+            decrypt_and_store_files(encrypted_records, encryption_keys)
             
             # Updates the object variable requested pointers.
             self.requested_indices.add(str(index))

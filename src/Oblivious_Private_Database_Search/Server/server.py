@@ -353,34 +353,7 @@ class Communicator(Utilities):
 
         return
 
-    def mp_spdz_record_encryption(self, connection: SSLSocket, mpc_script_name: str) -> None:
-        """
-            Obliviously encrypts, with the client's keys, two records of the client's choosing.
-
-            Parameters:
-                - connection (SSLSocket) : Connection with the client.
-                - mp_spdz_script_name (str): Name of the .mpc script to be used.
-
-            Returns:
-                :raises ValueError
-                -
-        """
-
-        # Receives two indices from the client.
-        index_a = int(connection.recv(self.HEADER).decode(self.FORMAT).strip(chr(0)))
-        index_b = int(connection.recv(self.HEADER).decode(self.FORMAT).strip(chr(0)))
-        connection.sendall(self.add_padding(self.DISCONNECT_MESSAGE))
-
-        # Obliviously encrypts the requested records, with the client's key.
-        if index_a is not None and index_b is not None:
-            address, port = self.ADDR
-            self.encrypt_records(index_a, index_b, mpc_script_name, address)
-        else:
-            raise ValueError('The received indices are not valid.')
-
-        return
-
-    def new_record_encryption(self, connection: SSLSocket) -> None:
+    def record_encryption(self, connection: SSLSocket) -> None:
         """
             Obliviously encrypts, with the client's keys, two records of the client's choosing.
 
@@ -399,7 +372,7 @@ class Communicator(Utilities):
         if index_a is None and index_b is None:
             raise ValueError('The received indices are not valid.')
 
-        record_a, record_b = self.new_get_records(index_a, index_b)
+        record_a, record_b = self.get_records(index_a, index_b)
 
         # Obliviously encrypts the requested records, with the client's key.
         mask_a, encryption_key_a, nonce_a = get_key_streams()
@@ -432,7 +405,7 @@ class Communicator(Utilities):
 
         connection.sendall(self.add_padding(self.DISCONNECT_MESSAGE))
 
-        self.new_write_encrypted_record(index_a, index_b, encrypted_record_a, encrypted_record_b)
+        self.write_encrypted_record(index_a, index_b, encrypted_record_a, encrypted_record_b)
 
         return
 
@@ -552,11 +525,9 @@ class Communicator(Utilities):
             self.write_encrypted_record_pointers()
             self.records_preprocessing_finished = True
         elif message == self.ENCRYPT_RECORDS_MESSAGE:
-            #self.mp_spdz_record_encryption(connection, sort_and_encrypt_with_circuit_mpc_script_path().stem)
-            self.new_record_encryption(connection)
+            self.record_encryption(connection)
         elif message == self.REENCRYPT_RECORDS_MESSAGE:
-            #self.mp_spdz_record_encryption(connection, sort_and_reencrypt_with_circuit_mpc_script_path().stem)
-            self.new_record_encryption(connection)
+            self.record_encryption(connection)
         elif message == self.SEMANTIC_SEARCH_MESSAGE:
             self.wait_for_indexing()
             print(f'[RECEIVED] {message} from client.')

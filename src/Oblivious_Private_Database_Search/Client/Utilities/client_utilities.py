@@ -159,76 +159,17 @@ class Utilities:
 
         return (bytestring_a ^ bytestring_b).tostring()
 
-    def encrypt_records(self, swap: bool, index_a: int, index_b: int, host_address: str) -> None:
-        """
-            Obliviously encrypts the records with the client's keys.
-
-            Parameters:
-                - swap (bool) : Indicator for whether the records should be swapped or not to be sorted.
-                - index_a (int) : Index to the pointer of a record.
-                - index_b (int) : Index to the pointer of a record.
-                - host_address (str) : The hostname of the party to host the MP-SPDZ execution.
-
-
-            Returns:
-                :raises
-                -
-        """
-
-        encryption_key_streams_a, encryption_key_a, nonce_a = get_key_streams()
-        encryption_key_streams_b, encryption_key_b, nonce_b = get_key_streams()
-        encryption_key_streams = [encryption_key_streams_a, encryption_key_streams_b]
-
-        # Runs MP-SPDZ to obliviously encrypt the records with the client's keys.
-        player_id = 1
-        self.write_mp_spdz_inputs(player_id, encryption_key_streams, int(swap))
-        self.run_mp_spdz(player_id, sort_and_encrypt_with_circuit_mpc_script_path().stem, host_address)
-        self.write_encryption_keys([index_a, index_b], [encryption_key_a, encryption_key_b], [nonce_a, nonce_b])
-
-        return
-
-    def reencrypt_records(self, swap: bool, index_a: int, index_b: int, host_address: str) -> None:
-        """
-            Obliviously re-encrypts the records with the client's keys.
-
-            Parameters:
-                - swap (bool) : Indicator for whether the records should be swapped or not to be sorted.
-                - index_a (int) : Index to the pointer of a record.
-                - index_b (int) : Index to the pointer of a record.
-                - host_address (str) : The hostname of the party to host the MP-SPDZ execution.
-                
-            Returns:
-                :raises
-                -
-        """
-
-        # Gets the decryption key streams and new encryption key streams.
-        decryption_key_streams_a = self.get_stored_encryption_key(index_a)
-        decryption_key_streams_b = self.get_stored_encryption_key(index_b)
-        encryption_key_streams_a, encryption_key_a, nonce_a = get_key_streams()
-        encryption_key_streams_b, encryption_key_b, nonce_b = get_key_streams()
-        encryption_key_streams = [encryption_key_streams_a, encryption_key_streams_b]
-        decryption_key_streams = [decryption_key_streams_a, decryption_key_streams_b]
-
-        # Runs MP-SPDZ to obliviously re-encrypt the records with the client's keys.
-        player_id = 1
-        self.write_mp_spdz_inputs(player_id, encryption_key_streams, int(swap), decryption_key_streams)
-        self.run_mp_spdz(player_id, sort_and_reencrypt_with_circuit_mpc_script_path().stem, host_address)
-        self.write_encryption_keys([index_a, index_b], [encryption_key_a, encryption_key_b], [nonce_a, nonce_b])
-
-        return
-
     @staticmethod
     def get_stored_encryption_key(index: int) -> bytes:
         """
             Gets the key streams used ot encrypt a record.
             
             Parameters:
-                - key_streams_path (Path) :
+                - index (int) : Index of the pointer to the record.
 
             Returns:
                 :raises
-                - key_streams (bytes) : Key streams corresponding to a record.
+                - key_stream (bytes) : Key streams corresponding to a record.
         """
 
         key_path = records_encryption_keys_directory() / f'{index}.txt'
@@ -271,8 +212,8 @@ class Utilities:
             
             Parameters:
                 - indices (list[int]) : The indices corresponding to the key streams.
-                - keys (list[str]) : Encryption keys to produce the key streams.
-                - nonces (list[str]) : Nonces used to produce the key streams.
+                - keys (list[bytes]) : Encryption keys to produce the key streams.
+                - nonces (list[bytes]) : Nonces used to produce the key streams.
 
             Returns:
                 :raises
@@ -400,23 +341,20 @@ class Utilities:
         # Runs MP-SPDZ to obliviously encrypt the client's search query.
         player_id = 0
         query_digest = shake_128(search_query.encode('ASCII')).digest(number_of_bytes()).hex()
-        self.write_mp_spdz_inputs(player_id, [[query_digest]])
+        self.write_mp_spdz_inputs(player_id, query_digest)
         self.run_mp_spdz(player_id, aes_128_ecb_mpc_script_path().stem, host_address)
         self.encrypted_query = self.get_mp_spdz_output()
 
         return
 
     @staticmethod
-    def write_mp_spdz_inputs(player_id: int, encryption_key_streams: list[list[str]], swap: int = None,
-                             decryption_key_streams: list[list[str]] = None) -> None:
+    def write_mp_spdz_inputs(player_id: int, query_digest: str) -> None:
         """
             Obliviously encrypts the client's search query with the server's inverted index matrix encryption key.
 
             Parameters:
                 - player_id (int) : The player ID the key streams will be written to.
-                - encryption_key_streams (list[list[str]]) : The encryption key streams.
-                - swap (bool) : Indicator for whether the records should be swapped or not to be sorted.
-                - decryption_key_streams (list[list[str]]) : The decryption key streams.
+                - query_digest (str) : The digest of the search query.
 
             Returns:
                 :raises
@@ -425,17 +363,7 @@ class Utilities:
 
         # Writes the swap indicator, decryption key streams,and encryption key streams as the client's MP-SPDZ input.
         with open(mp_spdz_input_path().parent / f'{mp_spdz_input_path()}-P{player_id}-0', 'w') as f:
-            if swap is not None:
-                f.write(f'{swap} \n')
-            if decryption_key_streams:
-                for i in range(len(decryption_key_streams)):
-                    for block in range(len(decryption_key_streams[i])):
-                        f.write(f'{int(decryption_key_streams[i][block], 16)} ')
-                    f.write('\n')
-            for i in range(len(encryption_key_streams)):
-                for block in range(len(encryption_key_streams[i])):
-                    f.write(f'{int(encryption_key_streams[i][block], 16)} ')
-                f.write('\n')
+            f.write(f'{int(query_digest, 16)} ')
             f.close()
 
         return
@@ -612,7 +540,7 @@ class Utilities:
             Writes the already requested server indices to a file.
 
             Parameters:
-                - record_paths (list[Path]) : The paths of the records.
+                -
 
             Returns:
                 :raises
@@ -625,27 +553,3 @@ class Utilities:
             f.close()
 
         return
-
-    @staticmethod
-    def get_record_key_streams(index: str) -> list[str]:
-        """
-            Gets the corresponding key streams to an index.
-
-            Parameters:
-                - index (str) : Index to the pointer of the encryption key stream of the record.
-
-            Returns:
-                :raises
-                - encryption_key_streams (list[str]) : Key streams to the encrypted record.
-        """
-
-        # Reads the encryption key streams.
-        key_streams_path = encryption_key_streams_directory() / f'{index}.txt'
-        with key_streams_path.open('r') as f:
-            key, nonce = f.read().split(' ')
-            f.close()
-
-        zero_plaintext = bytearray(number_of_bytes() * number_of_blocks())
-        encryption_key_streams = aes_128_ctr(bytes.fromhex(key), zero_plaintext, bytes.fromhex(nonce))
-
-        return encryption_key_streams

@@ -461,13 +461,13 @@ def get_number_of_dummy_items() -> int:
 
 def get_database_size() -> int:
     """ Getter for the database_size variable. """
-    database_size = 4
+    database_size = 2**4
     return database_size
 
 
 def get_number_of_records() -> int:
     """ Getter for the number_of_records variable. """
-    number_of_records = 4
+    number_of_records = 10
     return number_of_records
 
 

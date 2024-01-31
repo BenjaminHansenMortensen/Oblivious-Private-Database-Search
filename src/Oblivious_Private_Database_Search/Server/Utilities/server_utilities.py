@@ -3,7 +3,6 @@
 # Imports.
 from os import chdir
 from pathlib import Path, PosixPath
-from re import findall
 from subprocess import Popen, PIPE
 from json import loads
 from random import shuffle
@@ -18,8 +17,6 @@ from Oblivious_Private_Database_Search.getters import (get_mp_spdz_directory as
                                                        mp_spdz_directory)
 from Oblivious_Private_Database_Search.getters import (get_working_directory as
                                                        working_directory)
-from Oblivious_Private_Database_Search.getters import (get_number_of_blocks as
-                                                       number_of_blocks)
 from Oblivious_Private_Database_Search.getters import (get_number_of_records as
                                                        number_of_records)
 from Oblivious_Private_Database_Search.getters import (get_encrypted_records_directory as
@@ -201,42 +198,63 @@ class Utilities:
         return
 
     @staticmethod
-    def xor(bytes_a, bytes_b):
+    def xor(bytes_a: bytes, bytes_b: bytes) -> bytes:
+        """
+            XORs two bytes objects.
+
+            Parameters:
+                - bytes_a (bytes) : Bytes object to be XORed
+                - bytes_b (bytes) : Bytes object to be XORed
+
+            Returns:
+                :raises
+                -
+
+        """
         bytestring_a = fromstring(bytes_a, dtype='uint8')
         bytestring_b = fromstring(bytes_b, dtype='uint8')
 
         return (bytestring_a ^ bytestring_b).tostring()
 
-    def new_get_records(self, index_a: int, index_b: int) -> tuple[bytes, bytes]:
+    def get_records(self, index_a: int, index_b: int) -> tuple[bytes, bytes]:
         """
             Obliviously encrypts the records with the client's keys.
 
             Parameters:
                 - index_a (int) : Index to the pointer of a record.
                 - index_b (int) : Index of the pointer of a record.
-                - mpc_script_name (str) : Name of the .mpc script to be used.
-                - host_address (str) : The hostname of the party to host the MP-SPDZ execution.
 
             Returns:
                 :raises
-                -
+                - record_a (bytes) : The encrypted record.
+                - record_b (bytes) : The encrypted record.
         """
 
         # Fetches the records.
         record_path_a, record_path_b = self.encrypted_record_pointers[index_a], self.encrypted_record_pointers[index_b]
-        record_a, record_b = self.get_record(record_path_a), self.get_record(record_path_b)
+
+        # Reads the record.
+        with record_path_a.open("r") as f:
+            record_a = bytes.fromhex(f.read())
+            f.close()
+
+        # Reads the record.
+        with record_path_b.open("r") as f:
+            record_b = bytes.fromhex(f.read())
+            f.close()
 
         return record_a, record_b
 
-    def new_write_encrypted_record(self, index_a: int, index_b: int, encrypted_record_a: bytes, encrypted_record_b: bytes) -> None:
+    def write_encrypted_record(self, index_a: int, index_b: int,
+                               encrypted_record_a: bytes, encrypted_record_b: bytes) -> None:
         """
             Obliviously encrypts the records with the client's keys.
 
             Parameters:
                 - index_a (int) : Index to the pointer of a record.
                 - index_b (int) : Index of the pointer of a record.
-                - mpc_script_name (str) : Name of the .mpc script to be used.
-                - host_address (str) : The hostname of the party to host the MP-SPDZ execution.
+                - encrypted_record_a (bytes) : A encrypted record.
+                - encrypted_record_b (bytes) : A encrypted record.
 
             Returns:
                 :raises
@@ -258,26 +276,6 @@ class Utilities:
             f.close()
 
         return
-
-    @staticmethod
-    def get_record(record_path: Path) -> bytes:
-        """
-            Gets the contents of a record in the encrypted records' directory.
-
-            Parameters:
-                - record_path (Path) : The path to the record.
-
-            Returns:
-                :raises
-                - record (list[str]) :
-        """
-
-        # Reads the record.
-        with record_path.open("r") as f:
-            record = f.read()
-            f.close()
-
-        return bytes.fromhex(record)
 
     @staticmethod
     def write_mp_spdz_input(player_id: int, records: list[list[str]]) -> None:
