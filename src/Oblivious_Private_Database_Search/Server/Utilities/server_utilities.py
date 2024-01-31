@@ -7,6 +7,7 @@ from re import findall
 from subprocess import Popen, PIPE
 from json import loads
 from random import shuffle
+from numpy import fromstring
 
 # Local getters imports.
 from Oblivious_Private_Database_Search.getters import (get_mp_spdz_protocol as
@@ -170,7 +171,7 @@ class Utilities:
             record_path = self.record_pointers[i]
             # Encodes records.
             if record_path.suffix == ".json":
-                encoded_record = ' '.join(encode_record(record_path))
+                encoded_record = encode_record(record_path)
             # Encodes dummy items.
             else:
                 with record_path.open("r") as f:
@@ -199,7 +200,14 @@ class Utilities:
 
         return
 
-    def encrypt_records(self, index_a: int, index_b: int, mpc_script_name: str, host_address: str) -> None:
+    @staticmethod
+    def xor(bytes_a, bytes_b):
+        bytestring_a = fromstring(bytes_a, dtype='uint8')
+        bytestring_b = fromstring(bytes_b, dtype='uint8')
+
+        return (bytestring_a ^ bytestring_b).tostring()
+
+    def new_get_records(self, index_a: int, index_b: int) -> tuple[bytes, bytes]:
         """
             Obliviously encrypts the records with the client's keys.
 
@@ -218,19 +226,41 @@ class Utilities:
         record_path_a, record_path_b = self.encrypted_record_pointers[index_a], self.encrypted_record_pointers[index_b]
         record_a, record_b = self.get_record(record_path_a), self.get_record(record_path_b)
 
-        # Runs MP-SPDZ to obliviously encrypt the records with the client's keys then overwrites it.
-        player_id = 0
-        self.write_mp_spdz_input(player_id, [record_a, record_b])
-        self.run_mp_spdz(player_id, mpc_script_name, host_address)
-        record_path_a = encrypted_records_directory() / f"{index_a}.txt"
-        record_path_b = encrypted_records_directory() / f"{index_b}.txt"
+        return record_a, record_b
+
+    def new_write_encrypted_record(self, index_a: int, index_b: int, encrypted_record_a: bytes, encrypted_record_b: bytes) -> None:
+        """
+            Obliviously encrypts the records with the client's keys.
+
+            Parameters:
+                - index_a (int) : Index to the pointer of a record.
+                - index_b (int) : Index of the pointer of a record.
+                - mpc_script_name (str) : Name of the .mpc script to be used.
+                - host_address (str) : The hostname of the party to host the MP-SPDZ execution.
+
+            Returns:
+                :raises
+                -
+        """
+
+        record_path_a = encrypted_records_directory() / f'{index_a}.txt'
+        record_path_b = encrypted_records_directory() / f'{index_b}.txt'
         self.encrypted_record_pointers[index_a], self.encrypted_record_pointers[index_b] = record_path_a, record_path_b
-        self.write_mp_spdz_output_to_encrypted_records([record_path_a, record_path_b])
+
+        # Writes the new records back to the encrypted records' directory.
+        with record_path_a.open('w') as f:
+            f.write(encrypted_record_a.hex())
+            f.close()
+
+        # Writes the new records back to the encrypted records' directory.
+        with record_path_b.open('w') as f:
+            f.write(encrypted_record_b.hex())
+            f.close()
 
         return
 
     @staticmethod
-    def get_record(record_path: Path) -> list[str]:
+    def get_record(record_path: Path) -> bytes:
         """
             Gets the contents of a record in the encrypted records' directory.
 
@@ -247,7 +277,7 @@ class Utilities:
             record = f.read()
             f.close()
 
-        return record.split(" ")
+        return bytes.fromhex(record)
 
     @staticmethod
     def write_mp_spdz_input(player_id: int, records: list[list[str]]) -> None:
@@ -318,34 +348,6 @@ class Utilities:
 
         # Changes back to the original working directory.
         chdir(working_directory())
-
-        return
-
-    @staticmethod
-    def write_mp_spdz_output_to_encrypted_records(record_paths: list[Path]) -> None:
-        """
-            Takes the output of the MP-SPDZ execution and writes it as an encrypted record to the encrypted records'
-            directory.
-
-            Parameters:
-                - record_paths (list[Path]) : The paths of the records.
-
-            Returns:
-                :raises
-                -
-        """
-
-        # Finds all the hexadecimal blocks in the server's output.
-        with open(mp_spdz_output_path().parent / f"{mp_spdz_output_path().name}-P0-0", "r") as f:
-            hexadecimals_pattern = r"0x([a-fA-F0-9]+)"
-            ciphertexts = findall(hexadecimals_pattern, f.read())
-            f.close()
-
-        # Writes the new records back to the encrypted records' directory.
-        for i in range(len(record_paths)):
-            with open(encrypted_records_directory() / record_paths[i], "w") as f:
-                f.write(' '.join(ciphertexts[i * number_of_blocks(): (i + 1) * number_of_blocks()]))
-                f.close()
 
         return
 

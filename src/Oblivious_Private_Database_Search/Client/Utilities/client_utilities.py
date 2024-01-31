@@ -11,6 +11,7 @@ from random import randint
 from numpy import multiply
 from sentence_transformers import SentenceTransformer
 from warnings import simplefilter
+from numpy import fromstring
 
 # Local getters imports.
 from Oblivious_Private_Database_Search.getters import (get_mp_spdz_protocol as
@@ -151,6 +152,13 @@ class Utilities:
 
         return
 
+    @staticmethod
+    def xor(bytes_a, bytes_b):
+        bytestring_a = fromstring(bytes_a, dtype='uint8')
+        bytestring_b = fromstring(bytes_b, dtype='uint8')
+
+        return (bytestring_a ^ bytestring_b).tostring()
+
     def encrypt_records(self, swap: bool, index_a: int, index_b: int, host_address: str) -> None:
         """
             Obliviously encrypts the records with the client's keys.
@@ -175,7 +183,7 @@ class Utilities:
         player_id = 1
         self.write_mp_spdz_inputs(player_id, encryption_key_streams, int(swap))
         self.run_mp_spdz(player_id, sort_and_encrypt_with_circuit_mpc_script_path().stem, host_address)
-        self.write_encryption_key_streams([index_a, index_b], [encryption_key_a, encryption_key_b], [nonce_a, nonce_b])
+        self.write_encryption_keys([index_a, index_b], [encryption_key_a, encryption_key_b], [nonce_a, nonce_b])
 
         return
 
@@ -194,13 +202,9 @@ class Utilities:
                 -
         """
 
-        # Paths to the decryption keys.
-        decryption_key_streams_a_path = records_encryption_keys_directory() / f'{index_a}.txt'
-        decryption_key_streams_b_path = records_encryption_keys_directory() / f'{index_b}.txt'
-
         # Gets the decryption key streams and new encryption key streams.
-        decryption_key_streams_a = self.get_stored_key_streams(decryption_key_streams_a_path)
-        decryption_key_streams_b = self.get_stored_key_streams(decryption_key_streams_b_path)
+        decryption_key_streams_a = self.get_stored_encryption_key(index_a)
+        decryption_key_streams_b = self.get_stored_encryption_key(index_b)
         encryption_key_streams_a, encryption_key_a, nonce_a = get_key_streams()
         encryption_key_streams_b, encryption_key_b, nonce_b = get_key_streams()
         encryption_key_streams = [encryption_key_streams_a, encryption_key_streams_b]
@@ -210,32 +214,34 @@ class Utilities:
         player_id = 1
         self.write_mp_spdz_inputs(player_id, encryption_key_streams, int(swap), decryption_key_streams)
         self.run_mp_spdz(player_id, sort_and_reencrypt_with_circuit_mpc_script_path().stem, host_address)
-        self.write_encryption_key_streams([index_a, index_b], [encryption_key_a, encryption_key_b], [nonce_a, nonce_b])
+        self.write_encryption_keys([index_a, index_b], [encryption_key_a, encryption_key_b], [nonce_a, nonce_b])
 
         return
 
     @staticmethod
-    def get_stored_key_streams(key_streams_path: Path) -> list[str]:
+    def get_stored_encryption_key(index: int) -> bytes:
         """
             Gets the key streams used ot encrypt a record.
             
             Parameters:
-                - key_streams_path (Path) : 
+                - key_streams_path (Path) :
 
             Returns:
                 :raises
-                - key_streams (list[str]) : Key streams corresponding to a record.
+                - key_streams (bytes) : Key streams corresponding to a record.
         """
 
+        key_path = records_encryption_keys_directory() / f'{index}.txt'
+
         # Reads the key streams.
-        with key_streams_path.open('r') as f:
+        with key_path.open('r') as f:
             key, nonce = f.read().split(' ')
 
         # Reproduce the key stream from the key and nonce.
         zero_plaintext = bytearray(number_of_bytes() * number_of_blocks())
-        key_streams = aes_128_ctr(bytes.fromhex(key), zero_plaintext, bytes.fromhex(nonce))
+        key_stream = aes_128_ctr(bytes.fromhex(key), zero_plaintext, bytes.fromhex(nonce))
 
-        return key_streams
+        return key_stream
 
     @staticmethod
     def write_permutation(permutation: dict) -> None:
@@ -258,7 +264,7 @@ class Utilities:
         return
 
     @staticmethod
-    def write_encryption_key_streams(indices: list[int], keys: list[str], nonces: list[str]) -> None:
+    def write_encryption_keys(indices: list[int], keys: list[bytes], nonces: list[bytes]) -> None:
         """
             Obliviously encrypts and shuffles all records and dummy items according to the client's permutation and 
             encryption keys.
@@ -276,8 +282,8 @@ class Utilities:
         # Writes the encryption key streams.
         for i in range(len(indices)):
             index = indices[i]
-            key = keys[i]
-            nonce = nonces[i]
+            key = keys[i].hex()
+            nonce = nonces[i].hex()
             encryption_key_streams_path = records_encryption_keys_directory() / f'{index}.txt'
             with encryption_key_streams_path.open('w') as f:
                 f.write(f'{key} {nonce}')

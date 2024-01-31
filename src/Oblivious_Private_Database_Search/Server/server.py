@@ -15,6 +15,10 @@ from Oblivious_Private_Database_Search.getters import (get_client_ip as
                                                        client_ip)
 from Oblivious_Private_Database_Search.getters import (get_client_port as
                                                        client_port)
+from Oblivious_Private_Database_Search.getters import (get_number_of_blocks as
+                                                       number_of_blocks)
+from Oblivious_Private_Database_Search.getters import (get_number_of_bytes as
+                                                       number_of_bytes)
 from Oblivious_Private_Database_Search.getters import (get_database_size as
                                                        database_size)
 from Oblivious_Private_Database_Search.getters import (get_number_of_records as
@@ -38,6 +42,7 @@ from Oblivious_Private_Database_Search.getters import (get_records_directory as
 
 # Server utility imports.
 from Oblivious_Private_Database_Search.Server.Utilities.server_utilities import Utilities
+from Oblivious_Private_Database_Search.Server.Utilities.key_stream_generator import get_key_streams
 
 
 class Communicator(Utilities):
@@ -273,6 +278,7 @@ class Communicator(Utilities):
             # Updates database pointers with the dummy item.
             self.encrypted_record_pointers.append(file_path)
 
+        self.wait(connection)
         connection.shutdown(SHUT_WR)
         connection.close()
 
@@ -371,6 +377,62 @@ class Communicator(Utilities):
             self.encrypt_records(index_a, index_b, mpc_script_name, address)
         else:
             raise ValueError('The received indices are not valid.')
+
+        return
+
+    def new_record_encryption(self, connection: SSLSocket) -> None:
+        """
+            Obliviously encrypts, with the client's keys, two records of the client's choosing.
+
+            Parameters:
+                - connection (SSLSocket) : Connection with the client.
+
+            Returns:
+                :raises ValueError
+                -
+        """
+
+        # Receives two indices from the client.
+        index_a = int(connection.recv(self.HEADER).decode(self.FORMAT).strip(chr(0)))
+        index_b = int(connection.recv(self.HEADER).decode(self.FORMAT).strip(chr(0)))
+
+        if index_a is None and index_b is None:
+            raise ValueError('The received indices are not valid.')
+
+        record_a, record_b = self.new_get_records(index_a, index_b)
+
+        # Obliviously encrypts the requested records, with the client's key.
+        mask_a, encryption_key_a, nonce_a = get_key_streams()
+        mask_b, encryption_key_b, nonce_b = get_key_streams()
+        mask_c, encryption_key_c, nonce_c = get_key_streams()
+        mask_d, encryption_key_d, nonce_d = get_key_streams()
+
+        length_of_record = number_of_bytes() * number_of_blocks()
+
+        connection.sendall(self.xor(record_a, mask_a))
+        connection.sendall(self.xor(record_b, mask_b))
+
+        masked_record_a = connection.recv(length_of_record)
+        masked_record_b = connection.recv(length_of_record)
+
+        connection.sendall(self.xor(self.xor(masked_record_a, mask_a), mask_c))
+        connection.sendall(self.xor(self.xor(masked_record_b, mask_b), mask_d))
+
+        masked_record_a = connection.recv(length_of_record)
+        masked_record_b = connection.recv(length_of_record)
+
+        connection.sendall(self.xor(masked_record_a, mask_a))
+        connection.sendall(self.xor(masked_record_b, mask_b))
+
+        masked_record_a = connection.recv(length_of_record)
+        masked_record_b = connection.recv(length_of_record)
+
+        encrypted_record_a = self.xor(self.xor(masked_record_a, mask_a), mask_c)
+        encrypted_record_b = self.xor(self.xor(masked_record_b, mask_b), mask_d)
+
+        connection.sendall(self.add_padding(self.DISCONNECT_MESSAGE))
+
+        self.new_write_encrypted_record(index_a, index_b, encrypted_record_a, encrypted_record_b)
 
         return
 
@@ -490,9 +552,11 @@ class Communicator(Utilities):
             self.write_encrypted_record_pointers()
             self.records_preprocessing_finished = True
         elif message == self.ENCRYPT_RECORDS_MESSAGE:
-            self.mp_spdz_record_encryption(connection, sort_and_encrypt_with_circuit_mpc_script_path().stem)
+            #self.mp_spdz_record_encryption(connection, sort_and_encrypt_with_circuit_mpc_script_path().stem)
+            self.new_record_encryption(connection)
         elif message == self.REENCRYPT_RECORDS_MESSAGE:
-            self.mp_spdz_record_encryption(connection, sort_and_reencrypt_with_circuit_mpc_script_path().stem)
+            #self.mp_spdz_record_encryption(connection, sort_and_reencrypt_with_circuit_mpc_script_path().stem)
+            self.new_record_encryption(connection)
         elif message == self.SEMANTIC_SEARCH_MESSAGE:
             self.wait_for_indexing()
             print(f'[RECEIVED] {message} from client.')
