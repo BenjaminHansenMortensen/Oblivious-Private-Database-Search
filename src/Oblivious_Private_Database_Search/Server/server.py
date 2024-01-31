@@ -273,6 +273,7 @@ class Communicator(Utilities):
             # Updates database pointers with the dummy item.
             self.encrypted_record_pointers.append(file_path)
 
+        self.wait(connection)
         connection.shutdown(SHUT_WR)
         connection.close()
 
