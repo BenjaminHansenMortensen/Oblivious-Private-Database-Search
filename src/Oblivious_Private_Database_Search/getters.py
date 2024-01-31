@@ -478,7 +478,7 @@ def get_mp_spdz_protocol() -> str:
 
 
 working_directory = Path(__file__).parent
-mp_spdz_directory = None
+mp_spdz_directory = working_directory.parent.parent.parent.parent / 'mp-spdz-0.3.8'
 server_ip = 'localhost'
 server_port = 5500
 client_ip = 'localhost'
