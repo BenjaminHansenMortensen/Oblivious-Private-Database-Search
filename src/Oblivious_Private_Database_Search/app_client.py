@@ -96,9 +96,12 @@ def main() -> None:
             client.send_encrypt_query_message(search_query)
 
         # Searches and retrieves the records. Given no results dummy items will be requested instead.
-        client.request_pnr_records()
+        client.request_records()
 
     # Shutdown of the client.
     client.kill()
 
     return
+
+
+main()

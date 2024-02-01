@@ -16,6 +16,10 @@ from Oblivious_Private_Database_Search.getters import (get_client_ip as
                                                        client_ip)
 from Oblivious_Private_Database_Search.getters import (get_client_port as
                                                        client_port)
+from Oblivious_Private_Database_Search.getters import (get_number_of_blocks as
+                                                       number_of_blocks)
+from Oblivious_Private_Database_Search.getters import (get_number_of_bytes as
+                                                       number_of_bytes)
 from Oblivious_Private_Database_Search.getters import (get_client_networking_key_path as
                                                        client_networking_key_path)
 from Oblivious_Private_Database_Search.getters import (get_client_networking_certificate_path as
@@ -234,7 +238,7 @@ class Communicator(Utilities):
         # Receives and creates the requested amount of dummy items and sends them to the server.
         number_of_dummy_items = int(connection.recv(self.HEADER).decode(self.FORMAT).strip(chr(0)))
         for i in range(number_of_dummy_items):
-            dummy_item = ' '.join(get_key_streams()[0])
+            dummy_item = get_key_streams()[0].hex()
             connection.sendall(self.add_padding(dummy_item))
             connection.sendall(self.add_padding(self.END_FILE_MESSAGE))
         
@@ -327,9 +331,9 @@ class Communicator(Utilities):
         self.records_preprocessing(self)
         self.send_records_preprocessing_finished_message()
 
-        return 
+        return
 
-    def send_indices_and_encrypt(self, swap: bool, index_a: int, index_b: int, host_address: str) -> None:
+    def send_indices_and_encrypt(self, swap: bool, index_a: int, index_b: int, decrypt_first: bool) -> None:
         """
             Obliviously sorts and encrypts two of the server's records with the client's key.
 
@@ -337,13 +341,13 @@ class Communicator(Utilities):
                 - swap (bool) : Indicator to whether the records should be swapped or not.
                 - index_a (int) : Index to a server side pointer to a record.
                 - index_b (int) : Index to a server side pointer to a record.
-                - host_address (str) : The hostname of the party to host the MP-SPDZ execution.
+                - decrypt_first (bool) : Signals to if the record is already encrypted.
 
             Returns:
                 :raises
                 -
         """
-        
+
         # Sends which two records should be considered.
         connection = self.server_context.wrap_socket(socket(AF_INET, SOCK_STREAM),
                                                      server_hostname=server_networking_certificate_path().stem)
@@ -351,49 +355,72 @@ class Communicator(Utilities):
         connection.sendall(self.add_padding(self.ENCRYPT_RECORDS_MESSAGE))
         connection.sendall(self.add_padding(str(index_a)))
         connection.sendall(self.add_padding(str(index_b)))
-        
-        # Waits until the server disconnects.
-        self.wait(connection)
-        connection.shutdown(SHUT_WR)
-        connection.close()
 
         # Obliviously encrypts and sorts the two of the server's records with the client's key.
-        self.encrypt_records(swap, index_a, index_b, host_address)
-        
-        return 
+        encryption_key_stream_a, encryption_key_a, nonce_a = get_key_streams()
+        encryption_key_stream_b, encryption_key_b, nonce_b = get_key_streams()
+        encryption_key_stream_c, encryption_key_c, nonce_c = get_key_streams()
+        encryption_key_stream_d, encryption_key_d, nonce_d = get_key_streams()
+        encryption_key_stream_e, encryption_key_e, nonce_e = get_key_streams()
+        encryption_key_stream_f, encryption_key_f, nonce_f = get_key_streams()
 
-    def send_indices_and_reencrypt(self, swap: bool, index_a: int, index_b: int, host_address: str) -> None:
-        """
-            Obliviously sorts and re-encrypts two of the server's records with the client's key.
+        length_of_record = number_of_bytes() * number_of_blocks()
 
-            Parameters:
-                - swap (bool) : Indicator to whether the records should be swapped or not.
-                - index_a (int) : Index to a server side pointer to a record.
-                - index_b (int) : Index to a server side pointer to a record.
-                - host_address (str) : The hostname of the party to host the MP-SPDZ execution.
+        if decrypt_first:
+            # Gets the decryption key streams and new encryption key streams.
+            decryption_key_stream_a = self.get_stored_encryption_key(index_a)
+            decryption_key_stream_b = self.get_stored_encryption_key(index_b)
 
-            Returns:
-                :raises
-                -
-        """
+            # Decrypts the received records.
+            masked_record_a = self.xor(connection.recv(length_of_record), decryption_key_stream_a)
+            masked_record_b = self.xor(connection.recv(length_of_record), decryption_key_stream_b)
+        else:
+            # Receives the records.
+            masked_record_a = connection.recv(length_of_record)
+            masked_record_b = connection.recv(length_of_record)
 
-        # Sends which two records should be considered.
-        connection = self.server_context.wrap_socket(socket(AF_INET, SOCK_STREAM),
-                                                     server_hostname=server_networking_certificate_path().stem)
-        connection.connect(self.SERVER_ADDR)
-        connection.sendall(self.add_padding(self.REENCRYPT_RECORDS_MESSAGE))
-        connection.sendall(self.add_padding(str(index_a)))
-        connection.sendall(self.add_padding(str(index_b)))
-        
+        if swap:
+            masked_record_a, masked_record_b = masked_record_b, masked_record_a
+
+        masked_record_a = self.xor(masked_record_a, encryption_key_stream_a)
+        masked_record_b = self.xor(masked_record_b, encryption_key_stream_b)
+
+        connection.sendall(masked_record_a)
+        connection.sendall(masked_record_b)
+
+        masked_record_a = self.xor(connection.recv(length_of_record), encryption_key_stream_a)
+        masked_record_b = self.xor(connection.recv(length_of_record), encryption_key_stream_b)
+
+        if swap:
+            masked_record_a, masked_record_b = masked_record_b, masked_record_a
+
+        masked_record_a = self.xor(masked_record_a, encryption_key_stream_c)
+        masked_record_b = self.xor(masked_record_b, encryption_key_stream_d)
+
+        connection.sendall(masked_record_a)
+        connection.sendall(masked_record_b)
+
+        masked_record_a = self.xor(connection.recv(length_of_record), encryption_key_stream_c)
+        masked_record_b = self.xor(connection.recv(length_of_record), encryption_key_stream_d)
+
+        if swap:
+            masked_record_a, masked_record_b = masked_record_b, masked_record_a
+
+        masked_record_a = self.xor(masked_record_a, encryption_key_stream_e)
+        masked_record_b = self.xor(masked_record_b, encryption_key_stream_f)
+
+        connection.sendall(masked_record_a)
+        connection.sendall(masked_record_b)
+
+        # Writes the keys and nonces
+        self.write_encryption_keys([index_a, index_b], [encryption_key_e, encryption_key_f], [nonce_e, nonce_f])
+
         # Waits until the server disconnects.
         self.wait(connection)
         connection.shutdown(SHUT_WR)
         connection.close()
 
-        # Obliviously re-encrypts and sorts the two of the server's records with the client's key.
-        self.reencrypt_records(swap, index_a, index_b, host_address)
-        
-        return 
+        return
 
     def send_records_preprocessing_finished_message(self) -> None:
         """
@@ -491,7 +518,7 @@ class Communicator(Utilities):
         
         return 
 
-    def request_pnr_records(self) -> None:
+    def request_records(self) -> None:
         """
             Obliviously sorts and re-encrypts two of the server's records with the client's key.
 
@@ -511,15 +538,15 @@ class Communicator(Utilities):
             
             # Gets the server side index of the pointer to a record.
             database_index = self.permuted_indices[index]
-            
+
             # Gets the corresponding encryption key streams.
-            encryption_key_streams = self.get_record_key_streams(str(database_index))
+            encryption_keys = self.get_stored_encryption_key(database_index)
             
             # Requests the encrypted record from the server.
-            encrypted_records = self.request_encrypted_record(str(database_index))
+            encrypted_records = self.request_encrypted_record(database_index)
             
             # Decrypts and stores the record.
-            decrypt_and_store_files([encrypted_records], [encryption_key_streams])
+            decrypt_and_store_files(encrypted_records, encryption_keys)
             
             # Updates the object variable requested pointers.
             self.requested_indices.add(str(index))
@@ -532,25 +559,25 @@ class Communicator(Utilities):
             dummy_item_database_index = self.permuted_indices[random_dummy_item_index]
 
             # Requests the dummy item from the server.
-            self.request_encrypted_record(str(dummy_item_database_index))
+            self.request_encrypted_record(dummy_item_database_index)
 
             # Updates the object variable requested pointers.
             self.requested_indices.add(str(random_dummy_item_index))
             
         return
 
-    def request_encrypted_record(self, index: str) -> list[str]:
+    def request_encrypted_record(self, index: int) -> bytes:
         """
             Requests an encrypted record from the server.
 
             Parameters:
-                - index (str) : Index to the pointer of the encrypted record on the server.
+                - index (int) : Index to the pointer of the encrypted record on the server.
 
             Returns:
                 :raises
                 - encrypted_record (list[str]) : Encrypted record from the server.
         """
-        
+
         # Sends the pointer to the server.
         connection = self.server_context.wrap_socket(socket(AF_INET, SOCK_STREAM),
                                                      server_hostname=server_networking_certificate_path().stem)
@@ -558,7 +585,7 @@ class Communicator(Utilities):
         connection.sendall(self.add_padding(self.REQUEST_ENCRYPTED_RECORD_MESSAGE))
         print(f'[SENT] {self.REQUEST_ENCRYPTED_RECORD_MESSAGE} to server.')
         connection.sendall(self.add_padding(str(index)))
-        
+
         # Receives the encrypted record.
         encrypted_record = ''
         while (message := connection.recv(self.HEADER).decode(self.FORMAT).strip(chr(0))) != self.END_FILE_MESSAGE:
@@ -567,7 +594,7 @@ class Communicator(Utilities):
         connection.shutdown(SHUT_WR)
         connection.close()
 
-        return encrypted_record.split(' ')
+        return bytes.fromhex(encrypted_record)
 
     def send_shutdown_message(self) -> None:
         """
