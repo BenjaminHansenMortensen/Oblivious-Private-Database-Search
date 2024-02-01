@@ -321,23 +321,27 @@ class Communicator(Utilities):
         connection.connect(self.SERVER_ADDR)
         connection.sendall(self.add_padding(self.RECORDS_PREPROCESSING_MESSAGE))
         print(f'[SENT] {self.RECORDS_PREPROCESSING_MESSAGE} to server.')
-        
+
+        # Performs the client side of the records pre-processing.
+        self.records_preprocessing(self, connection)
+
+        # Sends records preprocessing finished message to the server.
+        connection.sendall(self.add_padding(self.RECORDS_PREPROCESSING_FINISHED_MESSAGE))
+        print(f'[SENT] {self.RECORDS_PREPROCESSING_FINISHED_MESSAGE} to server.')
+
         # Waits until the server disconnects.
         self.wait(connection)
         connection.shutdown(SHUT_WR)
         connection.close()
 
-        # Performs the client side of the records pre-processing.
-        self.records_preprocessing(self)
-        self.send_records_preprocessing_finished_message()
-
         return
 
-    def send_indices_and_encrypt(self, swap: bool, index_a: int, index_b: int, decrypt_first: bool) -> None:
+    def send_indices_and_encrypt(self, connection: SSLSocket, swap: bool, index_a: int, index_b: int, decrypt_first: bool) -> None:
         """
             Obliviously sorts and encrypts two of the server's records with the client's key.
 
             Parameters:
+                - connection (SSLSocket) : Connection with the server.
                 - swap (bool) : Indicator to whether the records should be swapped or not.
                 - index_a (int) : Index to a server side pointer to a record.
                 - index_b (int) : Index to a server side pointer to a record.
@@ -348,11 +352,9 @@ class Communicator(Utilities):
                 -
         """
 
-        # Sends which two records should be considered.
-        connection = self.server_context.wrap_socket(socket(AF_INET, SOCK_STREAM),
-                                                     server_hostname=server_networking_certificate_path().stem)
-        connection.connect(self.SERVER_ADDR)
         connection.sendall(self.add_padding(self.ENCRYPT_RECORDS_MESSAGE))
+
+        # Sends which two records should be considered.
         connection.sendall(self.add_padding(str(index_a)))
         connection.sendall(self.add_padding(str(index_b)))
 
@@ -382,6 +384,8 @@ class Communicator(Utilities):
         if swap:
             masked_record_a, masked_record_b = masked_record_b, masked_record_a
 
+        if len(masked_record_a) == self.HEADER:
+            print(masked_record_a.decode(self.FORMAT).strip(chr(0)))
         masked_record_a = self.xor(masked_record_a, encryption_key_stream_a)
         masked_record_b = self.xor(masked_record_b, encryption_key_stream_b)
 
@@ -415,34 +419,6 @@ class Communicator(Utilities):
         # Writes the keys and nonces
         self.write_encryption_keys([index_a, index_b], [encryption_key_e, encryption_key_f], [nonce_e, nonce_f])
 
-        # Waits until the server disconnects.
-        self.wait(connection)
-        connection.shutdown(SHUT_WR)
-        connection.close()
-
-        return
-
-    def send_records_preprocessing_finished_message(self) -> None:
-        """
-            Sends that the records preprocessing is finished ot the server.
-
-            Parameters:
-                -
-
-            Returns:
-                :raises
-                -
-        """
-        
-        # Sends records preprocessing finished message to the server.
-        connection = self.server_context.wrap_socket(socket(AF_INET, SOCK_STREAM),
-                                                     server_hostname=server_networking_certificate_path().stem)
-        connection.connect(self.SERVER_ADDR)
-        connection.sendall(self.add_padding(self.RECORDS_PREPROCESSING_FINISHED_MESSAGE))
-        print(f'[SENT] {self.RECORDS_PREPROCESSING_FINISHED_MESSAGE} to server.')
-        connection.shutdown(SHUT_WR)
-        connection.close()
-        
         return
 
     def send_semantic_search_message(self, search_query: str) -> None:

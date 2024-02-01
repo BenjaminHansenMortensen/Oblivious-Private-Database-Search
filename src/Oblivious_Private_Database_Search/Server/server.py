@@ -344,6 +344,16 @@ class Communicator(Utilities):
         # Server side of the records pre-processing
         self.setup_and_encode_records()
 
+        while (message := connection.recv(self.HEADER).decode(self.FORMAT).strip(chr(0))) != self.RECORDS_PREPROCESSING_FINISHED_MESSAGE:
+            if message == self.ENCRYPT_RECORDS_MESSAGE:
+                self.record_encryption(connection)
+            elif message == self.REENCRYPT_RECORDS_MESSAGE:
+                self.record_encryption(connection)
+
+        print(f'[RECEIVED] {message} from client.')
+        self.write_encrypted_record_pointers()
+        self.records_preprocessing_finished = True
+
         # Disconnects when the records pre-processing is finished.
         connection.sendall(self.add_padding(self.DISCONNECT_MESSAGE))
 
@@ -364,7 +374,6 @@ class Communicator(Utilities):
         # Receives two indices from the client.
         index_a = int(connection.recv(self.HEADER).decode(self.FORMAT).strip(chr(0)))
         index_b = int(connection.recv(self.HEADER).decode(self.FORMAT).strip(chr(0)))
-
         if index_a is None and index_b is None:
             raise ValueError('The received indices are not valid.')
 
@@ -398,8 +407,6 @@ class Communicator(Utilities):
 
         encrypted_record_a = self.xor(self.xor(masked_record_a, mask_a), mask_c)
         encrypted_record_b = self.xor(self.xor(masked_record_b, mask_b), mask_d)
-
-        connection.sendall(self.add_padding(self.DISCONNECT_MESSAGE))
 
         self.write_encrypted_record(index_a, index_b, encrypted_record_a, encrypted_record_b)
 
@@ -515,15 +522,6 @@ class Communicator(Utilities):
         elif message == self.RECORDS_PREPROCESSING_MESSAGE:
             print(f'[RECEIVED] {message} from client.')
             self.received_records_preprocessing_message(connection)
-            connection.sendall(self.add_padding(self.DISCONNECT_MESSAGE))
-        elif message == self.RECORDS_PREPROCESSING_FINISHED_MESSAGE:
-            print(f'[RECEIVED] {message} from client.')
-            self.write_encrypted_record_pointers()
-            self.records_preprocessing_finished = True
-        elif message == self.ENCRYPT_RECORDS_MESSAGE:
-            self.record_encryption(connection)
-        elif message == self.REENCRYPT_RECORDS_MESSAGE:
-            self.record_encryption(connection)
         elif message == self.SEMANTIC_SEARCH_MESSAGE:
             self.wait_for_indexing()
             print(f'[RECEIVED] {message} from client.')

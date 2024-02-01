@@ -120,13 +120,14 @@ class Utilities:
 
         return
 
-    def records_preprocessing(self, client_communicator) -> None:
+    def records_preprocessing(self, client_communicator, connection) -> None:
         """
             Obliviously encrypts and shuffles all records and dummy items according to the client's permutation and 
             encryption keys.
                         
             Parameters:
                 - client_communicator (Communicator) : The client.
+                - connection (SSLSocket) : Connection with the server.
 
             Returns:
                 :raises FileNotFoundError
@@ -134,7 +135,7 @@ class Utilities:
         """
 
         # Shuffles and encrypts the records and dummy items.
-        self.permuted_indices = bitonic_sort(client_communicator)
+        self.permuted_indices = bitonic_sort(client_communicator, connection)
 
         # Writes the permutation.
         self.write_permutation(self.permuted_indices)

@@ -9,12 +9,13 @@ from Oblivious_Private_Database_Search.getters import (get_database_size as
                                                        database_size)
 
 
-def compare_init(client, index: int, permutation: list, descending: bool, midpoint: int) -> None:
+def compare_init(client, connection, index: int, permutation: list, descending: bool, midpoint: int) -> None:
     """ 
         Sorts and encrypts two records.
 
         Parameters:
             - client (Communicator) : The client.
+            - connection (SSLSocket) : Connection with the server.
             - index (int) : An index of a record to be evaluated.
             - permutation (list) : The order the records will be shuffled.
             - descending (bool) : Indicates the order the records should be sorted.
@@ -39,17 +40,18 @@ def compare_init(client, index: int, permutation: list, descending: bool, midpoi
 
     # Executes the mpc encryption and sorting.
     decrypt_first = False
-    client.send_indices_and_encrypt(swap, index_a, index_b, decrypt_first)
+    client.send_indices_and_encrypt(connection, swap, index_a, index_b, decrypt_first)
 
     return 
 
 
-def compare(client, index: int, permutation: list, descending: bool, midpoint: int) -> None:
+def compare(client, connection, index: int, permutation: list, descending: bool, midpoint: int) -> None:
     """
         Sorts and re-encrypts two records.
 
         Parameters:
             - client (Communicator) : The client.
+            - connection (SSLSocket) : Connection with the server.
             - index (int) : An index of a record to be evaluated.
             - permutation (list) : The order the records will be shuffled.
             - descending (bool) : Indicates the order the records should be sorted.
@@ -74,17 +76,18 @@ def compare(client, index: int, permutation: list, descending: bool, midpoint: i
 
     # Executes the mpc encryption and sorting.
     decrypt_first = True
-    client.send_indices_and_encrypt(swap, index_record_a, index_record_b, decrypt_first)
+    client.send_indices_and_encrypt(connection, swap, index_record_a, index_record_b, decrypt_first)
 
     return
 
 
-def init(client, permutation: list) -> None:
+def init(client, connection, permutation: list) -> None:
     """
         Performs the first layer of the bitonic sort and encrypts the records.
 
         Parameters:
             - client (Communicator) : The client.
+            - connection (SSLSocket) : Connection with the server.
             - permutation (list) : The order the records will be shuffled.
 
         Returns:
@@ -99,19 +102,20 @@ def init(client, permutation: list) -> None:
     for index in range(0, database_size(), partition_size):
 
         # Parallelizable
-        compare_init(client, index, permutation, descending, partition_midpoint)
+        compare_init(client, connection, index, permutation, descending, partition_midpoint)
 
         descending = (descending + 1) % 2
         
     return 
 
 
-def merge_partition(client, descending: bool, permutation: list, partition_index: int, partition_midpoint: int) -> None:
+def merge_partition(client, connection, descending: bool, permutation: list, partition_index: int, partition_midpoint: int) -> None:
     """
         Merges two bitonic sequences.
 
         Parameters:
             - client (Communicator) : The client.
+            - connection (SSLSocket) : Connection with the server.
             - permutation (list) : The order the records will be shuffled.
             - partition_ex (int) : The first index of a partition.
             - partition_midpoint (int) : Midpoint of a partition.
@@ -125,17 +129,18 @@ def merge_partition(client, descending: bool, permutation: list, partition_index
         index = partition_index + value
 
         # Parallelizable
-        compare(client, index, permutation, descending, partition_midpoint)
+        compare(client, connection, index, permutation, descending, partition_midpoint)
     
     return 
 
 
-def merge(client, permutation: list, partition_size, partition_midpoint: int) -> None:
+def merge(client, connection, permutation: list, partition_size, partition_midpoint: int) -> None:
     """
         Merges the bitonic sequences of a layer.
 
         Parameters:
             - client (Communicator) : The client.
+            - connection (SSLSocket) : Connection with the server.
             - permutation (list) : The order the records will be shuffled.
             - partition_size (int) : Size of the partition.
             - partition_midpoint (int) : Midpoint of a partition.
@@ -149,20 +154,21 @@ def merge(client, permutation: list, partition_size, partition_midpoint: int) ->
     for partition_index in range(0, database_size(), partition_size):
 
         # Parallelizable
-        merge_partition(client, descending, permutation, partition_index, partition_midpoint)
+        merge_partition(client, connection, descending, permutation, partition_index, partition_midpoint)
 
         descending = (descending + 1) % 2
         
     return 
 
 
-def sort_subpartition(client, permutation: list, descending: bool, partition_index: int,
+def sort_subpartition(client, connection, permutation: list, descending: bool, partition_index: int,
                       subpartition_index: int, subpartition_midpoint: int) -> None:
     """
         Sorts the sub-partition into a bitonic sequences.
 
         Parameters:
             - client (Communicator) : The client.
+            - connection (SSLSocket) : Connection with the server.
             - permutation (list) : The order the records will be shuffled.
             - descending (bool) : Indicates the order the records should be sorted.
             - partition_index (int) : The first index of a partition.
@@ -178,17 +184,18 @@ def sort_subpartition(client, permutation: list, descending: bool, partition_ind
         index = partition_index + subpartition_index + value
 
         # Parallelizable
-        compare(client, index, permutation, descending, subpartition_midpoint)
+        compare(client, connection, index, permutation, descending, subpartition_midpoint)
     
     return 
 
 
-def sort_partition(client, permutation: list, descending: bool, partition_size: int, partition_index: int) -> None:
+def sort_partition(client, connection, permutation: list, descending: bool, partition_size: int, partition_index: int) -> None:
     """
         Sorts all sub-layers into bitonic sequences.
 
         Parameters:
             - client (Communicator) : The client.
+            - connection (SSLSocket) : Connection with the server.
             - permutation (list) : The order the records will be shuffled.
             - descending (bool) : Indicates the order the records should be sorted.
             - partition_size (int) : Size of the partition.
@@ -206,18 +213,19 @@ def sort_partition(client, permutation: list, descending: bool, partition_size: 
         for subpartition_index in range(0, partition_size, subpartition_size):
 
             # Parallelizable
-            sort_subpartition(client, permutation, descending, partition_index, subpartition_index,
+            sort_subpartition(client, connection, permutation, descending, partition_index, subpartition_index,
                               subpartition_midpoint)
             
     return 
 
 
-def sort(client, permutation: list, partition_size: int) -> None:
+def sort(client, connection, permutation: list, partition_size: int) -> None:
     """
         Sorts a layer into bitonic sequences.
 
         Parameters:
             - client (Communicator) : The client.
+            - connection (SSLSocket) : Connection with the server.
             - permutation (list) : The order the records will be shuffled.
             - partition_size (int) : Size of the partition.
 
@@ -230,19 +238,20 @@ def sort(client, permutation: list, partition_size: int) -> None:
     for partition_index in range(0, database_size(), partition_size):
 
         # Parallelizable
-        sort_partition(client, permutation, descending, partition_size, partition_index)
+        sort_partition(client, connection, permutation, descending, partition_size, partition_index)
 
         descending = (descending + 1) % 2
         
     return 
 
 
-def bitonic_sort(client) -> dict[int, int]:
+def bitonic_sort(client, connection) -> dict[int, int]:
     """
         Performs a random oblivious shuffling of the server's records.
 
         Parameters:
             - client (Communicator) : The client.
+            - connection (SSLSocket) : Connection with the server.
 
         Returns:
             :raises
@@ -258,15 +267,15 @@ def bitonic_sort(client) -> dict[int, int]:
     permutation_indexing = dict(zip([str(i) for i in range(len(permutation))], permutation))
 
     # Encrypts the records and sorts the first layer
-    init(client, permutation)
+    init(client, connection, permutation)
 
     # Completes the sorting of the encrypted records
     for layer in range(2, int(log(database_size(), 2) + 1)):
         partition_size = 2 ** layer
         partition_midpoint = partition_size // 2
 
-        merge(client, permutation, partition_size, partition_midpoint)
+        merge(client, connection, permutation, partition_size, partition_midpoint)
 
-        sort(client, permutation, partition_size)
+        sort(client, connection, permutation, partition_size)
 
     return permutation_indexing
