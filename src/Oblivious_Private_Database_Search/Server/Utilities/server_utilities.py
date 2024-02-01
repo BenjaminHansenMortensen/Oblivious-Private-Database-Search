@@ -136,7 +136,7 @@ class Utilities:
 
     def create_inverted_index_matrix(self) -> None:
         """
-            Creates a inverted index matrix of the records.
+            Creates an inverted index matrix of the records.
 
             Parameters:
                 -

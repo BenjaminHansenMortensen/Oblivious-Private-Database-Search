@@ -34,18 +34,12 @@ from Oblivious_Private_Database_Search.getters import (get_records_encryption_ke
                                                        records_encryption_keys_directory)
 from Oblivious_Private_Database_Search.getters import (get_permutation_indexing_path as
                                                        permutation_indexing_path)
-from Oblivious_Private_Database_Search.getters import (get_sort_and_encrypt_with_circuit_mpc_script_path as
-                                                       sort_and_encrypt_with_circuit_mpc_script_path)
-from Oblivious_Private_Database_Search.getters import (get_sort_and_reencrypt_with_circuit_mpc_script_path as
-                                                       sort_and_reencrypt_with_circuit_mpc_script_path)
 from Oblivious_Private_Database_Search.getters import (get_client_encrypted_inverted_index_matrix_directory as
                                                        encrypted_inverted_index_matrix_directory)
 from Oblivious_Private_Database_Search.getters import (get_requested_indices_path as
                                                        requested_indices_path)
 from Oblivious_Private_Database_Search.getters import (get_number_of_blocks as
                                                        number_of_blocks)
-from Oblivious_Private_Database_Search.getters import (get_records_encryption_key_streams_directory as
-                                                       encryption_key_streams_directory)
 from Oblivious_Private_Database_Search.getters import (get_semantic_search_mpc_script_path as
                                                        semantic_search_mpc_script_path)
 from Oblivious_Private_Database_Search.getters import (get_semantic_search_request_threshold as
@@ -61,7 +55,7 @@ from Oblivious_Private_Database_Search.getters import (get_number_of_records as
 
 # Client imports.
 from Oblivious_Private_Database_Search.Client.Utilities.bitonic_sort import bitonic_sort
-from Oblivious_Private_Database_Search.Client.Utilities.key_stream_generator import get_key_streams, aes_128_ctr
+from Oblivious_Private_Database_Search.Client.Utilities.key_stream_generator import aes_128_ctr
 
 
 # Warning filtering.

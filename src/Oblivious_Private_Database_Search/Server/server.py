@@ -31,10 +31,6 @@ from Oblivious_Private_Database_Search.getters import (get_server_networking_cer
                                                        server_networking_certificate_path)
 from Oblivious_Private_Database_Search.getters import (get_client_networking_certificate_path as
                                                        client_networking_certificate_path)
-from Oblivious_Private_Database_Search.getters import (get_sort_and_encrypt_with_circuit_mpc_script_path as
-                                                       sort_and_encrypt_with_circuit_mpc_script_path)
-from Oblivious_Private_Database_Search.getters import (get_sort_and_reencrypt_with_circuit_mpc_script_path as
-                                                       sort_and_reencrypt_with_circuit_mpc_script_path)
 from Oblivious_Private_Database_Search.getters import (get_server_encrypted_inverted_index_matrix_directory as
                                                        encrypted_inverted_index_matrix_directory)
 from Oblivious_Private_Database_Search.getters import (get_records_directory as
