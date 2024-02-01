@@ -90,6 +90,3 @@ def main() -> None:
     server.kill()
 
     return
-
-
-main()
