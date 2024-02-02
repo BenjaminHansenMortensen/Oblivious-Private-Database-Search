@@ -38,7 +38,7 @@ def aes_128_ctr(key: bytes, plaintext: bytes, nonce: bytes) -> bytes:
     return key_stream
 
 
-def get_key_streams() -> tuple[bytes, bytes, bytes]:
+def get_key_stream() -> tuple[bytes, bytes, bytes]:
     """
         Gets key streams to encrypt a record.
 

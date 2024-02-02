@@ -148,11 +148,24 @@ class Utilities:
         return
 
     @staticmethod
-    def xor(bytes_a, bytes_b):
-        bytestring_a = fromstring(bytes_a, dtype='uint8')
-        bytestring_b = fromstring(bytes_b, dtype='uint8')
+    def xor(bytes_a: bytes, bytes_b: bytes) -> bytes:
+        """
+            XORs two bytes objects.
 
-        return (bytestring_a ^ bytestring_b).tostring()
+            Parameters:
+                - bytes_a (bytes) : Bytes object to be XORed.
+                - bytes_b (bytes) : Bytes object to be XORed.
+
+            Returns:
+                :raises
+                - bytes_a ^ bytes_b (bytes) : Byte objects XORed.
+
+        """
+
+        bytestring_a = fromstring(bytes_a, dtype='uint8', sep='', count=-1)
+        bytestring_b = fromstring(bytes_b, dtype='uint8', sep='', count=-1)
+
+        return (bytestring_a ^ bytestring_b).tobytes()
 
     @staticmethod
     def get_stored_encryption_key(index: int) -> bytes:

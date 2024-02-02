@@ -64,7 +64,7 @@ def main() -> None:
         server.generate_pnr_records()
 
         # Requests dummy items from the client to fill the database to the required size.
-        server.request_dummy_items()
+        server.send_number_of_dummy_items()
 
         # Waits for the client to start the records pre-processing.
         server.wait_for_records_preprocessing()

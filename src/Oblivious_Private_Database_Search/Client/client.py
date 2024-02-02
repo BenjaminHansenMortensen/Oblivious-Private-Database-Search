@@ -7,7 +7,7 @@ from threading import Thread
 from socket import socket, AF_INET, SOCK_STREAM, SOL_SOCKET, SO_REUSEADDR, timeout, SHUT_WR
 from ssl import SSLContext, PROTOCOL_TLS_CLIENT, PROTOCOL_TLS_SERVER, SSLSocket
 
-# Local getters imports.
+# Local getter imports.
 from Oblivious_Private_Database_Search.getters import (get_server_ip as
                                                        server_ip)
 from Oblivious_Private_Database_Search.getters import (get_server_port as
@@ -35,7 +35,7 @@ from Oblivious_Private_Database_Search.getters import (get_client_number_of_dumm
 # Client utility imports.
 from Oblivious_Private_Database_Search.Client.Utilities.client_utilities import Utilities
 from Oblivious_Private_Database_Search.Client.Utilities.record_decryptor import run as decrypt_and_store_files
-from Oblivious_Private_Database_Search.Client.Utilities.key_stream_generator import get_key_streams
+from Oblivious_Private_Database_Search.Client.Utilities.key_stream_generator import get_key_stream
 
 
 class Communicator(Utilities):
@@ -53,7 +53,7 @@ class Communicator(Utilities):
         self.FORMAT = 'utf-8'
 
         self.ONLINE_MESSAGE = '<ONLINE>'
-        self.REQUEST_DUMMY_ITEMS_MESSAGE = '<REQUESTING DUMMY ITEMS>'
+        self.SENDING_NUMBER_OF_DUMMY_ITEMS = '<SENDING NUMBER OF DUMMY ITEMS>'
         self.RECORDS_PREPROCESSING_MESSAGE = '<RECORDS PRE-PROCESSING>'
         self.ENCRYPT_RECORDS_MESSAGE = '<ENCRYPT RECORDS>'
         self.REENCRYPT_RECORDS_MESSAGE = '<REENCRYPT RECORDS>'
@@ -205,7 +205,7 @@ class Communicator(Utilities):
             
         return 
 
-    def waiting_to_send_dummy_items(self) -> None:
+    def waiting_to_send_number_of_dummy_items(self) -> None:
         """
             Waits until the server requests dummy items.
 
@@ -223,9 +223,9 @@ class Communicator(Utilities):
             
         return 
 
-    def send_dummy_items(self, connection: SSLSocket) -> None:
+    def receive_number_of_dummy_items(self, connection: SSLSocket) -> None:
         """
-            Receives the amount of dummy items requested, then creates them and sends them to the server.
+            Receives the number of dummy items in the database from the server.
 
             Parameters:
                 - connection (SSLSocket) : Connection with the server.
@@ -237,11 +237,6 @@ class Communicator(Utilities):
         
         # Receives and creates the requested amount of dummy items and sends them to the server.
         number_of_dummy_items = int(connection.recv(self.HEADER).decode(self.FORMAT).strip(chr(0)))
-        for i in range(number_of_dummy_items):
-            dummy_item = get_key_streams()[0].hex()
-            connection.sendall(self.add_padding(dummy_item))
-            connection.sendall(self.add_padding(self.END_FILE_MESSAGE))
-        
         connection.sendall(self.add_padding(self.DISCONNECT_MESSAGE))
 
         # Writes the number of dummy items to a file.
@@ -359,12 +354,12 @@ class Communicator(Utilities):
         connection.sendall(self.add_padding(str(index_b)))
 
         # Obliviously encrypts and sorts the two of the server's records with the client's key.
-        encryption_key_stream_a, encryption_key_a, nonce_a = get_key_streams()
-        encryption_key_stream_b, encryption_key_b, nonce_b = get_key_streams()
-        encryption_key_stream_c, encryption_key_c, nonce_c = get_key_streams()
-        encryption_key_stream_d, encryption_key_d, nonce_d = get_key_streams()
-        encryption_key_stream_e, encryption_key_e, nonce_e = get_key_streams()
-        encryption_key_stream_f, encryption_key_f, nonce_f = get_key_streams()
+        encryption_key_stream_a, encryption_key_a, nonce_a = get_key_stream()
+        encryption_key_stream_b, encryption_key_b, nonce_b = get_key_stream()
+        encryption_key_stream_c, encryption_key_c, nonce_c = get_key_stream()
+        encryption_key_stream_d, encryption_key_d, nonce_d = get_key_stream()
+        encryption_key_stream_e, encryption_key_e, nonce_e = get_key_stream()
+        encryption_key_stream_f, encryption_key_f, nonce_f = get_key_stream()
 
         length_of_record = number_of_bytes() * number_of_blocks()
 
@@ -617,9 +612,9 @@ class Communicator(Utilities):
         elif message == self.SENDING_ENCRYPTED_INVERTED_INDEX_MATRIX_FINISHED_MESSAGE:
             print(f'[RECEIVED] {message} from server.')
             self.encrypted_inverted_index_matrix_received = True
-        elif message == self.REQUEST_DUMMY_ITEMS_MESSAGE:
+        elif message == self.SENDING_NUMBER_OF_DUMMY_ITEMS:
             print(f'[RECEIVED] {message} from server.')
-            self.send_dummy_items(connection)
+            self.receive_number_of_dummy_items(connection)
             
         return 
 

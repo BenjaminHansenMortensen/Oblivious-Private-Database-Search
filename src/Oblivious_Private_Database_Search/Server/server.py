@@ -6,7 +6,7 @@ from threading import Thread
 from socket import socket, AF_INET, SOCK_STREAM, SOL_SOCKET, SO_REUSEADDR, timeout, SHUT_WR
 from ssl import SSLContext, PROTOCOL_TLS_CLIENT, PROTOCOL_TLS_SERVER, SSLSocket
 
-# Local getters imports.
+# Local getter imports.
 from Oblivious_Private_Database_Search.getters import (get_server_ip as
                                                        server_ip)
 from Oblivious_Private_Database_Search.getters import (get_server_port as
@@ -38,7 +38,7 @@ from Oblivious_Private_Database_Search.getters import (get_records_directory as
 
 # Server utility imports.
 from Oblivious_Private_Database_Search.Server.Utilities.server_utilities import Utilities
-from Oblivious_Private_Database_Search.Server.Utilities.key_stream_generator import get_key_streams
+from Oblivious_Private_Database_Search.Server.Utilities.key_stream_generator import get_key_stream
 
 
 class Communicator(Utilities):
@@ -57,7 +57,7 @@ class Communicator(Utilities):
         self.FORMAT = 'utf-8'
 
         self.ONLINE_MESSAGE = '<ONLINE>'
-        self.REQUEST_DUMMY_ITEMS_MESSAGE = '<REQUESTING DUMMY ITEMS>'
+        self.SENDING_NUMBER_OF_DUMMY_ITEMS = '<SENDING NUMBER OF DUMMY ITEMS>'
         self.RECORDS_PREPROCESSING_MESSAGE = '<RECORDS PRE-PROCESSING>'
         self.ENCRYPT_RECORDS_MESSAGE = '<ENCRYPT RECORDS>'
         self.REENCRYPT_RECORDS_MESSAGE = '<REENCRYPT RECORDS>'
@@ -239,9 +239,9 @@ class Communicator(Utilities):
 
         return
 
-    def request_dummy_items(self) -> None:
+    def send_number_of_dummy_items(self) -> None:
         """
-            Requests dummy items from the client.
+            Sends the number of dummy items in the database to the client.
 
             Parameters:
                 -
@@ -255,24 +255,9 @@ class Communicator(Utilities):
         connection = self.client_context.wrap_socket(socket(AF_INET, SOCK_STREAM),
                                                      server_hostname=client_networking_certificate_path().stem)
         connection.connect(self.CLIENT_ADDR)
-        connection.sendall(self.add_padding(self.REQUEST_DUMMY_ITEMS_MESSAGE))
+        connection.sendall(self.add_padding(self.SENDING_NUMBER_OF_DUMMY_ITEMS))
         connection.sendall(self.add_padding(str(number_of_dummy_items())))
-        print(f'[SENT] {self.REQUEST_DUMMY_ITEMS_MESSAGE} to client.')
-
-        # Receives the dummy items.
-        for i in range(number_of_records(), database_size()):
-            dummy_item = ''
-            while (message := connection.recv(self.HEADER).decode(self.FORMAT).strip(chr(0))) != self.END_FILE_MESSAGE:
-                dummy_item += message
-
-            # Writes the dummy item.
-            file_path = records_directory() / f'{i}.txt'
-            with file_path.open('w') as f:
-                f.write(dummy_item)
-                f.close()
-
-            # Updates database pointers with the dummy item.
-            self.encrypted_record_pointers.append(file_path)
+        print(f'[SENT] {self.SENDING_NUMBER_OF_DUMMY_ITEMS} to client.')
 
         self.wait(connection)
         connection.shutdown(SHUT_WR)
@@ -380,10 +365,10 @@ class Communicator(Utilities):
         record_a, record_b = self.get_records(index_a, index_b)
 
         # Obliviously encrypts the requested records, with the client's key.
-        mask_a, encryption_key_a, nonce_a = get_key_streams()
-        mask_b, encryption_key_b, nonce_b = get_key_streams()
-        mask_c, encryption_key_c, nonce_c = get_key_streams()
-        mask_d, encryption_key_d, nonce_d = get_key_streams()
+        mask_a, encryption_key_a, nonce_a = get_key_stream()
+        mask_b, encryption_key_b, nonce_b = get_key_stream()
+        mask_c, encryption_key_c, nonce_c = get_key_stream()
+        mask_d, encryption_key_d, nonce_d = get_key_stream()
 
         length_of_record = number_of_bytes() * number_of_blocks()
 

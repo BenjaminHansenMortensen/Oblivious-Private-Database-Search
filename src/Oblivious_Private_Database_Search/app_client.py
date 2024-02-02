@@ -71,7 +71,7 @@ def main() -> None:
     if not client.resume_from_previous_preprocessing:
 
         # Waits for the server to request dummy items then sends them.
-        client.waiting_to_send_dummy_items()
+        client.waiting_to_send_number_of_dummy_items()
 
         # Shuffles and encrypts the server's records.
         client.send_records_preprocessing_message()

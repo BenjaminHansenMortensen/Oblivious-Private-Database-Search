@@ -9,6 +9,8 @@ from random import shuffle
 from numpy import fromstring
 
 # Local getters imports.
+from Oblivious_Private_Database_Search.getters import (get_database_size as
+                                                       database_size)
 from Oblivious_Private_Database_Search.getters import (get_mp_spdz_protocol as
                                                        mp_spdz_protocol)
 from Oblivious_Private_Database_Search.getters import (get_encoding_base as
@@ -41,6 +43,7 @@ from Oblivious_Private_Database_Search.getters import (get_server_record_pointer
                                                        record_indexing_path)
 
 # Server imports.
+from Oblivious_Private_Database_Search.Server.Utilities.key_stream_generator import get_key_stream
 from Oblivious_Private_Database_Search.Server.Utilities.Data_Generation.generate_pnr_records import run as generate_pnr_records
 from Oblivious_Private_Database_Search.Server.Utilities.semantic_indexing import run as create_semantic_indexing
 from Oblivious_Private_Database_Search.Server.Utilities.inverted_index_matrix import run as create_inverted_index_matrix
@@ -115,6 +118,19 @@ class Utilities:
 
         self.record_pointers = record_paths.copy()
         self.encrypted_record_pointers = record_paths
+
+        # Fills the remainder of the database with dummy items.
+        for i in range(number_of_records(), database_size()):
+            dummy_item = get_key_stream()[0].hex()
+
+            # Writes the dummy item.
+            file_path = records_directory() / f'{i}.txt'
+            with file_path.open('w') as f:
+                f.write(dummy_item)
+                f.close()
+
+            # Updates database pointers with the dummy item.
+            self.encrypted_record_pointers.append(file_path)
 
         return
 
@@ -203,18 +219,19 @@ class Utilities:
             XORs two bytes objects.
 
             Parameters:
-                - bytes_a (bytes) : Bytes object to be XORed
-                - bytes_b (bytes) : Bytes object to be XORed
+                - bytes_a (bytes) : Bytes object to be XORed.
+                - bytes_b (bytes) : Bytes object to be XORed.
 
             Returns:
                 :raises
-                -
+                - bytes_a ^ bytes_b (bytes) : Byte objects XORed.
 
         """
-        bytestring_a = fromstring(bytes_a, dtype='uint8')
-        bytestring_b = fromstring(bytes_b, dtype='uint8')
 
-        return (bytestring_a ^ bytestring_b).tostring()
+        bytestring_a = fromstring(bytes_a, dtype='uint8', sep='', count=-1)
+        bytestring_b = fromstring(bytes_b, dtype='uint8', sep='', count=-1)
+
+        return (bytestring_a ^ bytestring_b).tobytes()
 
     def get_records(self, index_a: int, index_b: int) -> tuple[bytes, bytes]:
         """
