@@ -3,6 +3,7 @@
 # Imports
 from pathlib import Path
 from json import load
+from re import findall
 
 
 # Local getter imports.
@@ -54,8 +55,8 @@ def get_encoded_database(indexing: dict, base_path: Path | str) -> list[list[int
             f.close()
         integer_encoding = convert_file_to_integers(contents)
 
-        integer_index = convert_string_to_unique_integer(file)
-        encoded_database.append([integer_index] + integer_encoding)
+        index = int(findall(r'\d+', file)[0])
+        encoded_database.append([index] + integer_encoding)
 
     return encoded_database
 
@@ -94,8 +95,8 @@ def encode_indexing(indexing: dict[str, list]) -> dict[int, list[int]]:
         for i in range(padding_amount):
             encoded_attributes.append(0)
 
-        encoded_index = convert_string_to_unique_integer(index)
-        encoded_indexing[encoded_index] = encoded_attributes
+        index = int(findall(r'\d+', index)[0])
+        encoded_indexing[index] = encoded_attributes
 
     return encoded_indexing
 

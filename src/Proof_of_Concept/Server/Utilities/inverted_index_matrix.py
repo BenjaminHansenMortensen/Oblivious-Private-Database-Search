@@ -3,6 +3,7 @@
 # Imports
 from pathlib import Path
 from json import load, dump
+from re import findall
 
 # Local getters imports.
 from Proof_of_Concept.getters import (get_inverted_index_matrix_path as
@@ -142,6 +143,7 @@ def run() -> None:
     # Creates an inverse index matrix of the records.
     inverse_index_matrix = {}
     record_paths = [path for path in records_directory().rglob('*') if path.name not in excluded_records()]
+    record_paths = sorted(record_paths, key=lambda x: int(findall(r'\d+', x.name)[0]))
     for i in range(len(record_paths)):
         record_path = record_paths[i]
         if record_path.suffix != '.json':

@@ -22,7 +22,7 @@ class GenerateNumber:
         Jf. § 60-5. 1.
         Generates a PNR-number for a record in the PNR-registry of an order.
     """
-    def __iter__(self, init_number: int = -1):
+    def __iter__(self, init_number: int = 0):
         """
             Initializes the PNR-number
 

@@ -52,7 +52,7 @@ from Proof_of_Concept.getters import (get_excluded_records as
 # Client and Server imports.
 from Proof_of_Concept.Server.Utilities.Data_Generation.generate_passenger_number_records import run as generate_data
 from Proof_of_Concept.Server.Utilities.indexing import run as generate_indexing
-from Proof_of_Concept.Server.Utilities.index_integer_encoder import run as encode_database_and_indexing
+from Proof_of_Concept.Server.Utilities.indexing_integer_encoder import run as encode_database_and_indexing
 from Proof_of_Concept.Server.Utilities.inverted_index_matrix import run as generate_inverse_index_matrix
 from Proof_of_Concept.Server.Utilities.inverted_index_matrix_integer_encoder import get_size_of_largest_set_of_pointers
 from Proof_of_Concept.Server.Utilities.inverted_index_matrix_integer_encoder import run as encode_database_and_inverse_index_matrix
@@ -243,6 +243,3 @@ def main() -> None:
     decode_retrieval()
 
     return
-
-
-main()

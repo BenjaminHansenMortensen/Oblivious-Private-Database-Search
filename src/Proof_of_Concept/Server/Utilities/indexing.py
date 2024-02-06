@@ -3,6 +3,7 @@
 # Imports
 from pathlib import Path
 from json import load, dump
+from re import findall
 
 # Local getter imports.
 from Proof_of_Concept.getters import (get_excluded_records as
@@ -144,6 +145,7 @@ def get_contents(path: str | Path) -> list[str | Path]:
         raise TypeError('Cannot covert directory to Path object')
 
     contents = [path for path in directory.rglob('*') if path.name not in excluded_records()]
+    contents = sorted(contents, key=lambda x: int(findall(r'\d+', x.name)[0]))
 
     return contents
 

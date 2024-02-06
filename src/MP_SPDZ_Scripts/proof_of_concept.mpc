@@ -309,12 +309,12 @@ def test_inverse_searching_oram_retrival_oram():
 # Defining global variables
 
 index_length = 1
-number_of_indices = 1
+number_of_indices = 4
 size_of_set_of_pointers = 1
-size_of_set_of_attributes = 15
+size_of_set_of_attributes = 13
 
 file_signature_length = 1
-number_of_files = 1
+number_of_files = 4
 file_size_length_upper_bound = 6016
 
 # Inputs from parties
