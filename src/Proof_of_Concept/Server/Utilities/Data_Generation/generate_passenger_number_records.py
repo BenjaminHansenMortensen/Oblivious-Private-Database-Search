@@ -965,7 +965,7 @@ class GeneratePassengerInformation:
 
 def create_random_record(pnr_number: int) -> dict:
     """
-        Generates a PNR record. This record contains the travel information of one order, which is the following
+        Generates a Passenger Number Record. This record contains the travel information of one order, which is the following
         information:
             - PNR Number
             - Payment Information
@@ -1003,7 +1003,7 @@ def create_random_record(pnr_number: int) -> dict:
             - pnr_number (int) : The PNR number.
 
         Returns:
-            pnr_record (dict) : A record of one order.
+            record (dict) : A record of one order.
     """
 
     gen_payment_information = GeneratePaymentInformation()
@@ -1042,7 +1042,7 @@ def create_random_record(pnr_number: int) -> dict:
     passenger_seats = gen_seat.get_seats(passenger_amount)
     passenger_luggage = gen_luggage.get_passengers_luggage(passenger_amount)
 
-    pnr_record = {'PNR Number': pnr_number,
+    record = {'PNR Number': pnr_number,
                   'Payment Information': {'Ticket Number': ticket_number,
                                           'Date': order_datetime.strftime("%d/%m/%Y"),
                                           'Name': orderer_name,
@@ -1079,7 +1079,7 @@ def create_random_record(pnr_number: int) -> dict:
                                  }
                   }
 
-    return pnr_record
+    return record
 
 
 def run(size: int) -> None:
@@ -1089,11 +1089,11 @@ def run(size: int) -> None:
 
     for _ in range(number_of_records):
         pnr_number = next(gen_pnr_number)
-        pnr_record = create_random_record(pnr_number)
-        pnr_record_path = records_directory() / f'record{pnr_number}.json'
+        record = create_random_record(pnr_number)
+        record_path = records_directory() / f'record{pnr_number}.json'
 
-        with pnr_record_path.open('w') as f:
-            dump(pnr_record, f, indent=4)
+        with record_path.open('w') as f:
+            dump(record, f, indent=4)
             f.close()
 
     return

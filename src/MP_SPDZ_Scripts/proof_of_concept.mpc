@@ -33,22 +33,19 @@ def search_indexing(indexing):
             - size (sint) : The number of files the pointer can point to.
     """
 
-    counter = 0
     pointers = sint.Array(number_of_files)
 
     for j in range(number_of_files):
-        file = indexing[j][0]
+        file_index = indexing[j][0]
 
         for l in range(1, index_length + size_of_set_of_attributes):
             attribute = indexing[j][l]
 
             match = (search_query == attribute)
 
-            pointers[counter] += match * file * not_in(file, pointers, number_of_files)
+            pointers[j] += match * file_index * (pointers[j] == 0)
 
-    counter += 0
-
-    return pointers, number_of_files
+    return pointers
 
 
 def search_inverse_index_matrix_oram(inverted_index_matrix):
@@ -220,10 +217,10 @@ def test_searching_retrieval():
     indexing = sint.input_tensor_from(1, [number_of_files, index_length + size_of_set_of_attributes])
 
     # Pointers is an array of size number_of_files * size_of_set_of_pointers
-    pointers, size = search_indexing(indexing)
+    pointers = search_indexing(indexing)
 
     # Files is an array of size number_of_files * file_size_length_upper_bound * number_of_indices
-    files = retrieve_files(pointers, size)
+    files = retrieve_files(pointers, number_of_files)
     files.print_reveal_nested()
 
 
@@ -312,12 +309,12 @@ def test_inverse_searching_oram_retrival_oram():
 # Defining global variables
 
 index_length = 1
-number_of_indices = 4
+number_of_indices = 1
 size_of_set_of_pointers = 1
-size_of_set_of_attributes = 11
+size_of_set_of_attributes = 15
 
 file_signature_length = 1
-number_of_files = 4
+number_of_files = 1
 file_size_length_upper_bound = 6016
 
 # Inputs from parties

@@ -241,8 +241,8 @@ class GenerateEmail:
     def __init__(self) -> None:
         self.email_providers = [('gmail', 0.4), ('outlook', 0.15), ('yahoo', 0.05), ('icloud', 0.4)]
         self.email_suffixes = [('com', 0.7), ('no', 0.25), ('org', 0.04), ('gov', 0.01)]
-        
-        return 
+
+        return
 
     def get_email(self, full_name: str) -> str:
         """
@@ -305,9 +305,9 @@ class GeneratePhoneNumber:
                                       ('+94', 0.005), ('+92', 0.005), ('+63', 0.005), ('+7', 0.005), ('+56', 0.0027),
                                       ('+55', 0.0027), ('+502', 0.0027), (f'+{randint(10, 389)}', 0.0096)]
         self.phone_number_starts = [('4', 0.5), ('9', 0.5)]
-        
-        return 
-    
+
+        return
+
     def get_phone_number(self) -> str:
         """
             Generates a Phone Number.
@@ -342,8 +342,8 @@ class GenerateAddress:
     """
     def __init__(self) -> None:
         self.states = ['CT', 'MA', 'VT', 'AL', 'AR', 'DC', 'FL', 'GA', 'KY', 'MD', 'OK', 'TN', 'AK', 'AZ', 'CA', 'CO']
-        
-        return 
+
+        return
 
     def get_address(self) -> tuple:
         """
@@ -373,8 +373,8 @@ class GeneratePaymentInformation:
     def __init__(self) -> None:
         self.vendors = ['Mastercard', 'Visa']
         self.payment_types = ['Credit', 'Debit']
-        
-        return 
+
+        return
 
     def get_payment_information(self) -> tuple:
         """
@@ -404,8 +404,8 @@ class GenerateTravelPlan:
     def __init__(self) -> None:
         self.airport_data = read_json(supplementary_data_directory() / "airport_data.json")
         self.flight_path_lengths = [(2, 0.75), (3, 0.2), (4, 0.045), (5, 0.004), (6, 0.001)]
-        
-        return 
+
+        return
 
     def get_path_length(self) -> int:
         """
@@ -559,8 +559,8 @@ class GenerateBonusProgramInformation:
 
     def __init__(self) -> None:
         self.programs = [('None', 0.6), ('Gold', 0.25), ('Platinum', 0.10), ('Diamond', 0.05)]
-        
-        return 
+
+        return
 
     def get_bonus_program(self) -> str:
         """
@@ -590,7 +590,7 @@ class GenerateTravelInformation:
         self.airlines = [('SAS', 0.4), ('Norwegian', 0.4), ('Wideroe', 0.2)]
         self.travel_agencies = [('Balslev', 0.125), ('TUI', 0.125), ('Norsktur', 0.125), ('Solfaktor', 0.125),
                                 ('Ving', 0.125), ('Charter', 0.125), ('Apollo', 0.125), ('Expedia', 0.125)]
-        
+
         return
 
     def get_travel_agency(self) -> str:
@@ -636,8 +636,8 @@ class GenerateStatusInformation:
 
     def __init__(self) -> None:
         self.passenger_statuses = [('no show', 0.02), ('cancelled', 0.08), ('showed', 0.9)]
-        
-        return 
+
+        return
 
     def get_passenger_status(self) -> str:
         """
@@ -746,8 +746,8 @@ class GenerateSeatInformation:
 
     def __init__(self) -> None:
         self.seat_letters = ['A', 'B', 'C', 'D', 'E', 'F']
-        
-        return 
+
+        return
 
     def get_seat(self) -> str:
         """
@@ -942,8 +942,8 @@ class GeneratePassengerInformation:
 
     def __init__(self) -> None:
         self.amounts = [(1, 0.4), (2, 0.2), (3, 0.2), (4, 0.1), (randint(5, 10), 0.1)]
-        
-        return 
+
+        return
 
     def get_amount_of_passengers(self) -> int:
         """
@@ -965,7 +965,7 @@ class GeneratePassengerInformation:
 
 def create_random_record(pnr_number: int) -> dict:
     """
-        Generates a PNR record. This record contains the travel information of one order, which is the following
+        Generates a Passenger Number Record. This record contains the travel information of one order, which is the following
         information:
             - PNR Number
             - Payment Information
@@ -1003,7 +1003,7 @@ def create_random_record(pnr_number: int) -> dict:
             - pnr_number (int) : The PNR number.
 
         Returns:
-            pnr_record (dict) : A record of one order.
+            record (dict) : A record of one order.
     """
 
     gen_payment_information = GeneratePaymentInformation()
@@ -1042,7 +1042,7 @@ def create_random_record(pnr_number: int) -> dict:
     passenger_seats = gen_seat.get_seats(passenger_amount)
     passenger_luggage = gen_luggage.get_passengers_luggage(passenger_amount)
 
-    pnr_record = {'PNR Number': pnr_number,
+    record = {'PNR Number': pnr_number,
                   'Payment Information': {'Ticket Number': ticket_number,
                                           'Date': order_datetime.strftime("%d/%m/%Y"),
                                           'Name': orderer_name,
@@ -1079,7 +1079,7 @@ def create_random_record(pnr_number: int) -> dict:
                                  }
                   }
 
-    return pnr_record
+    return record
 
 
 def run(size: int) -> None:
@@ -1089,11 +1089,11 @@ def run(size: int) -> None:
 
     for _ in range(number_of_records):
         pnr_number = next(gen_pnr_number)
-        pnr_record = create_random_record(pnr_number)
-        pnr_record_path = records_directory() / f'record{pnr_number}.json'
+        record = create_random_record(pnr_number)
+        record_path = records_directory() / f'record{pnr_number}.json'
 
-        with pnr_record_path.open('w') as f:
-            dump(pnr_record, f, indent=4)
+        with record_path.open('w') as f:
+            dump(record, f, indent=4)
             f.close()
 
     return

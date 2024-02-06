@@ -44,7 +44,7 @@ from Oblivious_Private_Database_Search.getters import (get_server_record_pointer
 
 # Server imports.
 from Oblivious_Private_Database_Search.Server.Utilities.key_stream_generator import get_key_stream
-from Oblivious_Private_Database_Search.Server.Utilities.Data_Generation.generate_pnr_records import run as generate_pnr_records
+from Oblivious_Private_Database_Search.Server.Utilities.Data_Generation.generate_passenger_number_records import run as generate_passenger_number_records
 from Oblivious_Private_Database_Search.Server.Utilities.semantic_indexing import run as create_semantic_indexing
 from Oblivious_Private_Database_Search.Server.Utilities.inverted_index_matrix import run as create_inverted_index_matrix
 from Oblivious_Private_Database_Search.Server.Utilities.record_encoder import encode_record
@@ -97,7 +97,7 @@ class Utilities:
 
         return
 
-    def generate_pnr_records(self) -> None:
+    def generate_records(self) -> None:
         """
             Generates the PNR records.
 
@@ -109,7 +109,7 @@ class Utilities:
                 -
         """
 
-        generate_pnr_records(number_of_records())
+        generate_passenger_number_records(number_of_records())
 
         # Creates a list of pointers of the records and shuffles them.
         record_paths = [path for path in records_directory().glob('*') if

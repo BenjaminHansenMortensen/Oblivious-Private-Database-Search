@@ -102,3 +102,6 @@ def main() -> None:
     client.kill()
 
     return
+
+
+main()

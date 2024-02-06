@@ -172,7 +172,7 @@ def get_hex_block_size() -> int:
 
 def get_records_directory() -> Path:
     """ Getter for the records_directory variable. """
-    records_directory = get_server_directory() / 'PNR_Records'
+    records_directory = get_server_directory() / 'Records'
     return records_directory
 
 
@@ -184,7 +184,7 @@ def get_excluded_records() -> list:
 
 def get_encrypted_records_directory() -> Path:
     """ Getter for the encrypted_records_directory variable. """
-    encrypted_records_directory = get_server_directory() / 'Encrypted_PNR_Records'
+    encrypted_records_directory = get_server_directory() / 'Encrypted_Records'
     return encrypted_records_directory
 
 
@@ -478,7 +478,7 @@ def get_mp_spdz_protocol() -> str:
 
 
 working_directory = Path(__file__).parent
-mp_spdz_directory = None
+mp_spdz_directory = working_directory.parent.parent.parent.parent / 'mp-spdz-0.3.8'
 server_ip = 'localhost'
 server_port = 5500
 client_ip = 'localhost'

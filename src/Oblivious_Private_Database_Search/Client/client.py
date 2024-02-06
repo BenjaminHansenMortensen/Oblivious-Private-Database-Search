@@ -379,8 +379,6 @@ class Communicator(Utilities):
         if swap:
             masked_record_a, masked_record_b = masked_record_b, masked_record_a
 
-        if len(masked_record_a) == self.HEADER:
-            print(masked_record_a.decode(self.FORMAT).strip(chr(0)))
         masked_record_a = self.xor(masked_record_a, encryption_key_stream_a)
         masked_record_b = self.xor(masked_record_b, encryption_key_stream_b)
 

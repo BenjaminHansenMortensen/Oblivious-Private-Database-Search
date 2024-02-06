@@ -61,7 +61,7 @@ def main() -> None:
         clean_up_files()
 
         # Initializes the database with PNR records.
-        server.generate_pnr_records()
+        server.generate_records()
 
         # Requests dummy items from the client to fill the database to the required size.
         server.send_number_of_dummy_items()
@@ -90,3 +90,6 @@ def main() -> None:
     server.kill()
 
     return
+
+
+main()

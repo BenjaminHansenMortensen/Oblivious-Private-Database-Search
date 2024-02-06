@@ -1,3 +1,7 @@
+""" Runs the applicaiton. """
+
+
+# Imports.
 from subprocess import run, Popen, PIPE
 from json import load
 from pathlib import Path
@@ -46,7 +50,7 @@ from Proof_of_Concept.getters import (get_excluded_records as
 
 
 # Client and Server imports.
-from Proof_of_Concept.Server.Utilities.Data_Generation.generate_pnr_records import run as generate_data
+from Proof_of_Concept.Server.Utilities.Data_Generation.generate_passenger_number_records import run as generate_data
 from Proof_of_Concept.Server.Utilities.indexing import run as generate_indexing
 from Proof_of_Concept.Server.Utilities.index_integer_encoder import run as encode_database_and_indexing
 from Proof_of_Concept.Server.Utilities.inverted_index_matrix import run as generate_inverse_index_matrix
@@ -213,7 +217,7 @@ def main() -> None:
 
     clean_up_files()
 
-    use_inverted_index_matrix = input("User an inverted index matrix for record indexing?: (y/n) ")
+    use_inverted_index_matrix = input("Use an inverted index matrix for record indexing?: (y/n) ")
 
     if use_inverted_index_matrix == 'y':
         use_inverted_index_matrix = True

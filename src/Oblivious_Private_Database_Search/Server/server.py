@@ -369,6 +369,7 @@ class Communicator(Utilities):
         mask_b, encryption_key_b, nonce_b = get_key_stream()
         mask_c, encryption_key_c, nonce_c = get_key_stream()
         mask_d, encryption_key_d, nonce_d = get_key_stream()
+        mask_e, encryption_key_e, nonce_e = get_key_stream()
 
         length_of_record = number_of_bytes() * number_of_blocks()
 
@@ -384,14 +385,14 @@ class Communicator(Utilities):
         masked_record_a = connection.recv(length_of_record)
         masked_record_b = connection.recv(length_of_record)
 
-        connection.sendall(self.xor(masked_record_a, mask_a))
-        connection.sendall(self.xor(masked_record_b, mask_b))
+        connection.sendall(self.xor(self.xor(masked_record_a, mask_a), mask_e))
+        connection.sendall(self.xor(self.xor(masked_record_b, mask_b), mask_e))
 
         masked_record_a = connection.recv(length_of_record)
         masked_record_b = connection.recv(length_of_record)
 
-        encrypted_record_a = self.xor(self.xor(masked_record_a, mask_a), mask_c)
-        encrypted_record_b = self.xor(self.xor(masked_record_b, mask_b), mask_d)
+        encrypted_record_a = self.xor(self.xor(self.xor(masked_record_a, mask_a), mask_c), mask_e)
+        encrypted_record_b = self.xor(self.xor(self.xor(masked_record_b, mask_b), mask_d), mask_e)
 
         self.write_encrypted_record(index_a, index_b, encrypted_record_a, encrypted_record_b)
 

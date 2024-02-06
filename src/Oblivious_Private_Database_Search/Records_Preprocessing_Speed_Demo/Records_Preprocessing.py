@@ -77,6 +77,7 @@ def encrypt_records(swap: bool, index_a: int, index_b: int, decrypt_first: bool)
     mask_b = aes_128_ctr()
     mask_c = aes_128_ctr()
     mask_d = aes_128_ctr()
+    mask_e = aes_128_ctr()
 
     masked_record_a = xor(record_a, mask_a)
     masked_record_b = xor(record_b, mask_b)
@@ -108,8 +109,8 @@ def encrypt_records(swap: bool, index_a: int, index_b: int, decrypt_first: bool)
     masked_record_a = xor(masked_record_a, encryption_key_stream_c)
     masked_record_b = xor(masked_record_b, encryption_key_stream_d)
 
-    masked_record_a = xor(masked_record_a, mask_a)
-    masked_record_b = xor(masked_record_b, mask_b)
+    masked_record_a = xor(xor(masked_record_a, mask_a), mask_e)
+    masked_record_b = xor(xor(masked_record_b, mask_b), mask_e)
 
     masked_record_a = xor(masked_record_a, encryption_key_stream_c)
     masked_record_b = xor(masked_record_b, encryption_key_stream_d)
@@ -120,8 +121,8 @@ def encrypt_records(swap: bool, index_a: int, index_b: int, decrypt_first: bool)
     masked_record_a = xor(masked_record_a, encryption_key_stream_e)
     masked_record_b = xor(masked_record_b, encryption_key_stream_f)
 
-    masked_record_a = xor(xor(masked_record_a, mask_a), mask_c)
-    masked_record_b = xor(xor(masked_record_b, mask_b), mask_d)
+    masked_record_a = xor(xor(xor(masked_record_a, mask_a), mask_c), mask_e)
+    masked_record_b = xor(xor(xor(masked_record_b, mask_b), mask_d), mask_e)
 
     return
 

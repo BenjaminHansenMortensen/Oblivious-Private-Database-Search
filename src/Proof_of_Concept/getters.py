@@ -181,7 +181,7 @@ def get_server_utilities_directory() -> Path:
 
 def get_records_directory() -> Path:
     """ Getter for the records_directory variable. """
-    records_directory = get_server_directory() / 'PNR_Records'
+    records_directory = get_server_directory() / 'Records'
     return records_directory
 
 
