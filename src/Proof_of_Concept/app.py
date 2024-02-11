@@ -217,12 +217,7 @@ def main() -> None:
 
     clean_up_files()
 
-    use_inverted_index_matrix = input("Use an inverted index matrix for record indexing?: (y/n) ")
-
-    if use_inverted_index_matrix == 'y':
-        use_inverted_index_matrix = True
-    else:
-        use_inverted_index_matrix = False
+    use_inverted_index_matrix = False
 
     chdir(Path.cwd())
 

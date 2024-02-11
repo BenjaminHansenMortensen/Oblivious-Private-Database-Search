@@ -11,7 +11,7 @@ from Proof_of_Concept.getters import (get_client_mp_spdz_output_path as
                                       mp_spdz_output_path)
 
 
-def read_file(file_path: Path | str) -> list[int]:
+def read_file(file_path: Path | str) -> list[list[int]]:
     """
         Reads the integer encoded file.
 
@@ -20,7 +20,7 @@ def read_file(file_path: Path | str) -> list[int]:
 
         Returns:
             :raises TypeError
-            - contents (list[int]) : The contents of the file.
+            - contents (list[list[int]]) : The contents of the file.
     """
 
     try:
@@ -31,7 +31,7 @@ def read_file(file_path: Path | str) -> list[int]:
         raise TypeError('Cannot covert output path to Path object')
 
     with file_path.open(mode='r') as f:
-        contents = load(f)
+        contents = eval(f.read())
         f.close()
 
     return contents
@@ -131,7 +131,8 @@ def run() -> None:
 
     encoded_record_path = mp_spdz_output_path().parent / f'{mp_spdz_output_path().name}-P0-0'
     contents = read_file(encoded_record_path)
-    files = decode_file(contents)
-    write_file(files, retrieved_records_path())
+    for content in contents:
+        file = decode_file(content)
+        write_file(file, retrieved_records_path())
 
     return
