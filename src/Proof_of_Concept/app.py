@@ -212,6 +212,3 @@ def main() -> None:
     decode_retrieval()
 
     return
-
-
-main()
