@@ -112,30 +112,23 @@ def setup_directories() -> None:
     return
 
 
-def update_mpc_script(use_inverted_index_matrix: bool) -> None:
+def update_mpc_script() -> None:
     """
         Updates the .mpc script with the values required to take the database and indexing as inputs.
 
         Parameters:
-            - use_inverted_index_matrix (bool) : User's response to whether to use an inverted index matrix or not.
+            -
 
         Returns:
             :raises
             -
     """
 
-    with inverted_index_matrix_path().open('r') as f:
-        inverted_index_matrix = load(f)
-        f.close()
-
     with indexing_path().open('r') as f:
         indexing = load(f)
         f.close()
 
-    if not use_inverted_index_matrix:
-        number_of_indices = len(indexing.keys())
-    else:
-        number_of_indices = len(inverted_index_matrix.keys())
+    number_of_indices = len(indexing.keys())
 
     number_of_files = database_size()
 
@@ -143,25 +136,12 @@ def update_mpc_script(use_inverted_index_matrix: bool) -> None:
         script = f.read()
         f.close()
 
-    pointer_set_size = get_size_of_largest_set_of_pointers(inverted_index_matrix)
     attribute_set_size = get_size_of_largest_set_of_pointers(indexing)
 
     script = sub(r'number_of_indices = \d*', f'number_of_indices = {number_of_indices}', script)
     script = sub(r'number_of_files = \d*', f'number_of_files = {number_of_files}', script)
     script = sub(r'file_size_length_upper_bound = \d*', f'file_size_length_upper_bound = {records_length_upper_bound()}', script)
-    script = sub(r'size_of_set_of_pointers = \d*', f'size_of_set_of_pointers = {pointer_set_size}', script)
     script = sub(r'size_of_set_of_attributes = \d*', f'size_of_set_of_attributes = {attribute_set_size}', script)
-
-    if not use_inverted_index_matrix:
-        script = sub(r'#test_searching_retrieval\(\)[^:]', f'test_searching_retrieval()\n', script)
-        script = sub(r'[^#]test_inverse_searching_retrieval\(\)[^:]', f'\n#test_inverse_searching_retrieval()\n', script)
-        script = sub(r'[^#]test_inverse_searching_oram_retrival\(\)[^:]', f'\n#test_inverse_searching_oram_retrival()\n', script)
-        script = sub(r'[^#]test_inverse_searching_oram_retrival_oram\(\)[^:]', f'\n#test_inverse_searching_oram_retrival_oram()\n', script)
-    else:
-        script = sub(r'[^#]test_searching_retrieval\(\)[^:]', f'\n#test_searching_retrieval()\n', script)
-        script = sub(r'#test_inverse_searching_retrieval\(\)[^:]', f'test_inverse_searching_retrieval()\n', script)
-        script = sub(r'[^#]test_inverse_searching_oram_retrival\(\)[^:]', f'\n#test_inverse_searching_oram_retrival()\n', script)
-        script = sub(r'[^#]test_inverse_searching_oram_retrival_oram\(\)[^:]', f'\n#test_inverse_searching_oram_retrival_oram()\n', script)
 
     with open('../MP_SPDZ_Scripts/proof_of_concept.mpc', 'w') as f:
         f.write(script)
@@ -217,24 +197,21 @@ def main() -> None:
 
     clean_up_files()
 
-    use_inverted_index_matrix = False
-
     chdir(Path.cwd())
 
     setup_directories()
 
     generate_data(database_size())
     generate_indexing()
-    generate_inverse_index_matrix()
-    if not use_inverted_index_matrix:
-        encode_database_and_indexing()
-    else:
-        encode_database_and_inverse_index_matrix()
+    encode_database_and_indexing()
 
     search_query = input("Search Query: ")
     encode_query(search_query)
-    update_mpc_script(use_inverted_index_matrix)
+    update_mpc_script()
     compile_and_run_mp_spdz()
     decode_retrieval()
 
     return
+
+
+main()

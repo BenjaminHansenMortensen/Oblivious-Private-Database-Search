@@ -184,15 +184,13 @@ def retrieve_files(indices, indices_size):
     for i in range(indices_size):
         index = indices[i]
 
-        for j in range(number_of_files):
-            file_index = database[j][0]
+        file_index = database[i][0]
 
-            match = (index == file_index)
-            not_updated = (files[j][0] == 0)
+        match = (index == file_index)
 
-            for l in range(1, file_signature_length + file_size_length_upper_bound):
-                character = database[j][l]
-                files[j][l - 1] += match * character * not_updated
+        for l in range(1, file_signature_length + file_size_length_upper_bound):
+            character = database[i][l]
+            files[i][l - 1] = match * character
 
     return files
 
@@ -308,12 +306,12 @@ def test_inverse_searching_oram_retrival_oram():
 # Defining global variables
 
 index_length = 1
-number_of_indices = 4
+number_of_indices = 100
 size_of_set_of_pointers = 1
-size_of_set_of_attributes = 13
+size_of_set_of_attributes = 17
 
 file_signature_length = 1
-number_of_files = 4
+number_of_files = 100
 file_size_length_upper_bound = 6016
 
 # Inputs from parties

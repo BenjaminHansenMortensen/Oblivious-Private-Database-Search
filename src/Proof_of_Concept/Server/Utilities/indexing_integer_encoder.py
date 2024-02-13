@@ -47,15 +47,15 @@ def get_encoded_database(indexing: dict, base_path: Path | str) -> list[list[int
         raise TypeError('Dictionary is not encoded as string.')
 
     encoded_database = []
-    for file in indexing.keys():
+    for file_index in indexing.keys():
 
-        file_path = base_path / file
+        file_path = base_path / file_index
         with file_path.open(mode='r') as f:
             contents = f.read()
             f.close()
         integer_encoding = convert_file_to_integers(contents)
 
-        index = int(findall(r'\d+', file)[0])
+        index = int(findall(r'\d+', file_index)[0])
         encoded_database.append([index] + integer_encoding)
 
     return encoded_database

@@ -145,7 +145,6 @@ def get_contents(path: str | Path) -> list[str | Path]:
         raise TypeError('Cannot covert directory to Path object')
 
     contents = [path for path in directory.rglob('*') if path.name not in excluded_records()]
-    contents = sorted(contents, key=lambda x: int(findall(r'\d+', x.name)[0]))
 
     return contents
 
