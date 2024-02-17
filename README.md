@@ -1,4 +1,4 @@
-# Oblivious Private Database Search
+# Oblivious Private Database Search (INSECURE)
 
 Welcome to the Oblivious Private Database Search repository which implements a Selective Oblivious Transfer between
 a user and a mock passenger list register ([Kapittel 60. PNR-registeret](https://lovdata.no/dokument/SF/forskrift/2013-09-20-1097/kap60#kap60)). The implementation supports two types of searches on the PNR records
