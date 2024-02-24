@@ -5,7 +5,7 @@ from math import log
 from numpy import random
 
 # Local getters imports.
-from Oblivious_Private_Database_Search.getters import (get_database_size as
+from application.getters import (get_database_size as
                                                        database_size)
 
 

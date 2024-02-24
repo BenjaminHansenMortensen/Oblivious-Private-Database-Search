@@ -7,38 +7,38 @@ from socket import socket, AF_INET, SOCK_STREAM, SOL_SOCKET, SO_REUSEADDR, timeo
 from ssl import SSLContext, PROTOCOL_TLS_CLIENT, PROTOCOL_TLS_SERVER, SSLSocket
 
 # Local getter imports.
-from Oblivious_Private_Database_Search.getters import (get_server_ip as
+from application.getters import (get_server_ip as
                                                        server_ip)
-from Oblivious_Private_Database_Search.getters import (get_server_port as
+from application.getters import (get_server_port as
                                                        server_port)
-from Oblivious_Private_Database_Search.getters import (get_client_ip as
+from application.getters import (get_client_ip as
                                                        client_ip)
-from Oblivious_Private_Database_Search.getters import (get_client_port as
+from application.getters import (get_client_port as
                                                        client_port)
-from Oblivious_Private_Database_Search.getters import (get_number_of_blocks as
+from application.getters import (get_number_of_blocks as
                                                        number_of_blocks)
-from Oblivious_Private_Database_Search.getters import (get_number_of_bytes as
+from application.getters import (get_number_of_bytes as
                                                        number_of_bytes)
-from Oblivious_Private_Database_Search.getters import (get_database_size as
+from application.getters import (get_database_size as
                                                        database_size)
-from Oblivious_Private_Database_Search.getters import (get_number_of_records as
+from application.getters import (get_number_of_records as
                                                        number_of_records)
-from Oblivious_Private_Database_Search.getters import (get_number_of_dummy_items as
+from application.getters import (get_number_of_dummy_items as
                                                        number_of_dummy_items)
-from Oblivious_Private_Database_Search.getters import (get_server_networking_key_path as
+from application.getters import (get_server_networking_key_path as
                                                        server_networking_key_path)
-from Oblivious_Private_Database_Search.getters import (get_server_networking_certificate_path as
+from application.getters import (get_server_networking_certificate_path as
                                                        server_networking_certificate_path)
-from Oblivious_Private_Database_Search.getters import (get_client_networking_certificate_path as
+from application.getters import (get_client_networking_certificate_path as
                                                        client_networking_certificate_path)
-from Oblivious_Private_Database_Search.getters import (get_server_encrypted_inverted_index_matrix_directory as
+from application.getters import (get_server_encrypted_inverted_index_matrix_directory as
                                                        encrypted_inverted_index_matrix_directory)
-from Oblivious_Private_Database_Search.getters import (get_records_directory as
+from application.getters import (get_records_directory as
                                                        records_directory)
 
 # Server utility imports.
-from Oblivious_Private_Database_Search.Server.Utilities.server_utilities import Utilities
-from Oblivious_Private_Database_Search.Server.Utilities.key_stream_generator import get_key_stream
+from application.Server.Utilities.server_utilities import Utilities
+from application.Server.Utilities.key_stream_generator import get_key_stream
 
 
 class Communicator(Utilities):

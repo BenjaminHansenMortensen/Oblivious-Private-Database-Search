@@ -216,6 +216,6 @@ def get_mp_spdz_protocol() -> str:
 
 working_directory = Path(__file__).parent
 
-# Gets the MP-SPDZ directory from the Oblivious_Private_Database_Search getters.py
+# Gets the MP-SPDZ directory from the application getters.py
 from Oblivious_Private_Database_Search.getters import get_mp_spdz_directory
 mp_spdz_directory = get_mp_spdz_directory()

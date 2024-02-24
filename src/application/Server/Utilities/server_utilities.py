@@ -9,46 +9,46 @@ from random import shuffle
 from numpy import fromstring
 
 # Local getters imports.
-from Oblivious_Private_Database_Search.getters import (get_database_size as
+from application.getters import (get_database_size as
                                                        database_size)
-from Oblivious_Private_Database_Search.getters import (get_mp_spdz_protocol as
+from application.getters import (get_mp_spdz_protocol as
                                                        mp_spdz_protocol)
-from Oblivious_Private_Database_Search.getters import (get_encoding_base as
+from application.getters import (get_encoding_base as
                                                        encoding_base)
-from Oblivious_Private_Database_Search.getters import (get_mp_spdz_directory as
+from application.getters import (get_mp_spdz_directory as
                                                        mp_spdz_directory)
-from Oblivious_Private_Database_Search.getters import (get_working_directory as
+from application.getters import (get_working_directory as
                                                        working_directory)
-from Oblivious_Private_Database_Search.getters import (get_number_of_records as
+from application.getters import (get_number_of_records as
                                                        number_of_records)
-from Oblivious_Private_Database_Search.getters import (get_encrypted_records_directory as
+from application.getters import (get_encrypted_records_directory as
                                                        encrypted_records_directory)
-from Oblivious_Private_Database_Search.getters import (get_server_mp_spdz_input_path as
+from application.getters import (get_server_mp_spdz_input_path as
                                                        mp_spdz_input_path)
-from Oblivious_Private_Database_Search.getters import (get_server_mp_spdz_output_path as
+from application.getters import (get_server_mp_spdz_output_path as
                                                        mp_spdz_output_path)
-from Oblivious_Private_Database_Search.getters import (get_aes_128_ecb_with_circuit_mpc_script_path as
+from application.getters import (get_aes_128_ecb_with_circuit_mpc_script_path as
                                                        aes_128_ecb_mpc_script_path)
-from Oblivious_Private_Database_Search.getters import (get_inverted_index_matrix_encryption_key_path as
+from application.getters import (get_inverted_index_matrix_encryption_key_path as
                                                        inverted_index_matrix_encryption_key_path)
-from Oblivious_Private_Database_Search.getters import (get_server_semantic_indexing_path as
+from application.getters import (get_server_semantic_indexing_path as
                                                        semantic_indexing_path)
-from Oblivious_Private_Database_Search.getters import (get_semantic_search_mpc_script_path as
+from application.getters import (get_semantic_search_mpc_script_path as
                                                        semantic_search_mpc_script_path)
-from Oblivious_Private_Database_Search.getters import (get_records_directory as
+from application.getters import (get_records_directory as
                                                        records_directory)
-from Oblivious_Private_Database_Search.getters import (get_excluded_records as
+from application.getters import (get_excluded_records as
                                                        excluded_records)
-from Oblivious_Private_Database_Search.getters import (get_server_record_pointers_path as
+from application.getters import (get_server_record_pointers_path as
                                                        record_indexing_path)
 
 # Server imports.
-from Oblivious_Private_Database_Search.Server.Utilities.key_stream_generator import get_key_stream
-from Oblivious_Private_Database_Search.Server.Utilities.Data_Generation.generate_passenger_number_records import run as generate_passenger_number_records
-from Oblivious_Private_Database_Search.Server.Utilities.semantic_indexing import run as create_semantic_indexing
-from Oblivious_Private_Database_Search.Server.Utilities.inverted_index_matrix import run as create_inverted_index_matrix
-from Oblivious_Private_Database_Search.Server.Utilities.record_encoder import encode_record
-from Oblivious_Private_Database_Search.Server.Utilities.inverted_index_matrix_encryptor import run as encrypt_inverted_index_matrix
+from application.Server.Utilities.key_stream_generator import get_key_stream
+from application.Server.Utilities.Data_Generation.generate_passenger_number_records import run as generate_passenger_number_records
+from application.Server.Utilities.semantic_indexing import run as create_semantic_indexing
+from application.Server.Utilities.inverted_index_matrix import run as create_inverted_index_matrix
+from application.Server.Utilities.record_encoder import encode_record
+from application.Server.Utilities.inverted_index_matrix_encryptor import run as encrypt_inverted_index_matrix
 
 
 class Utilities:
@@ -345,21 +345,12 @@ class Utilities:
                                         "-OF", f"{mp_spdz_output_path()}"],
                                        stdout=PIPE, stderr=PIPE
                                        )
-        # Runs the empty party.
-        empty_party_mp_spdz_process = Popen([f"{mp_spdz_directory() / mp_spdz_protocol()}",
-                                             f"{mpc_script_name}",
-                                             "-p", "2",
-                                             '-h', f'{host_address}'],
-                                            stdout=PIPE, stderr=PIPE
-                                            )
 
         # Blocks until the process is finished and captures the standard out and standard error of the processes.
         server_output, server_error = server_mp_spdz_process.communicate()
-        empty_party_output, empty_party_error = empty_party_mp_spdz_process.communicate()
 
         # Terminates the processes.
         server_mp_spdz_process.kill()
-        empty_party_mp_spdz_process.kill()
 
         # Changes back to the original working directory.
         chdir(working_directory())

@@ -1,18 +1,18 @@
 """ Runs the server side of the application. """
 
 # Local getters imports.
-from Oblivious_Private_Database_Search.getters import working_directory_validation, mp_spdz_directory_validation
-from Oblivious_Private_Database_Search.getters import (get_encrypted_records_directory as
+from application.getters import working_directory_validation, mp_spdz_directory_validation
+from application.getters import (get_encrypted_records_directory as
                                                        encrypted_pnr_records_directory)
-from Oblivious_Private_Database_Search.getters import (get_excluded_records as
+from application.getters import (get_excluded_records as
                                                        excluded_records)
-from Oblivious_Private_Database_Search.getters import (get_records_directory as
+from application.getters import (get_records_directory as
                                                        records_directory)
-from Oblivious_Private_Database_Search.getters import (get_server_indexing_directory as
+from application.getters import (get_server_indexing_directory as
                                                        server_indexing_directory)
 
 # Server import.
-from Oblivious_Private_Database_Search.Server.server import Communicator as Server
+from application.Server.server import Communicator as Server
 
 
 def clean_up_files() -> None:

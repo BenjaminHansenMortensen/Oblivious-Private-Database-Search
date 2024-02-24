@@ -1,6 +1,6 @@
-from Oblivious_Private_Database_Search.getters import (get_embedding_dimension as
+from application.getters import (get_embedding_dimension as
                                                      embedding_dimension)
-from Oblivious_Private_Database_Search.getters import (get_number_of_records as
+from application.getters import (get_number_of_records as
                                                      number_of_records)
 
 

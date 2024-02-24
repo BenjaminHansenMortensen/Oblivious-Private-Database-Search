@@ -8,11 +8,11 @@ from sentence_transformers import SentenceTransformer
 from warnings import simplefilter
 
 # Local getter imports.
-from Oblivious_Private_Database_Search.getters import (get_server_semantic_indexing_path as
+from application.getters import (get_server_semantic_indexing_path as
                                                        server_semantic_indexing_path)
-from Oblivious_Private_Database_Search.getters import (get_embedding_model as
+from application.getters import (get_embedding_model as
                                                        embedding_model)
-from Oblivious_Private_Database_Search.getters import (get_float_to_integer_scalar as
+from application.getters import (get_float_to_integer_scalar as
                                                        float_to_integer_scalar)
 
 # Warning filtering.

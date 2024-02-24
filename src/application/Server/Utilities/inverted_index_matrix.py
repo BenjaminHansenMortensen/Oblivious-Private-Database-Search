@@ -5,7 +5,7 @@ from pathlib import Path
 from json import load, dump
 
 # Local getters imports.
-from Oblivious_Private_Database_Search.getters import (get_inverted_index_matrix_path as
+from application.getters import (get_inverted_index_matrix_path as
                                                        inverted_index_matrix_path)
 
 

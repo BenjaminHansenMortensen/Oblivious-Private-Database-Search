@@ -5,9 +5,9 @@ from os import urandom
 from cryptography.hazmat.primitives.ciphers import (Cipher, algorithms, modes)
 
 # Local getters imports.
-from Oblivious_Private_Database_Search.getters import (get_number_of_blocks as
+from application.getters import (get_number_of_blocks as
                                                        number_of_blocks)
-from Oblivious_Private_Database_Search.getters import (get_number_of_bytes as
+from application.getters import (get_number_of_bytes as
                                                        number_of_bytes)
 
 

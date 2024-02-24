@@ -1,5 +1,5 @@
-from Oblivious_Private_Database_Search.getters import get_block_size as block_size
-from Oblivious_Private_Database_Search.getters import get_number_of_blocks as number_of_blocks
+from application.getters import get_block_size as block_size
+from application.getters import get_number_of_blocks as number_of_blocks
 
 
 sb = sbits.get_type(block_size())

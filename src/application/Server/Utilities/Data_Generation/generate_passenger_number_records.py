@@ -11,9 +11,9 @@ from datetime import timedelta, datetime
 from json import dump
 
 # Local getters imports.
-from Oblivious_Private_Database_Search.getters import (get_records_directory as
+from application.getters import (get_records_directory as
                                                        records_directory)
-from Oblivious_Private_Database_Search.getters import (get_supplementary_data_directory as
+from application.getters import (get_supplementary_data_directory as
                                                        supplementary_data_directory)
 
 

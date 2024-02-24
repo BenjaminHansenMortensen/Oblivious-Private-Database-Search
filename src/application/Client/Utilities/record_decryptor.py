@@ -5,9 +5,9 @@ from json import dump
 from numpy import fromstring
 
 # Local getters imports.
-from Oblivious_Private_Database_Search.getters import (get_retrieved_records_directory as
+from application.getters import (get_retrieved_records_directory as
                                                        retrieved_records_directory)
-from Oblivious_Private_Database_Search.getters import (get_max_file_length as
+from application.getters import (get_max_file_length as
                                                        max_file_length)
 
 

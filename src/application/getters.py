@@ -473,12 +473,12 @@ def get_number_of_records() -> int:
 
 def get_mp_spdz_protocol() -> str:
     """ Getter for the mp_spdz_protocol variable. """
-    mp_spdz_protocol = 'replicated-bin-party.x'
+    mp_spdz_protocol = 'semi-party.x'
     return mp_spdz_protocol
 
 
 working_directory = Path(__file__).parent
-mp_spdz_directory = None
+mp_spdz_directory = Path('/home/mpc2/mp-spdz-0.3.8')
 server_ip = 'localhost'
 server_port = 5500
 client_ip = 'localhost'
