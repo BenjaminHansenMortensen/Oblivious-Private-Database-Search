@@ -9,15 +9,15 @@ from cryptography.hazmat.primitives.ciphers import (Cipher, algorithms, modes)
 
 # Local getters imports.
 from application.getters import (get_inverted_index_matrix_path as
-                                                       inverted_index_matrix_path)
+                                 inverted_index_matrix_path)
 from application.getters import (get_server_encrypted_inverted_index_matrix_directory as
-                                                       encrypted_inverted_index_matrix_directory)
+                                 encrypted_inverted_index_matrix_directory)
 from application.getters import (get_number_of_bytes as
-                                                       number_of_bytes)
+                                 number_of_bytes)
 from application.getters import (get_max_amount_of_attributes_per_record as
-                                                       max_amount_of_attributes_per_record)
+                                 max_amount_of_attributes_per_record)
 from application.getters import (get_encrypted_inverted_index_matrix_attribute_limit as
-                                                       encrypted_inverted_index_matrix_attribute_limit)
+                                 encrypted_inverted_index_matrix_attribute_limit)
 
 
 def aes_128_ecb(key: bytes, plaintext: bytes) -> str:

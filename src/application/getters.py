@@ -39,8 +39,11 @@ def mp_spdz_directory_validation() -> None:
 
     global mp_spdz_directory
 
-    if not mp_spdz_directory.is_dir() or not mp_spdz_directory.exists():
-        raise NotADirectoryError('The MP-SPDZ path is not valid.')
+    try:
+        if mp_spdz_directory.is_dir() or mp_spdz_directory.exists():
+            return
+    except Exception:
+        raise Exception('The MP-SPDZ path is not valid.')
 
 
 def get_server_ip() -> str:
@@ -478,7 +481,7 @@ def get_mp_spdz_protocol() -> str:
 
 
 working_directory = Path(__file__).parent
-mp_spdz_directory = Path('/home/mpc2/mp-spdz-0.3.8')
+mp_spdz_directory = None
 server_ip = 'localhost'
 server_port = 5500
 client_ip = 'localhost'

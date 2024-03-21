@@ -12,9 +12,9 @@ from json import dump
 
 # Local getters imports.
 from application.getters import (get_records_directory as
-                                                       records_directory)
+                                 records_directory)
 from application.getters import (get_supplementary_data_directory as
-                                                       supplementary_data_directory)
+                                 supplementary_data_directory)
 
 
 class GenerateNumber:
@@ -22,6 +22,7 @@ class GenerateNumber:
         Jf. § 60-5. 1.
         Generates a PNR-number for a record in the PNR-registry of an order.
     """
+
     def __iter__(self, init_number: int = -1):
         """
             Initializes the PNR-number
@@ -340,6 +341,7 @@ class GenerateAddress:
         Generates an Address. The address consists of a street name, zip code and city. Pick from a public database
         containing addresses from different states in the United States of America.
     """
+
     def __init__(self) -> None:
         self.states = ['CT', 'MA', 'VT', 'AL', 'AR', 'DC', 'FL', 'GA', 'KY', 'MD', 'OK', 'TN', 'AK', 'AZ', 'CA', 'CO']
 
@@ -370,6 +372,7 @@ class GeneratePaymentInformation:
         Jf. § 60-5. 6.
         Generates the Payment Information. This information is the vendor and the type of payment.
     """
+
     def __init__(self) -> None:
         self.vendors = ['Mastercard', 'Visa']
         self.payment_types = ['Credit', 'Debit']
@@ -529,9 +532,9 @@ class GenerateTravelPlan:
         elif not all(key in dataframe_keys for key in arrival_airport.keys().values):
             raise KeyError('Arrival airport have incorrect keys')
 
-        airplane_speed = 12   # 12 Kilometers per Minute
+        airplane_speed = 12  # 12 Kilometers per Minute
         additional_time = 15  # Additional time due to reduced speed on take off and landing
-        real_path_deviation = 1.3   # Time lost with the real flight path
+        real_path_deviation = 1.3  # Time lost with the real flight path
 
         departure_latitude = radians(departure_airport['latitude'].values[0])
         departure_longitude = radians(departure_airport['longitude'].values[0])
@@ -878,6 +881,7 @@ class GenerateLuggageInformation:
         corresponding weights in kilograms, the amount of checked luggage with their corresponding weights in kilograms,
         and the amount of special baggage with their corresponding weights in kilograms.
     """
+
     def __init__(self):
         self.cabin_luggage_amounts = [('*unknown*', 1)]
         self.checked_luggage_amounts = [(0, 0.45), (1, 0.3), (2, 0.1), (3, 0.05), (randint(4, 12), 0.1)]
@@ -965,8 +969,8 @@ class GeneratePassengerInformation:
 
 def create_random_record(pnr_number: int) -> dict:
     """
-        Generates a Passenger Number Record. This record contains the travel information of one order, which is the following
-        information:
+        Generates a Passenger Number Record. This record contains the travel information of one order, which is the
+        following information:
             - PNR Number
             - Payment Information
                 - Ticket Number
@@ -1043,41 +1047,41 @@ def create_random_record(pnr_number: int) -> dict:
     passenger_luggage = gen_luggage.get_passengers_luggage(passenger_amount)
 
     record = {'PNR Number': pnr_number,
-                  'Payment Information': {'Ticket Number': ticket_number,
-                                          'Date': order_datetime.strftime("%d/%m/%Y"),
-                                          'Name': orderer_name,
-                                          'Address': {'City': orderer_address[0],
-                                                      'Zip Code': orderer_address[1],
-                                                      'Street': orderer_address[2]
-                                                      },
-                                          'Phone Number': orderer_phone_number,
-                                          'Email': orderer_email,
-                                          'Vendor': payment_vendor,
-                                          'Type': payment_type,
-                                          'Bonus Program': order_bonus_program
-                                          },
-                  'Airline': airline,
-                  'Travel Agency': travel_agency,
-                  'Travel Plan': {f"Destination {i + 1}": {'IATA Code': travel_plan[i][0],
-                                                           'Airport Name': travel_plan[i][1],
-                                                           'City': travel_plan[i][2],
-                                                           'Time': travel_plan[i][3].strftime("%d/%m/%Y, %H:%M:%S"),
-                                                           } for i in range(travel_length)
+              'Payment Information': {'Ticket Number': ticket_number,
+                                      'Date': order_datetime.strftime("%d/%m/%Y"),
+                                      'Name': orderer_name,
+                                      'Address': {'City': orderer_address[0],
+                                                  'Zip Code': orderer_address[1],
+                                                  'Street': orderer_address[2]
+                                                  },
+                                      'Phone Number': orderer_phone_number,
+                                      'Email': orderer_email,
+                                      'Vendor': payment_vendor,
+                                      'Type': payment_type,
+                                      'Bonus Program': order_bonus_program
+                                      },
+              'Airline': airline,
+              'Travel Agency': travel_agency,
+              'Travel Plan': {f"Destination {i + 1}": {'IATA Code': travel_plan[i][0],
+                                                       'Airport Name': travel_plan[i][1],
+                                                       'City': travel_plan[i][2],
+                                                       'Time': travel_plan[i][3].strftime("%d/%m/%Y, %H:%M:%S"),
+                                                       } for i in range(travel_length)
 
-                                  },
-                  'Passengers': {f'Passenger {passenger + 1}': {'Name': passenger_names[passenger],
-                                                                'Status': {f'Destination {i + 1}':
-                                                                           passenger_statuses[passenger][i]
-                                                                           for i in range(travel_length)
-                                                                           },
-                                                                'Seat': passenger_seats[passenger],
-                                                                'Luggage': {'Cabin': passenger_luggage[passenger][0],
-                                                                            'Checked': passenger_luggage[passenger][1],
-                                                                            'Special': passenger_luggage[passenger][2]
-                                                                            }
-                                                                } for passenger in range(passenger_amount)
-                                 }
-                  }
+                              },
+              'Passengers': {f'Passenger {passenger + 1}': {'Name': passenger_names[passenger],
+                                                            'Status': {f'Destination {i + 1}':
+                                                                       passenger_statuses[passenger][i]
+                                                                       for i in range(travel_length)
+                                                                       },
+                                                            'Seat': passenger_seats[passenger],
+                                                            'Luggage': {'Cabin': passenger_luggage[passenger][0],
+                                                                        'Checked': passenger_luggage[passenger][1],
+                                                                        'Special': passenger_luggage[passenger][2]
+                                                                        }
+                                                            } for passenger in range(passenger_amount)
+                             }
+              }
 
     return record
 

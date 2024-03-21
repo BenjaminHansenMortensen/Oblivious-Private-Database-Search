@@ -9,34 +9,28 @@ from ssl import SSLContext, PROTOCOL_TLS_CLIENT, PROTOCOL_TLS_SERVER, SSLSocket
 
 # Local getter imports.
 from application.getters import (get_server_ip as
-                                                       server_ip)
+                                 server_ip)
 from application.getters import (get_server_port as
-                                                       server_port)
+                                 server_port)
 from application.getters import (get_client_ip as
-                                                       client_ip)
+                                 client_ip)
 from application.getters import (get_client_port as
-                                                       client_port)
-from application.getters import (get_number_of_blocks as
-                                                       number_of_blocks)
-from application.getters import (get_number_of_bytes as
-                                                       number_of_bytes)
+                                 client_port)
 from application.getters import (get_client_networking_key_path as
-                                                       client_networking_key_path)
+                                 client_networking_key_path)
 from application.getters import (get_client_networking_certificate_path as
-                                                       client_networking_certificate_path)
+                                 client_networking_certificate_path)
 from application.getters import (get_server_networking_certificate_path as
-                                                       server_networking_certificate_path)
+                                 server_networking_certificate_path)
 from application.getters import (get_client_encrypted_inverted_index_matrix_directory as
-                                                       encrypted_inverted_index_matrix_directory)
+                                 encrypted_inverted_index_matrix_directory)
 from application.getters import (get_client_number_of_dummy_items_path as
-                                                       number_of_dummy_items_path)
+                                 number_of_dummy_items_path)
 
 
 # Client utility imports.
 from application.Client.Utilities.client_utilities import Utilities
 from application.Client.Utilities.record_decryptor import run as decrypt_and_store_files
-from application.Client.Utilities.key_stream_generator import get_key_stream
-
 
 class Communicator(Utilities):
     """
@@ -325,13 +319,12 @@ class Communicator(Utilities):
         print(f'[SENT] {self.RECORDS_PREPROCESSING_FINISHED_MESSAGE} to server.')
 
         # Waits until the server disconnects.
-        self.wait(connection)
         connection.shutdown(SHUT_WR)
         connection.close()
 
         return
 
-    def send_indices_and_encrypt(self, connection: SSLSocket, swap: bool, index_a: int, index_b: int, decrypt_first: bool) -> None:
+    def send_indices_and_encrypt(self, connection: SSLSocket, swap: bool, index_a: int, index_b: int) -> None:
         """
             Obliviously sorts and encrypts two of the server's records with the client's key.
 
@@ -340,77 +333,50 @@ class Communicator(Utilities):
                 - swap (bool) : Indicator to whether the records should be swapped or not.
                 - index_a (int) : Index to a server side pointer to a record.
                 - index_b (int) : Index to a server side pointer to a record.
-                - decrypt_first (bool) : Signals to if the record is already encrypted.
+                - host_address (str) : The hostname of the party to host the MP-SPDZ execution.
+                - connection (SSLSocket) : Connection with the server.
 
             Returns:
                 :raises
                 -
         """
 
-        connection.sendall(self.add_padding(self.ENCRYPT_RECORDS_MESSAGE))
-
         # Sends which two records should be considered.
+        connection.sendall(self.add_padding(self.ENCRYPT_RECORDS_MESSAGE))
         connection.sendall(self.add_padding(str(index_a)))
         connection.sendall(self.add_padding(str(index_b)))
 
         # Obliviously encrypts and sorts the two of the server's records with the client's key.
-        encryption_key_stream_a, encryption_key_a, nonce_a = get_key_stream()
-        encryption_key_stream_b, encryption_key_b, nonce_b = get_key_stream()
-        encryption_key_stream_c, encryption_key_c, nonce_c = get_key_stream()
-        encryption_key_stream_d, encryption_key_d, nonce_d = get_key_stream()
-        encryption_key_stream_e, encryption_key_e, nonce_e = get_key_stream()
-        encryption_key_stream_f, encryption_key_f, nonce_f = get_key_stream()
+        host_address = self.SERVER_ADDR[0]
+        self.encrypt_records(swap, index_a, index_b, host_address)
 
-        length_of_record = number_of_bytes() * number_of_blocks()
+        return
 
-        if decrypt_first:
-            # Gets the decryption key streams and new encryption key streams.
-            decryption_key_stream_a = self.get_stored_encryption_key(index_a)
-            decryption_key_stream_b = self.get_stored_encryption_key(index_b)
+    def send_indices_and_reencrypt(self, connection: SSLSocket, swap: bool, index_a: int, index_b: int) -> None:
+        """
+            Obliviously sorts and re-encrypts two of the server's records with the client's key.
 
-            # Decrypts the received records.
-            masked_record_a = self.xor(connection.recv(length_of_record), decryption_key_stream_a)
-            masked_record_b = self.xor(connection.recv(length_of_record), decryption_key_stream_b)
-        else:
-            # Receives the records.
-            masked_record_a = connection.recv(length_of_record)
-            masked_record_b = connection.recv(length_of_record)
+            Parameters:
+                - connection (SSLSocket) : Connection with the server.
+                - swap (bool) : Indicator to whether the records should be swapped or not.
+                - index_a (int) : Index to a server side pointer to a record.
+                - index_b (int) : Index to a server side pointer to a record.
+                - host_address (str) : The hostname of the party to host the MP-SPDZ execution.
+                - connection (SSLSocket) : Connection with the server.
 
-        if swap:
-            masked_record_a, masked_record_b = masked_record_b, masked_record_a
+            Returns:
+                :raises
+                -
+        """
 
-        masked_record_a = self.xor(masked_record_a, encryption_key_stream_a)
-        masked_record_b = self.xor(masked_record_b, encryption_key_stream_b)
+        # Sends which two records should be considered.
+        connection.sendall(self.add_padding(self.REENCRYPT_RECORDS_MESSAGE))
+        connection.sendall(self.add_padding(str(index_a)))
+        connection.sendall(self.add_padding(str(index_b)))
 
-        connection.sendall(masked_record_a)
-        connection.sendall(masked_record_b)
-
-        masked_record_a = self.xor(connection.recv(length_of_record), encryption_key_stream_a)
-        masked_record_b = self.xor(connection.recv(length_of_record), encryption_key_stream_b)
-
-        if swap:
-            masked_record_a, masked_record_b = masked_record_b, masked_record_a
-
-        masked_record_a = self.xor(masked_record_a, encryption_key_stream_c)
-        masked_record_b = self.xor(masked_record_b, encryption_key_stream_d)
-
-        connection.sendall(masked_record_a)
-        connection.sendall(masked_record_b)
-
-        masked_record_a = self.xor(connection.recv(length_of_record), encryption_key_stream_c)
-        masked_record_b = self.xor(connection.recv(length_of_record), encryption_key_stream_d)
-
-        if swap:
-            masked_record_a, masked_record_b = masked_record_b, masked_record_a
-
-        masked_record_a = self.xor(masked_record_a, encryption_key_stream_e)
-        masked_record_b = self.xor(masked_record_b, encryption_key_stream_f)
-
-        connection.sendall(masked_record_a)
-        connection.sendall(masked_record_b)
-
-        # Writes the keys and nonces
-        self.write_encryption_keys([index_a, index_b], [encryption_key_e, encryption_key_f], [nonce_e, nonce_f])
+        # Obliviously re-encrypts and sorts the two of the server's records with the client's key.
+        host_address = self.SERVER_ADDR[0]
+        self.reencrypt_records(swap, index_a, index_b, host_address)
 
         return
 
@@ -509,7 +475,7 @@ class Communicator(Utilities):
             database_index = self.permuted_indices[index]
 
             # Gets the corresponding encryption key streams.
-            encryption_keys = self.get_stored_encryption_key(database_index)
+            encryption_keys = self.get_stored_key_stream(database_index)
             
             # Requests the encrypted record from the server.
             encrypted_records = self.request_encrypted_record(database_index)
@@ -535,7 +501,7 @@ class Communicator(Utilities):
             
         return
 
-    def request_encrypted_record(self, index: int) -> bytes:
+    def request_encrypted_record(self, index: int) -> list[str]:
         """
             Requests an encrypted record from the server.
 
@@ -563,7 +529,7 @@ class Communicator(Utilities):
         connection.shutdown(SHUT_WR)
         connection.close()
 
-        return bytes.fromhex(encrypted_record)
+        return encrypted_record.split(' ')
 
     def send_shutdown_message(self) -> None:
         """

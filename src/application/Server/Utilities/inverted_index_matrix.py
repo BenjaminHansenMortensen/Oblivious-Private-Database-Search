@@ -6,7 +6,7 @@ from json import load, dump
 
 # Local getters imports.
 from application.getters import (get_inverted_index_matrix_path as
-                                                       inverted_index_matrix_path)
+                                 inverted_index_matrix_path)
 
 
 def read_record(record_path: str | Path) -> dict:

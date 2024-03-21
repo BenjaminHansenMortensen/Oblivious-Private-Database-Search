@@ -6,12 +6,12 @@ build-backend = 'setuptools.build_meta'
 version = '1.0.0'
 requires-python = '>=3.10'
 license = {text = 'MIT License'}
-name = 'ObliviousPrivateDatabaseSearch'
-description = 'Implementation of oblivious private database search showcasing regular searching and semantic search of mock records.'
+name = 'PrivateDatabaseSearching'
+description = 'Implementation of private database searching showcasing regular searching and semantic search of mock records.'
 readme = 'README.md'
 dependencies = ['cryptography', 'names', 'random-address', 'sentence-transformers']
 
 [project.scripts]
-opds_setup = 'application.setup:main'
-opds_client = 'application.app_client:main'
-opds_server = 'application.app_server:main'
+pds_setup = 'application.setup:main'
+pds_client = 'application.app_client:main'
+pds_server = 'application.app_server:main'

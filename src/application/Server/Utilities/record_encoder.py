@@ -6,11 +6,11 @@ from re import sub
 
 # Local getters imports.
 from application.getters import (get_encoding_base as
-                                                       encoding_base)
+                                 encoding_base)
 from application.getters import (get_max_file_length as
-                                                       max_file_length)
+                                 max_file_length)
 from application.getters import (get_block_size as
-                                                       block_size)
+                                 block_size)
 
 
 def read_record(record_path: Path) -> str:
@@ -43,7 +43,6 @@ def add_padding(record: list[str]) -> list[str]:
 
         Parameters:
             - record (list[str]) : The list with the record contents.
-            - padded_length (int) : The desired total length of the record.
 
         Returns:
             :raises
@@ -61,7 +60,7 @@ def add_padding(record: list[str]) -> list[str]:
     return record
 
 
-def encode_record_as_hexadecimals(record_content: str) -> str:
+def encode_record_as_hexadecimals(record_content: str) -> list[str]:
     """
         Transforms a record into a list of hexadecimal by turning every character into its ascii hexadecimal value.
 
@@ -70,7 +69,7 @@ def encode_record_as_hexadecimals(record_content: str) -> str:
 
         Returns:
             :raises
-            - encode_record (str) = The record as hexadecimals.
+            - encode_record (list[str]) = The record as hexadecimals.
     """
 
     # Encodes each character of the record into hexadecimal ascii values.
@@ -80,7 +79,28 @@ def encode_record_as_hexadecimals(record_content: str) -> str:
 
     encoded_record = add_padding(encoded_record)
 
-    return ''.join(encoded_record)
+    return encoded_record
+
+
+def group(record: list[str]) -> str:
+    """
+        Groups the hexadecimal encoded characters into blocks.
+
+        Parameters:
+            - record (list[str]) : List with hexadecimals.
+
+        Returns:
+            :raises
+            - encode_record (str) = The record grouped into blocks.
+    """
+
+    # Groups the record into blocks.
+    encoded_record = []
+    for i in range(0, len(record), encoding_base()):
+        block = ''.join(record[i:i + encoding_base()])
+        encoded_record.append(block)
+
+    return ' '.join(encoded_record)
 
 
 def encode_record(record_path: Path) -> str:
@@ -100,5 +120,8 @@ def encode_record(record_path: Path) -> str:
     
     # Encodes the record.
     encoded_record = encode_record_as_hexadecimals(record_content)
+
+    # Formats the encoded record.
+    encoded_record = group(encoded_record)
 
     return encoded_record

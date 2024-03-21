@@ -5,56 +5,47 @@ from json import dump
 from numpy import fromstring
 
 # Local getters imports.
+from application.getters import (get_number_of_blocks as
+                                 number_of_blocks)
 from application.getters import (get_retrieved_records_directory as
-                                                       retrieved_records_directory)
+                                 retrieved_records_directory)
 from application.getters import (get_max_file_length as
-                                                       max_file_length)
+                                 max_file_length)
+from application.getters import (get_encoding_base as
+                                 encoding_base)
 
 
-def xor(bytes_a: bytes, bytes_b: bytes) -> bytes:
-    """
-        XORs two bytes objects.
-
-        Parameters:
-            - bytes_a (bytes) : Bytes object to be XORed
-            - bytes_b (bytes) : Bytes object to be XORed
-
-        Returns:
-            :raises
-            -
-
-    """
-    bytestring_a = fromstring(bytes_a, dtype='uint8')
-    bytestring_b = fromstring(bytes_b, dtype='uint8')
-
-    return (bytestring_a ^ bytestring_b).tostring()
-
-
-def decrypt_record(ciphertext: bytes, key_stream: bytes) -> bytes:
+def decrypt_record(ciphertexts: list[str], key_streams: list[str]) -> list[str]:
     """
         Decrypts a record.
 
         Parameters:
-            - ciphertexts (bytes) : The encrypted record.
-            - key_streams (bytes) : The decryption key streams.
+            - ciphertexts (list[str]) : The encrypted record.
+            - key_streams (list[str]) : The decryption key streams.
 
         Returns:
             :raises
-            - plaintexts (bytes) : The record.
+            - plaintexts (list[str]) : The record.
     """
 
     # Decrypts the record.
-    decrypted_record = xor(ciphertext, key_stream)
+    decrypted_record = []
+    for i in range(number_of_blocks()):
+        ciphertext = int(ciphertexts[i], 16)
+        key_stream = int(key_streams[i], 16)
+
+        plaintext = f'{(ciphertext ^ key_stream):0{32}x}'
+        decrypted_record.append(plaintext)
 
     return decrypted_record
 
 
-def decode_record(encoded_record: str) -> dict:
+def decode_record(encoded_record: list[str]) -> dict:
     """
         Decodes a record by decoding every hexadecimal ascii value into a character.
 
         Parameters:
-            - encoded_record (str) : The encoded record.
+            - encoded_record (list[str]) : The encoded record.
         Returns:
             :raises
             - record (dict) : The record.
@@ -66,7 +57,7 @@ def decode_record(encoded_record: str) -> dict:
     # Decodes hexadecimal ascii values to characters.
     record = ''
     for encoded_character in encoded_record:
-        ascii_value = int(encoded_character, 16)
+        ascii_value = int(encoded_character, encoding_base())
         if ascii_value != 0 and ascii_value != 128:
             record += chr(ascii_value)
 
@@ -96,13 +87,13 @@ def write_record(record: dict) -> None:
     return
 
 
-def run(encrypted_record: bytes, key_stream: bytes) -> None:
+def run(encrypted_record: list[str], key_stream: list[str]) -> None:
     """
         Writes the record.
 
         Parameters:
-            - encrypted_record (bytes) : The encrypted record.
-            - key_streams (bytes) : The corresponding decryption key streams.
+            - encrypted_record (list[str]) : The encrypted record.
+            - key_streams (list[str]) : The corresponding decryption key streams.
 
         Returns:
             :raises
@@ -111,7 +102,7 @@ def run(encrypted_record: bytes, key_stream: bytes) -> None:
 
     # Decrypts and writes the record.
     encoded_record = decrypt_record(encrypted_record, key_stream)
-    record = decode_record(encoded_record.hex())
+    record = decode_record(encoded_record)
     write_record(record)
 
     return

@@ -3,11 +3,11 @@
 # Local getters imports.
 from application.getters import working_directory_validation, mp_spdz_directory_validation
 from application.getters import (get_client_indexing_directory as
-                                                       client_indexing_directory)
+                                 client_indexing_directory)
 from application.getters import (get_records_encryption_key_streams_directory as
-                                                       records_encryption_key_streams_directory)
+                                 records_encryption_key_streams_directory)
 from application.getters import (get_retrieved_records_directory as
-                                                       retrieved_records_directory)
+                                 retrieved_records_directory)
 
 # Client imports.
 from application.Client.client import Communicator as Client

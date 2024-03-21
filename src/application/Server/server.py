@@ -8,37 +8,30 @@ from ssl import SSLContext, PROTOCOL_TLS_CLIENT, PROTOCOL_TLS_SERVER, SSLSocket
 
 # Local getter imports.
 from application.getters import (get_server_ip as
-                                                       server_ip)
+                                 server_ip)
 from application.getters import (get_server_port as
-                                                       server_port)
+                                 server_port)
 from application.getters import (get_client_ip as
-                                                       client_ip)
+                                 client_ip)
 from application.getters import (get_client_port as
-                                                       client_port)
-from application.getters import (get_number_of_blocks as
-                                                       number_of_blocks)
-from application.getters import (get_number_of_bytes as
-                                                       number_of_bytes)
-from application.getters import (get_database_size as
-                                                       database_size)
-from application.getters import (get_number_of_records as
-                                                       number_of_records)
+                                 client_port)
 from application.getters import (get_number_of_dummy_items as
-                                                       number_of_dummy_items)
+                                 number_of_dummy_items)
 from application.getters import (get_server_networking_key_path as
-                                                       server_networking_key_path)
+                                 server_networking_key_path)
 from application.getters import (get_server_networking_certificate_path as
-                                                       server_networking_certificate_path)
+                                 server_networking_certificate_path)
 from application.getters import (get_client_networking_certificate_path as
-                                                       client_networking_certificate_path)
+                                 client_networking_certificate_path)
+from application.getters import (get_sort_and_encrypt_with_circuit_mpc_script_path as
+                                 sort_and_encrypt_with_circuit_mpc_script_path)
+from application.getters import (get_sort_and_reencrypt_with_circuit_mpc_script_path as
+                                 sort_and_reencrypt_with_circuit_mpc_script_path)
 from application.getters import (get_server_encrypted_inverted_index_matrix_directory as
-                                                       encrypted_inverted_index_matrix_directory)
-from application.getters import (get_records_directory as
-                                                       records_directory)
+                                 encrypted_inverted_index_matrix_directory)
 
 # Server utility imports.
 from application.Server.Utilities.server_utilities import Utilities
-from application.Server.Utilities.key_stream_generator import get_key_stream
 
 
 class Communicator(Utilities):
@@ -331,25 +324,23 @@ class Communicator(Utilities):
 
         while (message := connection.recv(self.HEADER).decode(self.FORMAT).strip(chr(0))) != self.RECORDS_PREPROCESSING_FINISHED_MESSAGE:
             if message == self.ENCRYPT_RECORDS_MESSAGE:
-                self.record_encryption(connection)
+                self.mp_spdz_record_encryption(connection, sort_and_encrypt_with_circuit_mpc_script_path().stem)
             elif message == self.REENCRYPT_RECORDS_MESSAGE:
-                self.record_encryption(connection)
+                self.mp_spdz_record_encryption(connection, sort_and_reencrypt_with_circuit_mpc_script_path().stem)
 
         print(f'[RECEIVED] {message} from client.')
         self.write_encrypted_record_pointers()
         self.records_preprocessing_finished = True
 
-        # Disconnects when the records pre-processing is finished.
-        connection.sendall(self.add_padding(self.DISCONNECT_MESSAGE))
-
         return
 
-    def record_encryption(self, connection: SSLSocket) -> None:
+    def mp_spdz_record_encryption(self, connection: SSLSocket, mpc_script_name: str) -> None:
         """
             Obliviously encrypts, with the client's keys, two records of the client's choosing.
 
             Parameters:
                 - connection (SSLSocket) : Connection with the client.
+                - mp_spdz_script_name (str): Name of the .mpc script to be used.
 
             Returns:
                 :raises ValueError
@@ -359,42 +350,14 @@ class Communicator(Utilities):
         # Receives two indices from the client.
         index_a = int(connection.recv(self.HEADER).decode(self.FORMAT).strip(chr(0)))
         index_b = int(connection.recv(self.HEADER).decode(self.FORMAT).strip(chr(0)))
-        if index_a is None and index_b is None:
-            raise ValueError('The received indices are not valid.')
-
-        record_a, record_b = self.get_records(index_a, index_b)
+        connection.sendall(self.add_padding(self.DISCONNECT_MESSAGE))
 
         # Obliviously encrypts the requested records, with the client's key.
-        mask_a, encryption_key_a, nonce_a = get_key_stream()
-        mask_b, encryption_key_b, nonce_b = get_key_stream()
-        mask_c, encryption_key_c, nonce_c = get_key_stream()
-        mask_d, encryption_key_d, nonce_d = get_key_stream()
-        mask_e, encryption_key_e, nonce_e = get_key_stream()
-
-        length_of_record = number_of_bytes() * number_of_blocks()
-
-        connection.sendall(self.xor(record_a, mask_a))
-        connection.sendall(self.xor(record_b, mask_b))
-
-        masked_record_a = connection.recv(length_of_record)
-        masked_record_b = connection.recv(length_of_record)
-
-        connection.sendall(self.xor(self.xor(masked_record_a, mask_a), mask_c))
-        connection.sendall(self.xor(self.xor(masked_record_b, mask_b), mask_d))
-
-        masked_record_a = connection.recv(length_of_record)
-        masked_record_b = connection.recv(length_of_record)
-
-        connection.sendall(self.xor(self.xor(masked_record_a, mask_a), mask_e))
-        connection.sendall(self.xor(self.xor(masked_record_b, mask_b), mask_e))
-
-        masked_record_a = connection.recv(length_of_record)
-        masked_record_b = connection.recv(length_of_record)
-
-        encrypted_record_a = self.xor(self.xor(self.xor(masked_record_a, mask_a), mask_c), mask_e)
-        encrypted_record_b = self.xor(self.xor(self.xor(masked_record_b, mask_b), mask_d), mask_e)
-
-        self.write_encrypted_record(index_a, index_b, encrypted_record_a, encrypted_record_b)
+        if index_a is not None and index_b is not None:
+            address, port = self.ADDR
+            self.encrypt_records(index_a, index_b, mpc_script_name, address)
+        else:
+            raise ValueError('The received indices are not valid.')
 
         return
 

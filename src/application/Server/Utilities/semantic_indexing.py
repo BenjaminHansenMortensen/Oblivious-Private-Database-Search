@@ -9,11 +9,11 @@ from warnings import simplefilter
 
 # Local getter imports.
 from application.getters import (get_server_semantic_indexing_path as
-                                                       server_semantic_indexing_path)
+                                 server_semantic_indexing_path)
 from application.getters import (get_embedding_model as
-                                                       embedding_model)
+                                 embedding_model)
 from application.getters import (get_float_to_integer_scalar as
-                                                       float_to_integer_scalar)
+                                 float_to_integer_scalar)
 
 # Warning filtering.
 simplefilter('ignore', UserWarning)

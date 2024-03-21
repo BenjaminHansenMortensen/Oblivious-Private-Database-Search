@@ -3,13 +3,13 @@
 # Local getters imports.
 from application.getters import working_directory_validation, mp_spdz_directory_validation
 from application.getters import (get_encrypted_records_directory as
-                                                       encrypted_pnr_records_directory)
+                                 encrypted_pnr_records_directory)
 from application.getters import (get_excluded_records as
-                                                       excluded_records)
+                                 excluded_records)
 from application.getters import (get_records_directory as
-                                                       records_directory)
+                                 records_directory)
 from application.getters import (get_server_indexing_directory as
-                                                       server_indexing_directory)
+                                 server_indexing_directory)
 
 # Server import.
 from application.Server.server import Communicator as Server
