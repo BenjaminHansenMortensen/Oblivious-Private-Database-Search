@@ -16,11 +16,11 @@ from application.getters import (get_hex_block_size as
 def aes_128_ctr(key: bytes, plaintext: bytes, nonce: bytes) -> list[str]:
     """
         Generates a new key stream by encrypting a nonce under some key using AES-128bit in CTR mode, then xor it with
-        an all zero bit plaintext.
+        an all zero bit ciphertext.
 
         Parameters:
             - key (bytes) : Encryption key.
-            - plaintext (bytes) : Plaintext to be encrypted.
+            - ciphertext (bytes) : Plaintext to be encrypted.
             - nonce (bytes) : Number used once.
 
         Returns:
@@ -34,7 +34,7 @@ def aes_128_ctr(key: bytes, plaintext: bytes, nonce: bytes) -> list[str]:
         modes.CTR(nonce),
     ).encryptor()    # Collects enough key streams to encrypt a record.
 
-    # Encrypt the all zero plaintext and get the key stream.
+    # Encrypt the all zero ciphertext and get the key stream.
     key_stream = (encryptor.update(plaintext) + encryptor.finalize()).hex()
 
     key_streams = []

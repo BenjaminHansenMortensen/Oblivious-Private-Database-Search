@@ -14,8 +14,6 @@ from application.getters import (get_server_encrypted_inverted_index_matrix_dire
                                  encrypted_inverted_index_matrix_directory)
 from application.getters import (get_number_of_bytes as
                                  number_of_bytes)
-from application.getters import (get_max_amount_of_attributes_per_record as
-                                 max_amount_of_attributes_per_record)
 from application.getters import (get_encrypted_inverted_index_matrix_attribute_limit as
                                  encrypted_inverted_index_matrix_attribute_limit)
 
@@ -26,7 +24,7 @@ def aes_128_ecb(key: bytes, plaintext: bytes) -> str:
 
         Parameters:
             - key (bytes) : The encryption key.
-            - plaintext (bytes) : The plaintext to be encrypted.
+            - ciphertext (bytes) : The ciphertext to be encrypted.
 
         Returns:
             :raises
@@ -39,30 +37,34 @@ def aes_128_ecb(key: bytes, plaintext: bytes) -> str:
         modes.ECB(),
     ).encryptor()
 
-    # Encrypts the plaintext with the key.
+    # Encrypts the ciphertext with the key.
     ciphertext = encryptor.update(plaintext) + encryptor.finalize()
 
     return ciphertext.hex()
 
 
-def encrypt_attribute(attribute: str, encryption_key: bytes) -> str:
+def encrypt(plaintext: str, encryption_key: bytes, create_digest: bool = True) -> str:
     """
-        Encrypts an attribute by hashing it and encrypting it as the plaintext input to a block cipher.
+        Encrypts a ciphertext by hashing it and encrypting it as the ciphertext input to a block cipher.
 
         Parameters:
-            - attribute (str) : The attribute to be encrypted.
-            - encryption_key (bytes) : The encryption key.
+            - plaintext (str) : The plaintext to be encrypted.
+            - encryption_key1 (bytes) : The encryption key.
 
         Returns:
             :raises
-            - encrypted_attribute (str) = The encrypted attribute.
+            - ciphertext (str) = The encrypted plaintext.
     """
 
-    # Hashes the
-    attribute_digest = shake_128(attribute.encode('ASCII')).digest(number_of_bytes())
-    encrypted_attribute = aes_128_ecb(encryption_key, attribute_digest)
+    if create_digest:
+        # Hashes the plaintext
+        plaintext = shake_128(plaintext.encode('ASCII')).digest(number_of_bytes())
+    else:
+        plaintext = str.encode(plaintext).ljust(number_of_bytes(), b'\0')
 
-    return encrypted_attribute
+    ciphertext = aes_128_ecb(encryption_key, plaintext)
+
+    return ciphertext
 
 
 def get_number_of_attributes_per_record(inverted_index_matrix: dict[str, list[str]]) -> dict[str, int]:
@@ -90,15 +92,15 @@ def get_number_of_attributes_per_record(inverted_index_matrix: dict[str, list[st
 
 
 def encrypt_and_pad_inverted_index_matrix(inverted_index_matrix: dict[str, list[str]],
-                                          encryption_key: bytes) -> dict[str, list[str]]:
+                                          encryption_key1: bytes, encryption_key2: bytes) -> dict[str, list[str]]:
     """
         Encrypts the attributes (dictionary keys) of the inverted index matrix, and pads it so that every record index
         has the same amount of attributes.
 
         Parameters:
             - inverted_index_matrix (dict[str, list[str]]) : The inverted index matrix to be encoded.
-            - encryption_key (bytes) : The encryption key.
-
+            - encryption_key1 (bytes) : The key for encrypting the attributes.
+            - encryption_key2 (bytes) : The key for encrypting the indices.
 
         Returns:
             :raises
@@ -106,21 +108,28 @@ def encrypt_and_pad_inverted_index_matrix(inverted_index_matrix: dict[str, list[
 
     """
 
+    length_of_largest_set_of_indices = max(map(len, inverted_index_matrix.values()))
+
     # Encrypts the attributes of the inverse index matrix.
     encrypted_inverted_index_matrix = {}
     for attribute in inverted_index_matrix.keys():
 
-        encrypted_attribute = encrypt_attribute(attribute, encryption_key)
-        encrypted_inverted_index_matrix[encrypted_attribute] = inverted_index_matrix[attribute]
+        encrypted_attribute = encrypt(attribute, encryption_key1)
+        indices = inverted_index_matrix[attribute]
 
-    attributes_per_index = get_number_of_attributes_per_record(inverted_index_matrix)
+        encrypted_indices = []
+        encrypted_attribute_key2 = encrypt(attribute, encryption_key2)
+        for index in indices:
+            encrypted_index = encrypt(index, bytes.fromhex(encrypted_attribute_key2), False)
+            encrypted_indices.append(encrypted_index)
 
-    # Adds padding so that every record index is referenced the same amount of times.
-    for record_index in attributes_per_index.keys():
-        for i in range(max_amount_of_attributes_per_record() - attributes_per_index[record_index]):
-            dummy_attribute = urandom(number_of_bytes())
-            encrypted_dummy_attribute = aes_128_ecb(encryption_key, dummy_attribute)
-            encrypted_inverted_index_matrix[encrypted_dummy_attribute] = [record_index]
+        dummy_index = -1
+        for i in range(length_of_largest_set_of_indices - len(indices)):
+            encrypted_index = encrypt(f'{dummy_index}', bytes.fromhex(encrypted_attribute_key2), False)
+            encrypted_indices.append(encrypted_index)
+            dummy_index -= 1
+
+        encrypted_inverted_index_matrix[encrypted_attribute] = encrypted_indices
 
     return encrypted_inverted_index_matrix
 
@@ -185,7 +194,7 @@ def write_encrypted_inverted_index_matrix(encrypted_inverted_index_matrix: dict[
     return
 
 
-def run() -> str:
+def run() -> tuple[str, str]:
     """
         Encrypts the attributes of the inverted index matrix.
 
@@ -194,7 +203,7 @@ def run() -> str:
 
         Returns:
             :raises
-            - encryption_key (str) = The encryption key as hexadecimal.
+            - encryption_key1 (str) = The encryption key as hexadecimal.
     """
 
     # reads the inverted index matrix.
@@ -202,10 +211,12 @@ def run() -> str:
         inverted_index_matrix = load(file)
 
     # Gets a new encryption key.
-    encryption_key = urandom(number_of_bytes())
+    encryption_key1 = urandom(number_of_bytes())
+    encryption_key2 = urandom(number_of_bytes())
 
     # Encrypts and pads the inverted index matrix.
-    encrypted_inverted_index_matrix = encrypt_and_pad_inverted_index_matrix(inverted_index_matrix, encryption_key)
+    encrypted_inverted_index_matrix = encrypt_and_pad_inverted_index_matrix(inverted_index_matrix,
+                                                                            encryption_key1, encryption_key2)
 
     # Shuffles the encrypted inverted index matrix.
     encrypted_inverted_index_matrix = shuffle_dictionary(encrypted_inverted_index_matrix)
@@ -213,4 +224,4 @@ def run() -> str:
     # Writes the encrypted inverted index matrix.
     write_encrypted_inverted_index_matrix(encrypted_inverted_index_matrix)
 
-    return encryption_key.hex()
+    return encryption_key1.hex(), encryption_key2.hex()

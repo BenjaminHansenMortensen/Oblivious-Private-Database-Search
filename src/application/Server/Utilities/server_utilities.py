@@ -64,7 +64,8 @@ class Utilities:
         self.indexing_finished = False
         self.record_pointers = None
         self.encrypted_record_pointers = None
-        self.inverted_index_matrix_encryption_key = None
+        self.inverted_index_matrix_encryption_key1 = None
+        self.inverted_index_matrix_encryption_key2 = None
 
         return
 
@@ -82,9 +83,11 @@ class Utilities:
 
         # Tries to load the encryption key used to encrypt the inverted index matrix.
         try:
-            if not self.inverted_index_matrix_encryption_key and not self.is_semantic_search:
+            if not self.inverted_index_matrix_encryption_key1 and not self.is_semantic_search:
                 with inverted_index_matrix_encryption_key_path().open('r') as f:
-                    self.inverted_index_matrix_encryption_key = f.read()
+                    keys = f.read().split(' ')
+                    self.inverted_index_matrix_encryption_key1 = keys[0]
+                    self.inverted_index_matrix_encryption_key2 = keys[1]
                     f.close()
 
             if not self.encrypted_record_pointers:
@@ -116,7 +119,6 @@ class Utilities:
         # Creates a list of pointers of the records and shuffles them.
         record_paths = [path for path in records_directory().glob('*') if
                         (path.name not in excluded_records()) and (path.suffix == '.json')]
-        shuffle(record_paths)
 
         self.record_pointers = record_paths.copy()
         self.encrypted_record_pointers = record_paths
@@ -386,10 +388,11 @@ class Utilities:
         """
 
         # Encrypts the inverted index matrix.
-        encryption_key = encrypt_inverted_index_matrix()
+        encryption_key1, encryption_key2 = encrypt_inverted_index_matrix()
 
         # Updates object variables.
-        self.inverted_index_matrix_encryption_key = encryption_key
+        self.inverted_index_matrix_encryption_key1 = encryption_key1
+        self.inverted_index_matrix_encryption_key2 = encryption_key2
         self.write_indexing_encryption_key()
 
         return
@@ -407,7 +410,7 @@ class Utilities:
 
         # Writes the encryption key.
         with inverted_index_matrix_encryption_key_path().open("w") as f:
-            f.write(self.inverted_index_matrix_encryption_key)
+            f.write(f'{self.inverted_index_matrix_encryption_key1} {self.inverted_index_matrix_encryption_key2}')
             f.close()
 
         return
@@ -472,7 +475,11 @@ class Utilities:
 
         # Runs MP-SPDZ to obliviously encrypt the client's search query.
         player_id = 1
-        self.write_mp_spdz_input(player_id, [[self.inverted_index_matrix_encryption_key]])
+        self.write_mp_spdz_input(player_id, [[self.inverted_index_matrix_encryption_key1]])
+        mpc_script_name = aes_128_ecb_mpc_script_path().stem
+        self.run_mp_spdz(player_id, mpc_script_name, host_address)
+
+        self.write_mp_spdz_input(player_id, [[self.inverted_index_matrix_encryption_key2]])
         mpc_script_name = aes_128_ecb_mpc_script_path().stem
         self.run_mp_spdz(player_id, mpc_script_name, host_address)
 

@@ -115,7 +115,7 @@ def update_inverse_index_matrix(inverse_index_matrix: dict, record: dict[str, st
             -
     """
 
-    # Adds the attributes of a record as keys to the inverted index matrix and updates that attribute's with the
+    # Adds the attributes of a record as keys to the inverted index matrix and updates that ciphertext's with the
     # record's index.
     for key, value in record.items():
         if value in list(inverse_index_matrix.keys()):

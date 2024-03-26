@@ -11,6 +11,7 @@ from random import randint
 from numpy import multiply
 from sentence_transformers import SentenceTransformer
 from warnings import simplefilter
+from cryptography.hazmat.primitives.ciphers import (Cipher, algorithms, modes)
 
 # Local getters imports.
 from application.getters import (get_mp_spdz_protocol as
@@ -19,6 +20,8 @@ from application.getters import (get_database_size as
                                  database_size)
 from application.getters import (get_number_of_bytes as
                                  number_of_bytes)
+from application.getters import (get_encoding_base as
+                                 encoding_base)
 from application.getters import (get_aes_128_ecb_with_circuit_mpc_script_path as
                                  aes_128_ecb_mpc_script_path)
 from application.getters import (get_client_mp_spdz_input_path as
@@ -74,7 +77,8 @@ class Utilities:
         self.is_semantic_search = False
         self.resume_from_previous_preprocessing = False
         self.query_embedding = None
-        self.encrypted_query = None
+        self.encrypted_query_key1 = None
+        self.encrypted_query_key2 = None
         self.permuted_indices = None
         self.number_of_dummy_items = None
         self.dummy_item_indices = None
@@ -393,7 +397,10 @@ class Utilities:
         query_digest = shake_128(search_query.encode('ASCII')).digest(number_of_bytes()).hex()
         self.write_mp_spdz_inputs(player_id, [[query_digest]])
         self.run_mp_spdz(player_id, aes_128_ecb_mpc_script_path().stem, host_address)
-        self.encrypted_query = self.get_mp_spdz_output()
+        self.encrypted_query_key1 = self.get_mp_spdz_output()
+
+        self.run_mp_spdz(player_id, aes_128_ecb_mpc_script_path().stem, host_address)
+        self.encrypted_query_key2 = self.get_mp_spdz_output()
 
         return
 
@@ -421,11 +428,11 @@ class Utilities:
             if decryption_key_streams:
                 for i in range(len(decryption_key_streams)):
                     for block in range(len(decryption_key_streams[i])):
-                        f.write(f'{int(decryption_key_streams[i][block], 16)} ')
+                        f.write(f'{int(decryption_key_streams[i][block], encoding_base())} ')
                     f.write('\n')
             for i in range(len(encryption_key_streams)):
                 for block in range(len(encryption_key_streams[i])):
-                    f.write(f'{int(encryption_key_streams[i][block], 16)} ')
+                    f.write(f'{int(encryption_key_streams[i][block], encoding_base())} ')
                 f.write('\n')
             f.close()
 
@@ -480,7 +487,7 @@ class Utilities:
 
             Returns:
                 :raises
-                - encrypted_query (str) : Encrypted search query under the server's encryption key.
+                - encrypted_query_key1 (str) : Encrypted search query under the server's encryption key.
         """
 
         # Finds the hexadecimal encrypted search query in the client's output.
@@ -505,6 +512,10 @@ class Utilities:
         """
 
         if self.is_semantic_search:
+
+            # Filters dummy indices.
+            self.indices_to_request = set(filter(lambda x: int(x) >= 0, self.indices_to_request))
+
             # Returns the result from the semantic search.
             search_query_result = self.indices_to_request - self.requested_indices
             if self.indices_to_request.issubset(self.requested_indices):
@@ -522,8 +533,19 @@ class Utilities:
                     f.close()
 
                 # Updates the results from the search of that part.
-                if self.encrypted_query in encrypted_inverted_index_matrix_part:
-                    self.indices_to_request.update(encrypted_inverted_index_matrix_part[self.encrypted_query])
+                if self.encrypted_query_key1 in encrypted_inverted_index_matrix_part:
+                    encrypted_indices = encrypted_inverted_index_matrix_part[self.encrypted_query_key1]
+
+                    indices = []
+                    for ciphertext in encrypted_indices:
+                        index = self.aes_128_ecb(bytes.fromhex(self.encrypted_query_key2), bytes.fromhex(ciphertext))
+                        indices.append(index)
+
+                    print(indices)
+                    self.indices_to_request.update(indices)
+
+            # Filters dummy indices.
+            self.indices_to_request = set(filter(lambda x: int(x) >= 0, self.indices_to_request))
 
             # Compares the encrypted search query with the encrypted inverted index matrx keys.
             if len(self.indices_to_request) == 0:
@@ -539,6 +561,31 @@ class Utilities:
         self.indices_to_request = set()
 
         return search_query_result
+
+    @staticmethod
+    def aes_128_ecb(key: bytes, ciphertext: bytes) -> str:
+        """
+            AES-128bit in ECB mode.
+
+            Parameters:
+                - key (bytes) : The encryption key.
+                - ciphertext (bytes) : The ciphertext to be encrypted.
+
+            Returns:
+                :raises
+                - plaintext (str) : The plaintext as a hexadecimal.
+        """
+
+        # Construct an AES-ECB Cipher object with the given key.
+        decryptor = Cipher(
+            algorithms.AES(key),
+            modes.ECB(),
+        ).decryptor()
+
+        # Encrypts the ciphertext with the key.
+        plaintext = decryptor.update(ciphertext) + decryptor.finalize()
+
+        return plaintext.strip(b'\x00').decode()
 
     def get_random_dummy_item_index(self) -> int:
         """
