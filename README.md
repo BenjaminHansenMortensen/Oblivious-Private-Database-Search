@@ -1,6 +1,6 @@
-# Private Database Searching
+# Private Database Search
 
-Welcome to the Private Database Searching repository which implements an adaptive oblivious transfer with access control between
+Welcome to the Private Database Search repository which implements an adaptive oblivious transfer with access control between
 a user and a mock passenger list register ([Kapittel 60. PNR-registeret](https://lovdata.no/dokument/SF/forskrift/2013-09-20-1097/kap60#kap60)). The implementation supports two types of searches on the PNR records
 and is meant to demonstrate their practicability. One type of searching is a classical search query which checks 
 whether the user's input matches any attribute in the records. The second type is a semantic search which uses Large Language Models 
