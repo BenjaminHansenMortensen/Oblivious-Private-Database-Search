@@ -72,11 +72,11 @@ The port numbers can be left alone.
 
 Now you can simply run 
 ```
-opds_client
+pds_client
 ```
 on the one system corresponding with the client_ip 
 and 
 ```
-opds_server
+pds_server
 ```
 on the one corresponding with the server_ip.
