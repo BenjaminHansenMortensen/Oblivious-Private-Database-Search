@@ -541,7 +541,6 @@ class Utilities:
                         index = self.aes_128_ecb(bytes.fromhex(self.encrypted_query_key2), bytes.fromhex(ciphertext))
                         indices.append(index)
 
-                    print(indices)
                     self.indices_to_request.update(indices)
 
             # Filters dummy indices.
