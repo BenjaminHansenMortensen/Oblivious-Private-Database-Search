@@ -345,6 +345,7 @@ class Communicator(Utilities):
         connection.sendall(self.add_padding(self.ENCRYPT_RECORDS_MESSAGE))
         connection.sendall(self.add_padding(str(index_a)))
         connection.sendall(self.add_padding(str(index_b)))
+        self.wait(connection)
 
         # Obliviously encrypts and sorts the two of the server's records with the client's key.
         host_address = self.SERVER_ADDR[0]
@@ -373,6 +374,7 @@ class Communicator(Utilities):
         connection.sendall(self.add_padding(self.REENCRYPT_RECORDS_MESSAGE))
         connection.sendall(self.add_padding(str(index_a)))
         connection.sendall(self.add_padding(str(index_b)))
+        self.wait(connection)
 
         # Obliviously re-encrypts and sorts the two of the server's records with the client's key.
         host_address = self.SERVER_ADDR[0]
