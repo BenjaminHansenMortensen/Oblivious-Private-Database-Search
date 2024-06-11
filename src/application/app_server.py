@@ -1,5 +1,9 @@
 """ Runs the server side of the application. """
 
+# Supress warning
+import warnings
+warnings.simplefilter(action='ignore', category=FutureWarning)
+
 # Local getters imports.
 from application.getters import working_directory_validation, mp_spdz_directory_validation
 from application.getters import (get_encrypted_records_directory as
