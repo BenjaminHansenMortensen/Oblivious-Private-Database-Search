@@ -6,6 +6,8 @@ and is meant to demonstrate their practicability. One type of searching is a key
 whether the user's input matches any values in the records. The second type is a semantic search which uses a Large Language Model 
 to create vector embeddings of the records and the user's input, to capture their semantics. Close vectors imply semantic likeness.
 
+This application is a part of my master's thesis which can be found at https://github.com/BenjaminHansenMortensen/MasterThesis-PrivateDatbaseSearch.
+
 ## MP-SPDZ Setup
 
 To get started we need to [download MP-SPDZ](https://github.com/data61/MP-SPDZ/releases). It is recommended to do so on an Ubuntu system, and
